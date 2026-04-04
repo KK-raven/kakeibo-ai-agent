@@ -1,0 +1,24 @@
+# 環境変数
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# データ（自動生成ファイルはGit管理外）
+data/dummy/*.csv
+data/processed/*.csv
+data/exports/*
+!data/exports/.gitkeep
+
+# MLflow（実行時に生成されるデータ）
+mlflow/data/
+
+# IDE
+.vscode/
+.idea/
+
+# Jupyter（チェックポイントのみ無視、notebookは管理する）
+.ipynb_checkpoints/logs/
