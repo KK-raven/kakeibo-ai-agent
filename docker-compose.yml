@@ -1,0 +1,31 @@
+services:
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app/api
+      - ./data://app/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  ui:
+    build: ./ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./ui:/app
+    env_file:
+      - .env
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  mlflow:
+    build: ./mlflow
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./mlflow/data:/mlflow
+    restart: unless-stopped

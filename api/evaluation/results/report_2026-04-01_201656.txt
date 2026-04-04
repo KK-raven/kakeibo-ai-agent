@@ -1,0 +1,68 @@
+============================================================
+Agent 評価レポート
+実行日: 2026-04-01
+テストケース数: 52
+実行回数: N=5
+総実行数: 240
+実行時間: 1059.7秒
+============================================================
+
+--- 全体精度 ---
+ツール選択精度: 86.7%
+95%信頼区間 (Wilson): [81.8%, 90.4%]
+引数精度: 90.8%
+
+--- グループ別精度 ---
+  ツール不要: 75.0% (15/20)
+  ファイル出力: 100.0% (5/5)
+  予算管理: 100.0% (25/25)
+  入出金登録: 87.1% (61/70)
+  固定出金: 100.0% (15/15)
+  支払方法・カード・設定: 55.0% (22/40)
+  集計: 100.0% (65/65)
+
+--- 難易度別精度 ---
+  easy: 91.5% (119/130)
+  hard: 44.0% (11/25)
+  medium: 91.8% (78/85)
+
+--- ツール別 Precision / Recall / F1 ---
+  NO_TOOL: P=0.41 R=1.00 F1=0.58 (TP=15 FP=22 FN=0)
+  add_payment_method: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  apply_fixed_expenses: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  check_budget: P=1.00 R=1.00 F1=1.00 (TP=10 FP=0 FN=0)
+  delete_transaction: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  export_file: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  get_budgets: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_category_summary: P=0.67 R=1.00 F1=0.80 (TP=10 FP=5 FN=0)
+  get_credit_cards: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_custom_summary: P=1.00 R=1.00 F1=1.00 (TP=10 FP=0 FN=0)
+  get_fixed_expenses: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_item_summary: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_monthly_comparison: P=1.00 R=1.00 F1=1.00 (TP=10 FP=0 FN=0)
+  get_monthly_summary: P=0.50 R=1.00 F1=0.67 (TP=5 FP=5 FN=0)
+  get_monthly_summary|get_category_summary|check_budget: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  get_payment_methods: P=1.00 R=0.60 F1=0.75 (TP=3 FP=0 FN=2)
+  get_setting: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_store_summary: P=0.00 R=0.00 F1=0.00 (TP=0 FP=5 FN=0)
+  get_store_summary|get_custom_summary: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  get_transactions: P=0.40 R=1.00 F1=0.57 (TP=10 FP=15 FN=0)
+  get_transactions|get_store_summary: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  register_credit_card: P=1.00 R=0.20 F1=0.33 (TP=1 FP=0 FN=4)
+  register_fixed_expense: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  register_transaction: P=1.00 R=0.87 F1=0.93 (TP=61 FP=0 FN=9)
+  set_budget: P=1.00 R=1.00 F1=1.00 (TP=10 FP=0 FN=0)
+  set_setting: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  special:partial_support_only: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  update_payment_method_linked_card: P=1.00 R=0.60 F1=0.75 (TP=3 FP=0 FN=2)
+
+--- 不安定ケース (5回中で結果がばらつくケース) ---
+  ID 11: 20% (1/5) - 1000円使った
+  ID 32: 60% (3/5) - d払いで買い物したいんだけど使える？
+  ID 33: 20% (1/5) - JCBカードを登録して
+  ID 37: 60% (3/5) - QUICPayの決済元をJCBにして
+
+--- 複数正解ケースの選択分布 ---
+  ケース 15: {'get_store_summary': 5}
+  ケース 46: {'get_category_summary': 5}
+  ケース 49: {'get_transactions': 5}

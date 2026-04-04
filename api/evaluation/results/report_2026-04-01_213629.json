@@ -1,0 +1,306 @@
+{
+  "metadata": {
+    "date": "2026-04-01",
+    "n_runs": 5,
+    "n_cases": 52,
+    "total_runs": 225,
+    "elapsed_seconds": 1171.3
+  },
+  "overall": {
+    "tool_selection_accuracy": 0.8978,
+    "ci_method": "wilson",
+    "ci_low": 0.8513,
+    "ci_high": 0.9309,
+    "args_accuracy": 0.8978
+  },
+  "by_group": {
+    "ツール不要": {
+      "accuracy": 0.75,
+      "correct": 15,
+      "total": 20
+    },
+    "ファイル出力": {
+      "accuracy": 1.0,
+      "correct": 5,
+      "total": 5
+    },
+    "予算管理": {
+      "accuracy": 0.92,
+      "correct": 23,
+      "total": 25
+    },
+    "入出金登録": {
+      "accuracy": 0.9286,
+      "correct": 65,
+      "total": 70
+    },
+    "固定出金": {
+      "accuracy": 1.0,
+      "correct": 15,
+      "total": 15
+    },
+    "支払方法・カード・設定": {
+      "accuracy": 0.6,
+      "correct": 15,
+      "total": 25
+    },
+    "集計": {
+      "accuracy": 0.9846,
+      "correct": 64,
+      "total": 65
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "accuracy": 0.9417,
+      "correct": 113,
+      "total": 120
+    },
+    "hard": {
+      "accuracy": 0.6,
+      "correct": 15,
+      "total": 25
+    },
+    "medium": {
+      "accuracy": 0.925,
+      "correct": 74,
+      "total": 80
+    }
+  },
+  "per_tool_metrics": {
+    "NO_TOOL": {
+      "precision": 0.5769,
+      "recall": 1.0,
+      "f1": 0.7317,
+      "tp": 15,
+      "fp": 11,
+      "fn": 0
+    },
+    "add_payment_method": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "apply_fixed_expenses": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "check_budget": {
+      "precision": 1.0,
+      "recall": 0.9,
+      "f1": 0.9474,
+      "tp": 9,
+      "fp": 0,
+      "fn": 1
+    },
+    "delete_transaction": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "export_file": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "get_budgets": {
+      "precision": 0.8333,
+      "recall": 1.0,
+      "f1": 0.9091,
+      "tp": 5,
+      "fp": 1,
+      "fn": 0
+    },
+    "get_category_summary": {
+      "precision": 0.7143,
+      "recall": 1.0,
+      "f1": 0.8333,
+      "tp": 10,
+      "fp": 4,
+      "fn": 0
+    },
+    "get_credit_cards": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_custom_summary": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 10,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_fixed_expenses": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_item_summary": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_monthly_comparison": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 10,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_monthly_summary": {
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667,
+      "tp": 5,
+      "fp": 5,
+      "fn": 0
+    },
+    "get_monthly_summary|get_category_summary|check_budget": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "get_setting": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_store_summary": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 5,
+      "fn": 0
+    },
+    "get_store_summary|get_custom_summary": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "get_transactions": {
+      "precision": 0.3846,
+      "recall": 1.0,
+      "f1": 0.5556,
+      "tp": 10,
+      "fp": 16,
+      "fn": 0
+    },
+    "get_transactions|get_store_summary": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "register_fixed_expense": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "register_transaction": {
+      "precision": 1.0,
+      "recall": 0.9286,
+      "f1": 0.963,
+      "tp": 65,
+      "fp": 0,
+      "fn": 5
+    },
+    "set_budget": {
+      "precision": 1.0,
+      "recall": 0.9,
+      "f1": 0.9474,
+      "tp": 9,
+      "fp": 0,
+      "fn": 1
+    },
+    "set_setting": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "special:partial_support_only": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    }
+  },
+  "unstable_cases": [
+    {
+      "case_id": 23,
+      "input": "食費の予算を3万円に設定して",
+      "accuracy": 0.8,
+      "correct": 4,
+      "total": 5
+    },
+    {
+      "case_id": 24,
+      "input": "食費あといくら使える？",
+      "accuracy": 0.8,
+      "correct": 4,
+      "total": 5
+    },
+    {
+      "case_id": 46,
+      "input": "食費どのくらい？",
+      "accuracy": 0.8,
+      "correct": 4,
+      "total": 5
+    }
+  ],
+  "alternative_distribution": {
+    "15": {
+      "get_store_summary": 5
+    },
+    "46": {
+      "get_category_summary": 4
+    },
+    "49": {
+      "get_transactions": 5
+    }
+  }
+}

@@ -1,0 +1,64 @@
+============================================================
+Agent 評価レポート
+実行日: 2026-04-01
+テストケース数: 52
+実行回数: N=5
+総実行数: 225
+実行時間: 1171.3秒
+============================================================
+
+--- 全体精度 ---
+ツール選択精度: 89.8%
+95%信頼区間 (Wilson): [85.1%, 93.1%]
+引数精度: 89.8%
+
+--- グループ別精度 ---
+  ツール不要: 75.0% (15/20)
+  ファイル出力: 100.0% (5/5)
+  予算管理: 92.0% (23/25)
+  入出金登録: 92.9% (65/70)
+  固定出金: 100.0% (15/15)
+  支払方法・カード・設定: 60.0% (15/25)
+  集計: 98.5% (64/65)
+
+--- 難易度別精度 ---
+  easy: 94.2% (113/120)
+  hard: 60.0% (15/25)
+  medium: 92.5% (74/80)
+
+--- ツール別 Precision / Recall / F1 ---
+  NO_TOOL: P=0.58 R=1.00 F1=0.73 (TP=15 FP=11 FN=0)
+  add_payment_method: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  apply_fixed_expenses: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  check_budget: P=1.00 R=0.90 F1=0.95 (TP=9 FP=0 FN=1)
+  delete_transaction: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  export_file: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  get_budgets: P=0.83 R=1.00 F1=0.91 (TP=5 FP=1 FN=0)
+  get_category_summary: P=0.71 R=1.00 F1=0.83 (TP=10 FP=4 FN=0)
+  get_credit_cards: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_custom_summary: P=1.00 R=1.00 F1=1.00 (TP=10 FP=0 FN=0)
+  get_fixed_expenses: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_item_summary: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_monthly_comparison: P=1.00 R=1.00 F1=1.00 (TP=10 FP=0 FN=0)
+  get_monthly_summary: P=0.50 R=1.00 F1=0.67 (TP=5 FP=5 FN=0)
+  get_monthly_summary|get_category_summary|check_budget: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  get_setting: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_store_summary: P=0.00 R=0.00 F1=0.00 (TP=0 FP=5 FN=0)
+  get_store_summary|get_custom_summary: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  get_transactions: P=0.38 R=1.00 F1=0.56 (TP=10 FP=16 FN=0)
+  get_transactions|get_store_summary: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  register_fixed_expense: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  register_transaction: P=1.00 R=0.93 F1=0.96 (TP=65 FP=0 FN=5)
+  set_budget: P=1.00 R=0.90 F1=0.95 (TP=9 FP=0 FN=1)
+  set_setting: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  special:partial_support_only: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+
+--- 不安定ケース (5回中で結果がばらつくケース) ---
+  ID 23: 80% (4/5) - 食費の予算を3万円に設定して
+  ID 24: 80% (4/5) - 食費あといくら使える？
+  ID 46: 80% (4/5) - 食費どのくらい？
+
+--- 複数正解ケースの選択分布 ---
+  ケース 15: {'get_store_summary': 5}
+  ケース 46: {'get_category_summary': 4}
+  ケース 49: {'get_transactions': 5}
