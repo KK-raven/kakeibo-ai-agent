@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家計簿ダッシュボード</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+                         "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            text-align: center;
+            padding: 12px 0;
+            color: #2c3e50;
+        }
+
+        /* --- フィルター部分 --- */
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filters select,
+        .filters input {
+            flex: 1;
+            min-width: 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: #fff;
+        }
+
+        /* --- グラフ --- */
+        .chart-container {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- 集計サマリー --- */
+        .summary-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #fff;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 0.95rem;
+        }
+
+        .summary-bar .label {
+            color: #888;
+        }
+
+        .summary-bar .value {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* --- テーブル --- */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .section-header h2 {
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+
+        .section-header select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: #fff;
+        }
+
+        .table-container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th, td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+        }
+
+        th {
+            font-weight: 600;
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        td.amount {
+            text-align: right;
+            font-weight: 500;
+        }
+
+        td.amount.income {
+            color: #27ae60;
+        }
+
+        td.amount.expense {
+            color: #e74c3c;
+        }
+
+        /* --- ローディング --- */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #e74c3c;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 家計簿ダッシュボード</h1>
+
+    <!-- フィルター -->
+    <div class="filters">
+        <input type="month" id="monthSelector">
+        <select id="typeSelector">
+            <option value="expense">支出</option>
+            <option value="income">収入</option>
+        </select>
+        <select id="personSelector">
+            <option value="自分">自分</option>
+            <option value="妻">妻</option>
+            <option value="共通">共通</option>
+        </select>
+    </div>
+
+    <!-- 合計表示 -->
+    <div class="summary-bar">
+        <span class="label" id="summaryLabel">今月の支出合計</span>
+        <span class="value" id="summaryValue">-</span>
+    </div>
+
+    <!-- カテゴリ別グラフ -->
+    <div class="chart-container">
+        <canvas id="categoryChart"></canvas>
+        <div id="chartLoading" class="loading">読み込み中...</div>
+        <div id="chartEmpty" class="empty" style="display:none;">
+            データがありません
+        </div>
+    </div>
+
+    <!-- 取引履歴 -->
+    <div class="section-header">
+        <h2>取引履歴</h2>
+        <select id="limitSelector">
+            <option value="20">20件</option>
+            <option value="50" selected>50件</option>
+            <option value="100">100件</option>
+        </select>
+    </div>
+    <div class="table-container">
+        <div id="tableLoading" class="loading">読み込み中...</div>
+        <div id="tableEmpty" class="empty" style="display:none;">
+            取引がありません
+        </div>
+        <table id="transactionTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>日付</th>
+                    <th>種別</th>
+                    <th>カテゴリ</th>
+                    <th>金額</th>
+                    <th>店名</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // --- 設定 ---
+        const LIFF_ID = "{{LIFF_ID}}";
+
+        // APIのベースURL（LIFFはブラウザから直接APIにアクセスする）
+        // デプロイ後に正しいURLに更新する
+        const API_BASE = window.location.origin;
+
+        let currentUserId = null;
+        let chartInstance = null;
+
+        // --- 初期化 ---
+        async function init() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+
+                // LINEユーザーIDを取得
+                const profile = await liff.getProfile();
+                const lineUserId = profile.userId;
+
+                // アプリのuser_idに変換
+                const res = await fetch(
+                    `${API_BASE}/line/user_id?line_user_id=${lineUserId}`
+                );
+                const data = await res.json();
+                currentUserId = data.user_id;
+
+                // 月セレクターを今月に設定
+                const now = new Date();
+                const currentMonth = `${now.getFullYear()}-${
+                    String(now.getMonth() + 1).padStart(2, "0")
+                }`;
+                document.getElementById("monthSelector").value = currentMonth;
+
+                // データを読み込む
+                await loadAll();
+
+            } catch (err) {
+                console.error("初期化エラー:", err);
+                document.body.innerHTML =
+                    '<div class="error">初期化に失敗しました。' +
+                    'LINEアプリから開き直してください。</div>';
+            }
+        }
+
+        // --- データ読み込み ---
+        async function loadAll() {
+            await Promise.all([
+                loadCategorySummary(),
+                loadTransactions(),
+            ]);
+        }
+
+        async function loadCategorySummary() {
+            const yearMonth = document.getElementById("monthSelector").value;
+            const type = document.getElementById("typeSelector").value;
+            const person = document.getElementById("personSelector").value;
+
+            const chartLoading = document.getElementById("chartLoading");
+            const chartEmpty = document.getElementById("chartEmpty");
+            const canvas = document.getElementById("categoryChart");
+
+            chartLoading.style.display = "block";
+            chartEmpty.style.display = "none";
+            canvas.style.display = "none";
+
+            try {
+                const params = new URLSearchParams({
+                    year_month: yearMonth,
+                    type: type,
+                    person: person,
+                    user_id: currentUserId,
+                });
+                const res = await fetch(
+                    `${API_BASE}/category_summary?${params}`
+                );
+                const data = await res.json();
+                const summary = data.summary;
+
+                chartLoading.style.display = "none";
+
+                if (!summary || summary.length === 0) {
+                    chartEmpty.style.display = "block";
+                    updateSummaryBar(0, type);
+                    return;
+                }
+
+                canvas.style.display = "block";
+
+                const labels = summary.map(s => s.category);
+                const values = summary.map(s => s.total);
+                const total = values.reduce((a, b) => a + b, 0);
+
+                updateSummaryBar(total, type);
+                renderChart(labels, values, type);
+
+            } catch (err) {
+                console.error("集計取得エラー:", err);
+                chartLoading.innerHTML =
+                    '<span class="error">データの取得に失敗しました</span>';
+            }
+        }
+
+        async function loadTransactions() {
+            const yearMonth = document.getElementById("monthSelector").value;
+            const limit = document.getElementById("limitSelector").value;
+
+            const tableLoading = document.getElementById("tableLoading");
+            const tableEmpty = document.getElementById("tableEmpty");
+            const table = document.getElementById("transactionTable");
+            const tbody = document.getElementById("tableBody");
+
+            tableLoading.style.display = "block";
+            tableEmpty.style.display = "none";
+            table.style.display = "none";
+
+            try {
+                const params = new URLSearchParams({
+                    year_month: yearMonth,
+                    limit: limit,
+                    user_id: currentUserId,
+                });
+                const res = await fetch(
+                    `${API_BASE}/transactions?${params}`
+                );
+                const data = await res.json();
+                const transactions = data.transactions;
+
+                tableLoading.style.display = "none";
+
+                if (!transactions || transactions.length === 0) {
+                    tableEmpty.style.display = "block";
+                    return;
+                }
+
+                table.style.display = "table";
+                tbody.innerHTML = "";
+
+                for (const tx of transactions) {
+                    const tr = document.createElement("tr");
+                    const typeLabel = tx.type === "income" ? "収入" : "支出";
+                    const amountClass = tx.type === "income"
+                        ? "amount income" : "amount expense";
+                    const sign = tx.type === "income" ? "+" : "-";
+
+                    tr.innerHTML = `
+                        <td>${tx.date}</td>
+                        <td>${typeLabel}</td>
+                        <td>${tx.category}</td>
+                        <td class="${amountClass}">
+                            ${sign}¥${tx.amount.toLocaleString()}
+                        </td>
+                        <td>${tx.store_name || ""}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+
+            } catch (err) {
+                console.error("取引取得エラー:", err);
+                tableLoading.innerHTML =
+                    '<span class="error">データの取得に失敗しました</span>';
+            }
+        }
+
+        // --- グラフ描画 ---
+        function renderChart(labels, values, type) {
+            const ctx = document.getElementById("categoryChart")
+                .getContext("2d");
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const barColor = type === "income"
+                ? "rgba(39, 174, 96, 0.7)"
+                : "rgba(231, 76, 60, 0.7)";
+            const borderColor = type === "income"
+                ? "rgba(39, 174, 96, 1)"
+                : "rgba(231, 76, 60, 1)";
+
+            chartInstance = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: type === "income" ? "収入" : "支出",
+                        data: values,
+                        backgroundColor: barColor,
+                        borderColor: borderColor,
+                        borderWidth: 1,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return "¥" + ctx.parsed.y.toLocaleString();
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                font: { size: 11 },
+                            },
+                        },
+                        y: {
+                            ticks: {
+                                callback: function(value) {
+                                    return "¥" + value.toLocaleString();
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
+        // --- サマリーバー更新 ---
+        function updateSummaryBar(total, type) {
+            const label = type === "income" ? "収入合計" : "支出合計";
+            document.getElementById("summaryLabel").textContent = label;
+            document.getElementById("summaryValue").textContent =
+                "¥" + total.toLocaleString();
+        }
+
+        // --- イベントリスナー ---
+        document.getElementById("monthSelector")
+            .addEventListener("change", loadAll);
+        document.getElementById("typeSelector")
+            .addEventListener("change", loadCategorySummary);
+        document.getElementById("personSelector")
+            .addEventListener("change", loadCategorySummary);
+        document.getElementById("limitSelector")
+            .addEventListener("change", loadTransactions);
+
+        // --- 起動 ---
+        init();
+    </script>
+</body>
+</html>

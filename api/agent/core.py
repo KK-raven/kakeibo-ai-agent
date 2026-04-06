@@ -2,27 +2,20 @@
 """
 Agent のコアパイプライン
 
-役割:
-- ユーザーの自然言語入力を受け取る
-- OpenAI API（Function Calling）で意図判定・ツール選択を行う
-- 対応する crud 関数を実行する
-- 実行結果を LLM に返し、自然言語の応答を生成する
+ユーザーの自然言語入力を受け取り、OpenAI API（Function Calling）で
+意図判定・ツール選択を行い、対応するcrud関数を実行し、
+実行結果をLLMに返して自然言語の応答を生成する。
 
 処理フロー:
 1. システムプロンプト + 会話履歴 + ユーザー入力を組み立てる
 2. OpenAI API に送信（Tool 定義を添付）
 3. LLM が tool_calls を返した場合:
    a) 引数のデフォルト値を補完（日付・支払方法・カード名）
-   b) 対応する crud 関数を実行
+   b) user_id を注入し、対応する crud 関数を実行
    c) 特殊処理（取引登録後の予算チェック等）
    d) 実行結果を tool ロールで LLM に返す
    e) LLM が自然言語応答を生成（再度 tool_calls なら繰り返し、最大5回）
 4. 応答を返す
-
-他モジュールとの関係:
-- api/agent/tools.py: Tool 定義（JSON スキーマ）
-- api/db/crud.py: 全てのデータ操作関数
-- api/models/schemas.py: リクエスト/レスポンスの型定義（Step 6-C で作成）
 """
 
 import json
@@ -36,24 +29,19 @@ from api.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# OpenAI クライアント
-# OPENAI_API_KEY 環境変数から自動で読み取る
 client = OpenAI()
 
-# モデル名を定数化（変更時に1箇所で済むように）
 MODEL = "gpt-4o-mini"
 
-# Tool 実行ループの上限
-# 1つのユーザー入力に対して LLM が連続で Tool を呼べる最大回数
-# 通常は 1〜2 回で完結する。5 回に達したらループを打ち切る
 MAX_TOOL_CALLS = 5
 
-# --- システムプロンプト ---
-# v1 では簡素な役割定義のみ。
-# v2 の Phase 7 でキャラ設定を動的に組み込む。
+# user_idを必要としないツールの一覧。
+# これ以外のツールは全てcrud関数であり、user_idを第一引数に取る。
+_NO_USER_ID_TOOLS = {"export_file"}
+
+
 def _build_system_prompt() -> str:
-    """
-    システムプロンプトを生成する。
+    """システムプロンプトを生成する。
 
     今日の日付を動的に埋め込む。
     LLM は学習データの日付を使ってしまうことがあるため、
@@ -81,12 +69,8 @@ def _build_system_prompt() -> str:
     """
 
 
-# --- Tool名 → crud関数 のマッピング ---
-# LLM が返した tool 名でこの辞書を引き、対応する関数を実行する。
-# if/elif を並べるより保守しやすい。
-# 新しい Tool を追加するときはここに1行追加するだけ。
-#
-# 命名規則（tools.py と共通）:
+# --- Tool名 → 関数 のマッピング ---
+# 命名規則:
 #   参照系: get_ または check_ で始める
 #   更新系: register_, set_, apply_, delete_,
 #           update_, add_, deactivate_, export_ で始める
@@ -120,35 +104,41 @@ TOOL_FUNCTIONS = {
 }
 
 
-def _complement_defaults(tool_name: str, args: dict) -> dict:
-    """
-    LLM が省略した引数にデフォルト値を補完する。
+def _complement_defaults(
+    user_id: int,
+    tool_name: str,
+    args: dict,
+) -> dict:
+    """LLM が省略した引数にデフォルト値を補完する。
 
     補完対象:
     1. date: 省略時は今日の日付
     2. payment_method: 省略時は settings("default_payment_method") or "現金"
     3. card_name: クレカ払いで未指定の場合、デフォルトカードを適用
+
+    Args:
+        user_id: ユーザーID。crud関数呼び出しに必要。
+        tool_name: ツール名。
+        args: LLMが生成した引数の辞書。
+
+    Returns:
+        デフォルト値が補完された引数の辞書。
     """
     if tool_name == "register_transaction":
-        # 1. date の補完
         if "date" not in args or not args["date"]:
             args["date"] = date.today().isoformat()
             logger.debug(f"日付補完: {args['date']}")
 
-        # 2. payment_method の補完
         if "payment_method" not in args or not args["payment_method"]:
-            default_pm = crud.get_setting("default_payment_method")
+            default_pm = crud.get_setting(user_id, "default_payment_method")
             args["payment_method"] = default_pm or "現金"
             logger.debug(f"支払方法補完: {args['payment_method']}")
 
-        # 3. card_name の補完
-        # クレジットカード払いで card_name が未指定の場合、
-        # デフォルトカードを自動適用する
         if (
             args.get("payment_method") == "クレジットカード"
             and not args.get("card_name")
         ):
-            cards = crud.get_credit_cards()
+            cards = crud.get_credit_cards(user_id)
             default_card = next(
                 (c for c in cards if c["is_default"]),
                 None,
@@ -160,18 +150,29 @@ def _complement_defaults(tool_name: str, args: dict) -> dict:
     return args
 
 
-def _post_process(tool_name: str, result: dict | list | bool | str | None) -> str | None:
-    """
-    Tool 実行後の特殊処理。
+def _post_process(
+    user_id: int,
+    tool_name: str,
+    result: dict | list | bool | str | None,
+) -> str | None:
+    """Tool 実行後の特殊処理。
 
     現在は register_transaction 後の自動予算チェックのみ。
     予算が設定されているカテゴリの取引を登録した場合、
     alert_level が "ok" 以外なら予算情報を追加テキストとして返す。
 
+    Args:
+        user_id: ユーザーID。
+        tool_name: ツール名。
+        result: ツール実行結果。
+
     Returns:
         追加情報のテキスト。不要なら None。
     """
-    logger.debug(f"_post_process呼び出し: tool={tool_name}, result_type={type(result)}")
+    logger.debug(
+        f"_post_process呼び出し: tool={tool_name},"
+        f" result_type={type(result)}"
+    )
 
     if tool_name == "register_transaction" and isinstance(result, dict):
         category = result.get("category")
@@ -179,10 +180,11 @@ def _post_process(tool_name: str, result: dict | list | bool | str | None) -> st
             today = date.today()
             year_month = f"{today.year:04d}-{today.month:02d}"
             budget_info = crud.check_budget(
-                category, year_month, result.get("person", "自分"),
+                user_id, category, year_month,
+                result.get("person", "自分"),
             )
-            logger.debug(f"予算チェック結果: {budget_info}") 
-            
+            logger.debug(f"予算チェック結果: {budget_info}")
+
             if budget_info and budget_info["alert_level"] != "ok":
                 if budget_info["alert_level"] == "warning":
                     return (
@@ -201,31 +203,29 @@ def _post_process(tool_name: str, result: dict | list | bool | str | None) -> st
 
 
 def chat(
+    user_id: int,
     user_message: str,
     conversation_history: list[dict] | None = None,
 ) -> dict:
-    """
-    ユーザーの入力を受け取り、Agentの応答を返す。
+    """ユーザーの入力を受け取り、Agentの応答を返す。
 
-    この関数が FastAPI のエンドポイント（Step 7）から呼ばれる。
-    会話履歴は呼び出し元（Streamlit）が管理し、毎回渡す。
+    FastAPIのエンドポイントから呼ばれる。
+    会話履歴は呼び出し元（Streamlit / LINE Bot）が管理し、毎回渡す。
 
     Args:
-        user_message: ユーザーの自然言語入力
+        user_id: ユーザーID。全ツール実行時にcrud関数へ渡される。
+        user_message: ユーザーの自然言語入力。
         conversation_history: これまでの会話履歴（role/content の辞書リスト）。
                               None の場合は新規会話として扱う。
 
     Returns:
         {
             "response": "LLMの応答テキスト",
-            "tool_results": [...],  # 実行されたToolの結果リスト（デバッグ用）
+            "tool_results": [...],
         }
     """
     logger.info(f"ユーザー入力: {user_message}")
 
-    # --- メッセージ配列の組み立て ---
-    # OpenAI API に渡す messages は以下の構造:
-    # [system, user/assistant/tool の履歴..., 今回のuser入力]
     messages = [{"role": "system", "content": _build_system_prompt()}]
 
     if conversation_history:
@@ -233,11 +233,8 @@ def chat(
 
     messages.append({"role": "user", "content": user_message})
 
-    # Tool 実行結果の記録（デバッグ・ログ用）
     tool_results = []
 
-    # --- メインループ ---
-    # LLM が tool_calls を返す限り繰り返す（上限: MAX_TOOL_CALLS 回）
     for iteration in range(MAX_TOOL_CALLS):
         logger.debug(f"LLM呼び出し: iteration={iteration + 1}")
 
@@ -258,7 +255,6 @@ def chat(
         choice = response.choices[0]
         assistant_message = choice.message
 
-        # --- tool_calls がない場合 → 応答を返して終了 ---
         if not assistant_message.tool_calls:
             logger.info(f"LLM応答: {assistant_message.content}")
             return {
@@ -266,8 +262,6 @@ def chat(
                 "tool_results": tool_results,
             }
 
-        # --- tool_calls がある場合 → Tool を実行 ---
-        # assistant のメッセージ（tool_calls 付き）を履歴に追加
         messages.append({
             "role": "assistant",
             "content": assistant_message.content,
@@ -284,14 +278,12 @@ def chat(
             ],
         })
 
-        # 各 tool_call を順に実行
         for tc in assistant_message.tool_calls:
             tool_name = tc.function.name
             tool_args = json.loads(tc.function.arguments)
 
             logger.info(f"Tool呼び出し: {tool_name}({tool_args})")
 
-            # ディスパッチ辞書から関数を取得
             func = TOOL_FUNCTIONS.get(tool_name)
             if not func:
                 error_msg = f"不明なTool: {tool_name}"
@@ -305,12 +297,15 @@ def chat(
                 })
                 continue
 
-            # デフォルト値の補完
-            tool_args = _complement_defaults(tool_name, tool_args)
+            tool_args = _complement_defaults(user_id, tool_name, tool_args)
 
-            # Tool 実行
             try:
-                result = func(**tool_args)
+                # crud関数にはuser_idを第一引数として渡す。
+                # export_file等のuser_id不要な関数はそのまま呼ぶ。
+                if tool_name not in _NO_USER_ID_TOOLS:
+                    result = func(user_id, **tool_args)
+                else:
+                    result = func(**tool_args)
             except Exception as e:
                 error_msg = f"Tool実行エラー: {tool_name}: {e}"
                 logger.error(error_msg)
@@ -330,18 +325,14 @@ def chat(
 
             logger.info(f"Tool結果: {tool_name} → {result}")
 
-            # 結果を記録
             tool_results.append({
                 "tool": tool_name,
                 "args": tool_args,
                 "result": result,
             })
 
-            # Tool 実行後の特殊処理（予算チェック等）
-            extra_info = _post_process(tool_name, result)
+            extra_info = _post_process(user_id, tool_name, result)
 
-            # tool ロールで結果を LLM に返す
-            # extra_info がある場合は結果に付加する
             tool_content = result
             if extra_info:
                 tool_content = {
@@ -357,9 +348,6 @@ def chat(
                 ),
             })
 
-    # --- ループ上限に達した場合 ---
-    # ここまでの結果をまとめてもらうために、
-    # LLM に最終応答を生成させる
     logger.warning(f"Tool呼び出し上限到達: {MAX_TOOL_CALLS}回")
     messages.append({
         "role": "user",
@@ -378,7 +366,10 @@ def chat(
         final_content = response.choices[0].message.content
     except Exception as e:
         logger.error(f"最終応答生成エラー: {e}")
-        final_content = "処理が複雑になりすぎました。質問を分けて聞いていただけますか？"
+        final_content = (
+            "処理が複雑になりすぎました。"
+            "質問を分けて聞いていただけますか？"
+        )
 
     return {
         "response": final_content,

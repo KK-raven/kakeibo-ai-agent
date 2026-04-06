@@ -4,3 +4,5 @@ python-dotenv
 openai
 jpholiday
 statsmodels
+psycopg2-binary
+line-bot-sdk

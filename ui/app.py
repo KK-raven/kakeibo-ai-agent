@@ -1,21 +1,22 @@
 # ui/app.py
 """
 Streamlit チャット UI
-役割:
-- ユーザーのチャット入力をFastAPI（/chat）に送信する
-- 会話履歴を管理し、毎回APIに渡すことで文脈を保った会話を実現する
-- APIの死活確認（/health）をサイドバーで表示する
+
+固定のデモユーザーIDで動作する開発・確認用のWebインターフェース。
+本番のユーザー向けインターフェースはLINE Bot + LIFF。
 """
+
 from datetime import datetime
+
 import requests
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-API_BASE_URL = "http://api:8000"  # Docker Compose内サービス名で接続
+API_BASE_URL = "http://api:8000"
 
-# DBとAPIは英語カラム名で管理し、UI表示時のみ日本語に変換する
-# personを追加する場合は "person": "名義" のように追記する
+DEMO_USER_ID = 1
+
 TRANSACTION_COLUMNS = {
     "date": "日付",
     "type": "種別",
@@ -32,31 +33,28 @@ def fetch_transactions(limit: int = 20) -> list[dict]:
         limit: 取得件数の上限。
 
     Returns:
-        list[dict]: 取引履歴のリスト。取得失敗時は空リストを返す。
+        取引履歴のリスト。取得失敗時は空リストを返す。
     """
     try:
         response = requests.get(
             f"{API_BASE_URL}/transactions",
-            params={"limit": limit},
+            params={"limit": limit, "user_id": DEMO_USER_ID},
             timeout=5,
         )
         response.raise_for_status()
         return response.json()["transactions"]
     except requests.exceptions.RequestException:
         return []
-    
+
 
 def download_export(filename: str) -> bytes | None:
     """エクスポートファイルをAPIから取得する。
 
-    Agentがexport_fileツールで保存したファイルを取得し、
-    st.download_buttonに渡すためのバイト列を返す。
-
     Args:
-        filename: ダウンロードするファイル名。Agentの応答から抽出する。
+        filename: ダウンロードするファイル名。
 
     Returns:
-        bytes: ファイルの内容。取得失敗時はNoneを返す。
+        ファイルの内容。取得失敗時はNoneを返す。
     """
     try:
         response = requests.get(
@@ -64,7 +62,7 @@ def download_export(filename: str) -> bytes | None:
             timeout=10,
         )
         response.raise_for_status()
-        return response.content  # バイト列で返す
+        return response.content
     except requests.exceptions.RequestException:
         return None
 
@@ -82,13 +80,17 @@ def fetch_category_summary(
         person: 誰の集計か。
 
     Returns:
-        list[dict]: カテゴリ別集計のリスト。データなしは空リスト。
-        None: 通信エラー時。
+        カテゴリ別集計のリスト。通信エラー時はNone。
     """
     try:
         response = requests.get(
             f"{API_BASE_URL}/category_summary",
-            params={"year_month": year_month, "type": type, "person": person},
+            params={
+                "year_month": year_month,
+                "type": type,
+                "person": person,
+                "user_id": DEMO_USER_ID,
+            },
             timeout=5,
         )
         response.raise_for_status()
@@ -98,12 +100,7 @@ def fetch_category_summary(
 
 
 def check_api_health() -> bool:
-    """APIのヘルスチェックを行う。
-
-    Returns:
-        bool: APIが HTTP 200 を返せば True、
-            それ以外のステータスコードや通信エラー（タイムアウト・接続失敗など）は False。
-    """
+    """APIのヘルスチェックを行う。"""
     try:
         response = requests.get(f"{API_BASE_URL}/health", timeout=3)
         return response.status_code == 200
@@ -111,23 +108,25 @@ def check_api_health() -> bool:
         return False
 
 
-def send_message(message: str, conversation_history: list) -> tuple[str, list]:
-    """チャットメッセージをAPIに送信し、Agentの応答を返す。
-
-    conversation_historyを毎回送ることで、APIがステートレスでも文脈を保てる。
+def send_message(
+    message: str,
+    conversation_history: list,
+) -> tuple[str, list]:
+    """チャットメッセージをAPIに送信する。
 
     Args:
         message: ユーザーの入力テキスト。
-        conversation_history: これまでの会話履歴（OpenAI形式のrole/contentリスト）。
+        conversation_history: これまでの会話履歴。
 
     Returns:
-        tuple: (応答テキスト, tool_resultsリスト)。
-               通信失敗時はエラーメッセージと空リストを返す。
+        (応答テキスト, tool_resultsリスト)。
+        通信失敗時はエラーメッセージと空リストを返す。
     """
     try:
         response = requests.post(
             f"{API_BASE_URL}/chat",
             json={
+                "user_id": DEMO_USER_ID,
                 "message": message,
                 "conversation_history": conversation_history,
             },
@@ -143,10 +142,9 @@ def send_message(message: str, conversation_history: list) -> tuple[str, list]:
 
 
 def main():
-    """Streamlitアプリのエントリーポイント。画面描画とイベント処理を担う。"""
+    """Streamlitアプリのエントリーポイント。"""
     st.title("家計簿AIエージェント")
 
-    # --- サイドバー：API接続状態 + 履歴テーブル ---
     with st.sidebar:
         st.header("システム状態")
         if check_api_health():
@@ -157,33 +155,31 @@ def main():
         st.divider()
         st.header("取引履歴")
 
-        # 表示件数をユーザーが変更できるようにする
-        limit = st.slider("表示件数", min_value=5, max_value=50, value=20, step=5)
+        limit = st.slider(
+            "表示件数", min_value=5, max_value=50, value=20, step=5,
+        )
 
         transactions = fetch_transactions(limit=limit)
         if transactions:
-            df = pd.DataFrame(transactions)[list(TRANSACTION_COLUMNS.keys())]
+            df = pd.DataFrame(transactions)[
+                list(TRANSACTION_COLUMNS.keys())
+            ]
             df.columns = list(TRANSACTION_COLUMNS.values())
-            # use_container_width=Trueでサイドバーの幅に合わせて表示する
             st.dataframe(df, use_container_width=True, hide_index=True)
         else:
             st.caption("取引履歴がありません")
 
-    # --- 会話履歴の初期化 ---
-    # st.session_stateはStreamlitの再描画をまたいで値を保持する仕組み
-    # ページを再読み込みするまで会話履歴が消えない
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "conversation_history" not in st.session_state:
         st.session_state.conversation_history = []
 
-    # --- カテゴリ別グラフ（折りたたみ式） ---
-    current_month = datetime.now().strftime("%Y-%m")
     with st.expander("カテゴリ別支出グラフ", expanded=False):
         col1, col2, col3 = st.columns(3)
         with col1:
-            # date_inputはdatetime.date型を返すので"%Y-%m"形式に変換する
-            selected_date = st.date_input("対象月", value=datetime.now())
+            selected_date = st.date_input(
+                "対象月", value=datetime.now(),
+            )
             year_month = selected_date.strftime("%Y-%m")
         with col2:
             type_label = st.selectbox("種別", ["支出", "収入"])
@@ -197,7 +193,10 @@ def main():
             person=person,
         )
         if summary is None:
-            st.error("データの取得に失敗しました。APIの接続を確認してください。")
+            st.error(
+                "データの取得に失敗しました。"
+                "APIの接続を確認してください。"
+            )
         elif len(summary) == 0:
             st.caption("該当するデータがありません")
         else:
@@ -207,26 +206,22 @@ def main():
                 df_summary,
                 x="カテゴリ",
                 y="合計金額",
-                text="合計金額",  # 棒グラフの上に金額を表示する
+                text="合計金額",
             )
             fig.update_layout(
-                xaxis_tickangle=-45,  # ラベルを45度傾ける
-                margin=dict(b=80),    # 傾けた分だけ下部の余白を確保する
+                xaxis_tickangle=-45,
+                margin=dict(b=80),
             )
             fig.update_traces(
-                texttemplate="¥%{text:,}",  # 金額をカンマ区切りで表示する
-                textposition="outside",      # 棒の外側（上）に表示する
+                texttemplate="¥%{text:,}",
+                textposition="outside",
             )
             st.plotly_chart(fig, use_container_width=True)
 
-    # --- 会話履歴の表示 ---
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # --- ダウンロードボタン ---
-    # Agentがexport_fileツールを実行した場合、応答テキストにファイル名が含まれる
-    # session_stateにファイル名を保存しておき、ダウンロードボタンを表示する
     if "last_export_filename" in st.session_state:
         filename = st.session_state.last_export_filename
         file_content = download_export(filename)
@@ -235,17 +230,21 @@ def main():
                 label=f"📥 {filename} をダウンロード",
                 data=file_content,
                 file_name=filename,
-                mime="text/csv" if filename.endswith(".csv") else "text/plain",
+                mime=(
+                    "text/csv"
+                    if filename.endswith(".csv")
+                    else "text/plain"
+                ),
             )
 
-    # --- チャット入力 ---
-    # キャプションで操作方法を明示する
     st.caption("Enter で送信　／　Shift + Enter で改行")
     if prompt := st.chat_input("メッセージを入力してください"):
 
         with st.chat_message("user"):
             st.markdown(prompt)
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.messages.append(
+            {"role": "user", "content": prompt},
+        )
 
         with st.chat_message("assistant"):
             with st.spinner("考え中..."):
@@ -255,33 +254,28 @@ def main():
                 )
             st.markdown(response)
 
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        st.session_state.messages.append(
+            {"role": "assistant", "content": response},
+        )
 
-        st.session_state.conversation_history.append({"role": "user", "content": prompt})
-        st.session_state.conversation_history.append({"role": "assistant", "content": response})
+        st.session_state.conversation_history.append(
+            {"role": "user", "content": prompt},
+        )
+        st.session_state.conversation_history.append(
+            {"role": "assistant", "content": response},
+        )
 
-        # DBを変更するツールが実行された場合、サイドバーを再描画する
-        # ファイル出力の場合はファイル名を保存してから再描画する
-        RERUN_TOOLS = {
-            "register_transaction", "delete_transaction", "update_transaction",
-            "register_fixed_expense", "deactivate_fixed_expense",
-            "apply_fixed_expenses", "set_budget",
-            "add_payment_method", "update_payment_method_linked_card",
-            "register_credit_card", "set_setting",
+        executed_tools = {
+            tr["tool"] for tr in tool_results if "tool" in tr
         }
 
-        executed_tools = {tr["tool"] for tr in tool_results if "tool" in tr}
-
         import re
-        match = re.search(r"[\w\-]+_\d{8}_\d{6}\.(csv|txt)", response)
+        match = re.search(
+            r"[\w\-]+_\d{8}_\d{6}\.(csv|txt)", response,
+        )
         if match:
             st.session_state.last_export_filename = match.group()
 
-        # DB更新の有無を命名規則で判定する
-        # 参照系ツールは get_ または check_ で始まる
-        # 更新系ツールは register_, set_, apply_, delete_,
-        #   update_, add_, deactivate_, export_ で始まる
-        # 新しいツール追加時もこの規則に従うこと
         should_rerun = any(
             not tool.startswith(("get_", "check_"))
             for tool in executed_tools

@@ -1,13 +1,26 @@
 services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: kakeibo
+      POSTGRES_PASSWORD: kakeibo_dev
+      POSTGRES_DB: kakeibo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   api:
     build: ./api
     ports:
       - "8000:8000"
     volumes:
       - ./api:/app/api
-      - ./data://app/data
     env_file:
       - .env
+    depends_on:
+      - db
     restart: unless-stopped
 
   ui:
@@ -29,3 +42,6 @@ services:
     volumes:
       - ./mlflow/data:/mlflow
     restart: unless-stopped
+
+volumes:
+  postgres_data:
