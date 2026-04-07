@@ -265,13 +265,16 @@ def download_csv(
         ])
 
     output.seek(0)
+    from urllib.parse import quote
     filename = f"家計簿_{year_month}.csv"
 
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
         headers={
-            "Content-Disposition": f"attachment; filename={filename}",
+            "Content-Disposition": (
+                f"attachment; filename*=UTF-8''{quote(filename)}"
+            ),
         },
     )
 
@@ -328,12 +331,15 @@ def download_txt(
                 f"¥{tx['amount']:,}\n"
             )
 
+    from urllib.parse import quote
     filename = f"家計簿_{year_month}.txt"
 
     return StreamingResponse(
         iter([text]),
         media_type="text/plain; charset=utf-8",
         headers={
-            "Content-Disposition": f"attachment; filename={filename}",
+            "Content-Disposition": (
+                f"attachment; filename*=UTF-8''{quote(filename)}"
+            ),
         },
     )
