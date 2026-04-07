@@ -30,7 +30,6 @@
             color: #2c3e50;
         }
 
-        /* --- フィルター部分 --- */
         .filters {
             display: flex;
             gap: 8px;
@@ -49,7 +48,6 @@
             background: #fff;
         }
 
-        /* --- グラフ --- */
         .chart-container {
             background: #fff;
             border-radius: 10px;
@@ -58,7 +56,6 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        /* --- 集計サマリー --- */
         .summary-bar {
             display: flex;
             justify-content: space-between;
@@ -79,7 +76,6 @@
             font-size: 1.1rem;
         }
 
-        /* --- テーブル --- */
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -105,6 +101,7 @@
             border-radius: 10px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             overflow-x: auto;
+            margin-bottom: 16px;
         }
 
         table {
@@ -143,7 +140,37 @@
             color: #e74c3c;
         }
 
-        /* --- ローディング --- */
+        .download-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .download-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .download-btn.csv {
+            background: #27ae60;
+            color: #fff;
+        }
+
+        .download-btn.txt {
+            background: #2980b9;
+            color: #fff;
+        }
+
+        .download-btn:active {
+            opacity: 0.7;
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -166,7 +193,6 @@
 <body>
     <h1>📊 家計簿ダッシュボード</h1>
 
-    <!-- フィルター -->
     <div class="filters">
         <input type="month" id="monthSelector">
         <select id="typeSelector">
@@ -175,18 +201,15 @@
         </select>
         <select id="personSelector">
             <option value="自分">自分</option>
-            <option value="妻">妻</option>
-            <option value="共通">共通</option>
+            <option value="その他">その他</option>
         </select>
     </div>
 
-    <!-- 合計表示 -->
     <div class="summary-bar">
         <span class="label" id="summaryLabel">今月の支出合計</span>
         <span class="value" id="summaryValue">-</span>
     </div>
 
-    <!-- カテゴリ別グラフ -->
     <div class="chart-container">
         <canvas id="categoryChart"></canvas>
         <div id="chartLoading" class="loading">読み込み中...</div>
@@ -195,7 +218,15 @@
         </div>
     </div>
 
-    <!-- 取引履歴 -->
+    <div class="download-buttons">
+        <button class="download-btn csv" onclick="downloadCSV()">
+            📥 CSV ダウンロード
+        </button>
+        <button class="download-btn txt" onclick="downloadTXT()">
+            📥 TXT ダウンロード
+        </button>
+    </div>
+
     <div class="section-header">
         <h2>取引履歴</h2>
         <select id="limitSelector">
@@ -224,17 +255,16 @@
     </div>
 
     <script>
-        // --- 設定 ---
         const LIFF_ID = "{{LIFF_ID}}";
-
-        // APIのベースURL（LIFFはブラウザから直接APIにアクセスする）
-        // デプロイ後に正しいURLに更新する
         const API_BASE = window.location.origin;
 
         let currentUserId = null;
         let chartInstance = null;
 
-        // --- 初期化 ---
+        // 現在表示中のデータを保持（ダウンロード用）
+        let currentSummaryData = [];
+        let currentTransactionData = [];
+
         async function init() {
             try {
                 await liff.init({ liffId: LIFF_ID });
@@ -244,25 +274,21 @@
                     return;
                 }
 
-                // LINEユーザーIDを取得
                 const profile = await liff.getProfile();
                 const lineUserId = profile.userId;
 
-                // アプリのuser_idに変換
                 const res = await fetch(
                     `${API_BASE}/line/user_id?line_user_id=${lineUserId}`
                 );
                 const data = await res.json();
                 currentUserId = data.user_id;
 
-                // 月セレクターを今月に設定
                 const now = new Date();
                 const currentMonth = `${now.getFullYear()}-${
                     String(now.getMonth() + 1).padStart(2, "0")
                 }`;
                 document.getElementById("monthSelector").value = currentMonth;
 
-                // データを読み込む
                 await loadAll();
 
             } catch (err) {
@@ -273,7 +299,6 @@
             }
         }
 
-        // --- データ読み込み ---
         async function loadAll() {
             await Promise.all([
                 loadCategorySummary(),
@@ -308,6 +333,7 @@
                 const summary = data.summary;
 
                 chartLoading.style.display = "none";
+                currentSummaryData = summary || [];
 
                 if (!summary || summary.length === 0) {
                     chartEmpty.style.display = "block";
@@ -357,6 +383,7 @@
                 const transactions = data.transactions;
 
                 tableLoading.style.display = "none";
+                currentTransactionData = transactions || [];
 
                 if (!transactions || transactions.length === 0) {
                     tableEmpty.style.display = "block";
@@ -392,7 +419,6 @@
             }
         }
 
-        // --- グラフ描画 ---
         function renderChart(labels, values, type) {
             const ctx = document.getElementById("categoryChart")
                 .getContext("2d");
@@ -451,12 +477,102 @@
             });
         }
 
-        // --- サマリーバー更新 ---
         function updateSummaryBar(total, type) {
             const label = type === "income" ? "収入合計" : "支出合計";
             document.getElementById("summaryLabel").textContent = label;
             document.getElementById("summaryValue").textContent =
                 "¥" + total.toLocaleString();
+        }
+
+        // --- ダウンロード機能 ---
+        function downloadCSV() {
+            if (currentTransactionData.length === 0) {
+                alert("ダウンロードするデータがありません");
+                return;
+            }
+
+            const yearMonth = document.getElementById("monthSelector").value;
+            const headers = [
+                "日付", "種別", "金額", "カテゴリ",
+                "店名", "品目", "メモ", "支払方法", "名義"
+            ];
+            const rows = currentTransactionData.map(tx => [
+                tx.date,
+                tx.type === "income" ? "収入" : "支出",
+                tx.amount,
+                tx.category,
+                tx.store_name || "",
+                tx.item || "",
+                tx.memo || "",
+                tx.payment_method || "",
+                tx.person || "",
+            ]);
+
+            // BOM付きUTF-8でExcelでも文字化けしない
+            const bom = "\uFEFF";
+            const csv = bom
+                + headers.join(",") + "\n"
+                + rows.map(r =>
+                    r.map(v =>
+                        '"' + String(v).replace(/"/g, '""') + '"'
+                    ).join(",")
+                ).join("\n");
+
+            downloadFile(csv, `家計簿_${yearMonth}.csv`, "text/csv");
+        }
+
+        function downloadTXT() {
+            if (currentTransactionData.length === 0
+                && currentSummaryData.length === 0) {
+                alert("ダウンロードするデータがありません");
+                return;
+            }
+
+            const yearMonth = document.getElementById("monthSelector").value;
+            const type = document.getElementById("typeSelector").value;
+            const typeLabel = type === "income" ? "収入" : "支出";
+
+            let text = `家計簿レポート（${yearMonth}）\n`;
+            text += "=".repeat(40) + "\n\n";
+
+            if (currentSummaryData.length > 0) {
+                text += `【カテゴリ別${typeLabel}】\n`;
+                text += "-".repeat(30) + "\n";
+                let total = 0;
+                for (const s of currentSummaryData) {
+                    const amount = `¥${s.total.toLocaleString()}`;
+                    text += `${s.category}: ${amount}（${s.count}件）\n`;
+                    total += s.total;
+                }
+                text += "-".repeat(30) + "\n";
+                text += `合計: ¥${total.toLocaleString()}\n\n`;
+            }
+
+            if (currentTransactionData.length > 0) {
+                text += "【取引明細】\n";
+                text += "-".repeat(30) + "\n";
+                for (const tx of currentTransactionData) {
+                    const typeStr = tx.type === "income" ? "収入" : "支出";
+                    const store = tx.store_name ? ` ${tx.store_name}` : "";
+                    text += `${tx.date} [${typeStr}] `
+                        + `${tx.category}${store} `
+                        + `¥${tx.amount.toLocaleString()}\n`;
+                }
+            }
+
+            downloadFile(text, `家計簿_${yearMonth}.txt`, "text/plain");
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         // --- イベントリスナー ---
@@ -469,7 +585,6 @@
         document.getElementById("limitSelector")
             .addEventListener("change", loadTransactions);
 
-        // --- 起動 ---
         init();
     </script>
 </body>

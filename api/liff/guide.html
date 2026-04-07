@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家計簿AI 使い方ガイド</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+                         "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            text-align: center;
+            padding: 16px 0;
+            color: #2c3e50;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-top: 24px;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        h3 {
+            font-size: 0.95rem;
+            color: #555;
+            margin-top: 16px;
+            margin-bottom: 4px;
+        }
+
+        p {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        ul {
+            padding-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        li {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .example {
+            background: #fff;
+            border-left: 3px solid #3498db;
+            padding: 8px 12px;
+            margin: 8px 0 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .example span {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .note {
+            background: #fff9e6;
+            border-left: 3px solid #f1c40f;
+            padding: 8px 12px;
+            margin: 8px 0 12px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.85rem;
+        }
+
+        .section {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .category-tag {
+            background: #ecf0f1;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>📖 家計簿AI 使い方ガイド</h1>
+
+    <div class="section">
+        <h2>💬 入出金の記録</h2>
+        <p>チャットで話しかけるだけで入出金を記録できます。
+           日付・カテゴリ・支払方法は自動で判定されます。</p>
+
+        <h3>支出の登録</h3>
+        <div class="example">
+            <span>「コンビニで300円」</span>
+            <span>「スタバでコーヒー450円、クレカで」</span>
+            <span>「昨日ドラッグストアでシャンプー買った。800円」</span>
+        </div>
+
+        <h3>収入の登録</h3>
+        <div class="example">
+            <span>「今月の給料25万円」</span>
+            <span>「メルカリで5000円の臨時収入」</span>
+        </div>
+
+        <h3>取引の修正・削除</h3>
+        <p>登録した取引の金額やカテゴリを後から修正できます。
+           削除する場合は候補を表示して確認してから実行します。</p>
+        <div class="example">
+            <span>「さっきの取引、金額500円に直して」</span>
+            <span>「昨日のスタバの取引を削除して」</span>
+        </div>
+
+        <h3>支出カテゴリ</h3>
+        <div class="category-list">
+            <span class="category-tag">食費</span>
+            <span class="category-tag">光熱費</span>
+            <span class="category-tag">交通費</span>
+            <span class="category-tag">日用品</span>
+            <span class="category-tag">交際費</span>
+            <span class="category-tag">サブスク</span>
+            <span class="category-tag">医療費</span>
+            <span class="category-tag">衣服</span>
+            <span class="category-tag">娯楽</span>
+            <span class="category-tag">教育</span>
+            <span class="category-tag">家賃/住居</span>
+            <span class="category-tag">保険</span>
+            <span class="category-tag">その他</span>
+        </div>
+
+        <h3>収入カテゴリ</h3>
+        <div class="category-list">
+            <span class="category-tag">給与</span>
+            <span class="category-tag">賞与</span>
+            <span class="category-tag">副業/フリーランス</span>
+            <span class="category-tag">金融資産</span>
+            <span class="category-tag">ギャンブル</span>
+            <span class="category-tag">臨時収入</span>
+            <span class="category-tag">その他</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📊 集計・分析</h2>
+        <p>さまざまな切り口で支出・収入を確認できます。</p>
+
+        <h3>月次集計</h3>
+        <div class="example">
+            <span>「今月いくら使った？」</span>
+            <span>「今月の収支は？」</span>
+        </div>
+
+        <h3>カテゴリ別集計</h3>
+        <div class="example">
+            <span>「今月の食費はいくら？」</span>
+            <span>「何に一番使ってる？」</span>
+        </div>
+
+        <h3>月の比較</h3>
+        <div class="example">
+            <span>「先月と比べてどう？」</span>
+            <span>「去年の4月と比べて」</span>
+        </div>
+
+        <h3>店別・品目別集計</h3>
+        <div class="example">
+            <span>「セブンイレブンでいくら使った？」</span>
+            <span>「コーヒーにいくら使ってる？」</span>
+        </div>
+
+        <h3>支払方法別集計</h3>
+        <div class="example">
+            <span>「クレカでいくら使った？」</span>
+            <span>「支払方法別の支出は？」</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>💰 予算管理</h2>
+        <p>カテゴリごとに月額予算を設定できます。
+           予算に近づくと警告、超過すると通知が自動で表示されます。</p>
+
+        <div class="example">
+            <span>「食費の予算を3万円に設定して」</span>
+            <span>「交際費の予算を1万5千円、残り5千円で警告して」</span>
+            <span>「今の予算を確認して」</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔄 固定出金</h2>
+        <p>毎月決まった金額の支出（家賃、サブスク等）を登録しておくと、
+           毎月自動で取引に反映できます。</p>
+
+        <div class="example">
+            <span>「家賃8万円を毎月27日で登録して」</span>
+            <span>「固定出金を確認して」</span>
+            <span>「今月の固定出金を計上して」</span>
+            <span>「Netflixの固定出金を止めて」</span>
+        </div>
+
+        <div class="note">
+            口座振替の場合、土日祝は翌営業日に自動調整されます。
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>💳 支払方法・カード管理</h2>
+        <p>支払方法の一覧確認、新しい支払方法の追加、
+           クレジットカードの登録ができます。</p>
+
+        <div class="example">
+            <span>「支払方法の一覧を見せて」</span>
+            <span>「JCBカードを登録して」</span>
+            <span>「QUICPayの決済元をJCBに設定して」</span>
+            <span>「デフォルトの支払方法を現金にして」</span>
+        </div>
+
+        <h3>初期登録されている支払方法</h3>
+        <div class="category-list">
+            <span class="category-tag">現金</span>
+            <span class="category-tag">口座振替</span>
+            <span class="category-tag">クレジットカード</span>
+            <span class="category-tag">QUICPay</span>
+            <span class="category-tag">PayPay</span>
+            <span class="category-tag">Suica</span>
+            <span class="category-tag">PASMO</span>
+            <span class="category-tag">Amazon Pay</span>
+            <span class="category-tag">楽天ペイ</span>
+            <span class="category-tag">メルペイ</span>
+            <span class="category-tag">PayPal</span>
+            <span class="category-tag">その他</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📥 ファイル出力</h2>
+        <p>チャットからのファイル出力と、ダッシュボードからの
+           ダウンロードの2つの方法があります。</p>
+
+        <h3>チャットから出力</h3>
+        <div class="example">
+            <span>「今月の支出をCSVで出力して」</span>
+            <span>「今月のレポートをテキストで出力して」</span>
+        </div>
+
+        <h3>ダッシュボードからダウンロード</h3>
+        <p>リッチメニューの「ダッシュボード」を開き、
+           CSV / TXT ダウンロードボタンから取得できます。
+           表示中の月のデータがダウンロードされます。</p>
+    </div>
+
+    <div class="section">
+        <h2>📊 ダッシュボード</h2>
+        <p>リッチメニューからワンタップでアクセスできます。</p>
+        <ul>
+            <li>カテゴリ別の支出・収入グラフ</li>
+            <li>取引履歴テーブル</li>
+            <li>月・種別・名義の切り替え</li>
+            <li>CSV・TXTファイルのダウンロード</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>⏱ セッションについて</h2>
+        <p>10分間メッセージを送らないと、会話がリセットされます。
+           リセット後に最初のメッセージを送ると、
+           その旨が通知されます。</p>
+        <div class="note">
+            トーク画面に過去のメッセージが残っていても、
+            リセット後はそれらの内容を参照できません。
+            取引の削除や修正など、複数回のやり取りが必要な操作は
+            間を空けずに行ってください。
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>💡 Tips</h2>
+        <ul>
+            <li>日付を省略すると今日の日付で登録されます</li>
+            <li>支払方法を省略するとデフォルトの支払方法が使われます</li>
+            <li>カテゴリは自動で判定されますが、
+                「食費で」のように明示もできます</li>
+            <li>「取引を見せて」で最近の取引一覧を確認できます</li>
+        </ul>
+    </div>
+</body>
+</html>

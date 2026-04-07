@@ -206,3 +206,18 @@ def liff_dashboard():
 
     html_content = html_content.replace("{{LIFF_ID}}", liff_id)
     return HTMLResponse(content=html_content)
+
+
+@app.get("/liff/guide", response_class=HTMLResponse)
+def liff_guide():
+    """使い方ガイドのHTMLを返す。
+
+    LINEリッチメニューからアクセスする説明書ページ。
+    認証不要で誰でも閲覧できる。
+    """
+    html_path = os.path.join(
+        os.path.dirname(__file__), "liff", "guide.html",
+    )
+    with open(html_path, encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+    
