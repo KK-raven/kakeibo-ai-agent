@@ -220,4 +220,120 @@ def liff_guide():
     )
     with open(html_path, encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
-    
+
+
+@app.get("/download/csv")
+def download_csv(
+    user_id: int,
+    year_month: str,
+    person: str = "自分",
+):
+    """取引データをCSVファイルとして返す。
+
+    LIFFダッシュボードのダウンロードボタンから呼ばれる。
+    """
+    from io import StringIO
+    import csv
+    from fastapi.responses import StreamingResponse
+    from api.db.crud import get_transactions
+
+    transactions = get_transactions(
+        user_id=user_id,
+        year_month=year_month,
+        person=person,
+    )
+
+    output = StringIO()
+    # BOM付きUTF-8でExcelでも文字化けしない
+    output.write("\ufeff")
+    writer = csv.writer(output)
+    writer.writerow([
+        "日付", "種別", "金額", "カテゴリ",
+        "店名", "品目", "メモ", "支払方法", "名義",
+    ])
+    for tx in transactions:
+        writer.writerow([
+            tx["date"],
+            "収入" if tx["type"] == "income" else "支出",
+            tx["amount"],
+            tx["category"],
+            tx.get("store_name", ""),
+            tx.get("item", ""),
+            tx.get("memo", ""),
+            tx.get("payment_method", ""),
+            tx.get("person", ""),
+        ])
+
+    output.seek(0)
+    filename = f"家計簿_{year_month}.csv"
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+        },
+    )
+
+
+@app.get("/download/txt")
+def download_txt(
+    user_id: int,
+    year_month: str,
+    type: str = "expense",
+    person: str = "自分",
+):
+    """集計レポートをTXTファイルとして返す。
+
+    LIFFダッシュボードのダウンロードボタンから呼ばれる。
+    """
+    from fastapi.responses import StreamingResponse
+    from api.db.crud import get_category_summary, get_transactions
+
+    summary = get_category_summary(
+        user_id=user_id,
+        year_month=year_month,
+        type=type,
+        person=person,
+    )
+    transactions = get_transactions(
+        user_id=user_id,
+        year_month=year_month,
+        person=person,
+    )
+
+    type_label = "収入" if type == "income" else "支出"
+    text = f"家計簿レポート（{year_month}）\n"
+    text += "=" * 40 + "\n\n"
+
+    if summary:
+        text += f"【カテゴリ別{type_label}】\n"
+        text += "-" * 30 + "\n"
+        total = 0
+        for s in summary:
+            text += f"{s['category']}: ¥{s['total']:,}（{s['count']}件）\n"
+            total += s["total"]
+        text += "-" * 30 + "\n"
+        text += f"合計: ¥{total:,}\n\n"
+
+    if transactions:
+        text += "【取引明細】\n"
+        text += "-" * 30 + "\n"
+        for tx in transactions:
+            type_str = "収入" if tx["type"] == "income" else "支出"
+            store = f" {tx['store_name']}" if tx.get("store_name") else ""
+            text += (
+                f"{tx['date']} [{type_str}] "
+                f"{tx['category']}{store} "
+                f"¥{tx['amount']:,}\n"
+            )
+
+    filename = f"家計簿_{year_month}.txt"
+
+    return StreamingResponse(
+        iter([text]),
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+        },
+    )

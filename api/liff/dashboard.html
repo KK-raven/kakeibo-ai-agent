@@ -490,35 +490,14 @@
                 alert("ダウンロードするデータがありません");
                 return;
             }
-
             const yearMonth = document.getElementById("monthSelector").value;
-            const headers = [
-                "日付", "種別", "金額", "カテゴリ",
-                "店名", "品目", "メモ", "支払方法", "名義"
-            ];
-            const rows = currentTransactionData.map(tx => [
-                tx.date,
-                tx.type === "income" ? "収入" : "支出",
-                tx.amount,
-                tx.category,
-                tx.store_name || "",
-                tx.item || "",
-                tx.memo || "",
-                tx.payment_method || "",
-                tx.person || "",
-            ]);
-
-            // BOM付きUTF-8でExcelでも文字化けしない
-            const bom = "\uFEFF";
-            const csv = bom
-                + headers.join(",") + "\n"
-                + rows.map(r =>
-                    r.map(v =>
-                        '"' + String(v).replace(/"/g, '""') + '"'
-                    ).join(",")
-                ).join("\n");
-
-            downloadFile(csv, `家計簿_${yearMonth}.csv`, "text/csv");
+            const person = document.getElementById("personSelector").value;
+            const params = new URLSearchParams({
+                user_id: currentUserId,
+                year_month: yearMonth,
+                person: person,
+            });
+            window.location.href = `${API_BASE}/download/csv?${params}`;
         }
 
         function downloadTXT() {
@@ -527,52 +506,16 @@
                 alert("ダウンロードするデータがありません");
                 return;
             }
-
             const yearMonth = document.getElementById("monthSelector").value;
             const type = document.getElementById("typeSelector").value;
-            const typeLabel = type === "income" ? "収入" : "支出";
-
-            let text = `家計簿レポート（${yearMonth}）\n`;
-            text += "=".repeat(40) + "\n\n";
-
-            if (currentSummaryData.length > 0) {
-                text += `【カテゴリ別${typeLabel}】\n`;
-                text += "-".repeat(30) + "\n";
-                let total = 0;
-                for (const s of currentSummaryData) {
-                    const amount = `¥${s.total.toLocaleString()}`;
-                    text += `${s.category}: ${amount}（${s.count}件）\n`;
-                    total += s.total;
-                }
-                text += "-".repeat(30) + "\n";
-                text += `合計: ¥${total.toLocaleString()}\n\n`;
-            }
-
-            if (currentTransactionData.length > 0) {
-                text += "【取引明細】\n";
-                text += "-".repeat(30) + "\n";
-                for (const tx of currentTransactionData) {
-                    const typeStr = tx.type === "income" ? "収入" : "支出";
-                    const store = tx.store_name ? ` ${tx.store_name}` : "";
-                    text += `${tx.date} [${typeStr}] `
-                        + `${tx.category}${store} `
-                        + `¥${tx.amount.toLocaleString()}\n`;
-                }
-            }
-
-            downloadFile(text, `家計簿_${yearMonth}.txt`, "text/plain");
-        }
-
-        function downloadFile(content, filename, mimeType) {
-            const blob = new Blob([content], { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const person = document.getElementById("personSelector").value;
+            const params = new URLSearchParams({
+                user_id: currentUserId,
+                year_month: yearMonth,
+                type: type,
+                person: person,
+            });
+            window.location.href = `${API_BASE}/download/txt?${params}`;
         }
 
         // --- イベントリスナー ---

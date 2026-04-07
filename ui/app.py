@@ -184,7 +184,7 @@ def main():
         with col2:
             type_label = st.selectbox("種別", ["支出", "収入"])
         with col3:
-            person = st.selectbox("対象者", ["自分", "妻", "共通"])
+            person = st.selectbox("対象者", ["自分", "その他"])
         type_value = "expense" if type_label == "支出" else "income"
 
         summary = fetch_category_summary(
