@@ -497,7 +497,15 @@
                 year_month: yearMonth,
                 person: person,
             });
-            window.location.href = `${API_BASE}/download/csv?${params}`;
+            const url = `${API_BASE}/download/csv?${params}`;
+
+            // LINEアプリ内ブラウザではダウンロードが制限されるため
+            // 外部ブラウザで開く
+            if (liff.isInClient()) {
+                liff.openWindow({ url: url, external: true });
+            } else {
+                window.location.href = url;
+            }
         }
 
         function downloadTXT() {
@@ -515,7 +523,13 @@
                 type: type,
                 person: person,
             });
-            window.location.href = `${API_BASE}/download/txt?${params}`;
+            const url = `${API_BASE}/download/txt?${params}`;
+
+            if (liff.isInClient()) {
+                liff.openWindow({ url: url, external: true });
+            } else {
+                window.location.href = url;
+            }
         }
 
         // --- イベントリスナー ---
