@@ -147,7 +147,7 @@
         }
 
         td.amount.income {
-            color: #2980b9;
+            color: #27ae60;
         }
 
         td.amount.expense {
@@ -480,10 +480,10 @@
             }
 
             const barColor = type === "income"
-                ? "rgba(41, 128, 185, 0.7)"
+                ? "rgba(39, 174, 96, 0.7)"
                 : "rgba(231, 76, 60, 0.7)";
             const borderColor = type === "income"
-                ? "rgba(41, 128, 185, 1)"
+                ? "rgba(39, 174, 96, 1)"
                 : "rgba(231, 76, 60, 1)";
 
             chartInstance = new Chart(ctx, {
@@ -534,19 +534,20 @@
             const valueEl = document.getElementById("summaryValue");
 
             if (summaryMode === "net") {
+                // 収支モード：黒字は緑、赤字は赤
                 const net = currentIncomeTotal - currentExpenseTotal;
                 labelEl.textContent = "収支";
                 const sign = net >= 0 ? "+" : "";
                 valueEl.textContent = sign + net.toLocaleString() + "円";
-                // 黒字は青、赤字は赤
-                valueEl.style.color = net >= 0 ? "#2980b9" : "#e74c3c";
+                valueEl.style.color = net >= 0 ? "#27ae60" : "#e74c3c";
             } else {
+                // 合計モード：色は付けず黒で表示
                 const isIncome = type === "income";
                 const total = isIncome
                     ? currentIncomeTotal : currentExpenseTotal;
                 labelEl.textContent = isIncome ? "収入合計" : "支出合計";
                 valueEl.textContent = total.toLocaleString() + "円";
-                valueEl.style.color = isIncome ? "#2980b9" : "#e74c3c";
+                valueEl.style.color = "#333";
             }
         }
 
