@@ -218,12 +218,8 @@ def _complement_defaults(
         デフォルト値が補完された引数の辞書。
     """
     if tool_name == "register_transaction":
-        # 収入には支払方法・カード情報は不要なため除去する。
-        # LLMが自律的に「現金」等をセットする場合があるため、
-        # アーリーリターンではなく明示的に削除する。
+        # 収入には支払方法・カード情報は不要なため補完しない
         if args.get("type") == "income":
-            args.pop("payment_method", None)
-            args.pop("card_name", None)
             return args
 
         if "date" not in args or not args["date"]:

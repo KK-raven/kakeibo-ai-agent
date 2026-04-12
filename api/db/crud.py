@@ -24,7 +24,7 @@ def register_transaction(
     store_name: str | None = None,
     item: str | None = None,
     memo: str | None = None,
-    payment_method: str = "現金",
+    payment_method: str | None = None,
     card_name: str | None = None,
     person: str = "自分",
 ) -> dict:
@@ -55,6 +55,15 @@ def register_transaction(
         登録されたレコードの辞書（id を含む）。
     """
     conn = get_connection()
+
+    # 収入には支払方法の概念がないため "-" を格納する。
+    # 支出でpayment_methodが省略された場合は "現金" をデフォルトとする。
+    # （DB列はNOT NULL制約のため、Noneのまま渡せない）
+    if type == "income":
+        payment_method = "-"
+    elif payment_method is None:
+        payment_method = "現金"
+        
     try:
         cur = conn.cursor()
 
