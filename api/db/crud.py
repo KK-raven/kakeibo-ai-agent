@@ -114,16 +114,16 @@ def get_transactions(
     type: str | None = None,
     store_name: str | None = None,
     item: str | None = None,
+    payment_method: str | None = None,
+    amount: int | None = None,
 ) -> list[dict]:
     """取引一覧を取得する。条件を指定すると絞り込める。
-
     各引数が None でなければ WHERE 句に条件を追加する。
     複数指定すると AND で結合される。
-
-    store_name, item はLIKEで部分一致検索にしている。
-    ユーザーが「セブン」と略して言う場合や、
-    「雪見」だけで「雪見だいふく」を探す場合に対応するため。
-
+    store_name / item / payment_method はLIKEで部分一致検索。
+    ユーザーが「セブン」と略したり「QUICPay」で
+    「QUICPay」を含む支払方法を一括検索する場合に対応するため。
+    amount は完全一致検索。
     Args:
         user_id: ユーザーID。
         year_month: "YYYY-MM" 形式（例: "2025-04"）。
@@ -132,17 +132,16 @@ def get_transactions(
         type: "income" or "expense" で絞り込み。
         store_name: 店名で部分一致検索。
         item: 品目で部分一致検索。
-
+        payment_method: 支払方法で完全一致検索。
+        amount: 金額で完全一致検索。
     Returns:
         該当レコードのリスト（辞書のリスト）。日付降順。
     """
     conn = get_connection()
     try:
         cur = conn.cursor()
-
         conditions = ["user_id = %s"]
         params = [user_id]
-
         if year_month:
             conditions.append("to_char(date, 'YYYY-MM') = %s")
             params.append(year_month)
@@ -161,9 +160,13 @@ def get_transactions(
         if item:
             conditions.append("item LIKE %s")
             params.append(f"%{item}%")
-
+        if payment_method:
+            conditions.append("payment_method = %s")
+            params.append(payment_method)
+        if amount is not None:
+            conditions.append("amount = %s")
+            params.append(amount)
         where_clause = "WHERE " + " AND ".join(conditions)
-
         cur.execute(
             f"""
             SELECT * FROM transactions
@@ -173,7 +176,6 @@ def get_transactions(
             params,
         )
         return [dict(row) for row in cur.fetchall()]
-
     except Exception:
         conn.rollback()
         raise

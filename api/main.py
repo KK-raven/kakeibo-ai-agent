@@ -86,31 +86,33 @@ def get_transactions_endpoint(
     year_month: str | None = None,
     category: str | None = None,
     type: str | None = None,
+    payment_method: str | None = None,
+    amount: int | None = None,
     limit: int = 20,
     user_id: int | None = None,
 ):
     """取引履歴取得エンドポイント。
-
     Streamlitのサイドバー表示など、チャットを経由しないデータ取得に使う。
     user_id省略時はデモユーザーのデータを返す。
-
     Args:
         year_month: "YYYY-MM" 形式で月絞り込み。
         category: カテゴリ名で絞り込み。
         type: "income" or "expense" で絞り込み。
+        payment_method: 支払方法で完全一致検索。
+        amount: 金額で完全一致検索。
         limit: 取得件数の上限。デフォルト20件。
         user_id: ユーザーID。省略時はデモユーザー。
     """
     from api.db.crud import get_transactions
-
     uid = user_id if user_id is not None else get_demo_user_id()
     transactions = get_transactions(
         user_id=uid,
         year_month=year_month,
         category=category,
         type=type,
+        payment_method=payment_method,
+        amount=amount,
     )
-    return {"transactions": transactions[:limit]}
 
 
 @app.get("/category_summary")
