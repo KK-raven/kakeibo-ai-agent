@@ -63,7 +63,7 @@ def register_transaction(
         payment_method = "-"
     elif payment_method is None:
         payment_method = "現金"
-        
+
     try:
         cur = conn.cursor()
 
@@ -125,14 +125,21 @@ def get_transactions(
     item: str | None = None,
     payment_method: str | None = None,
     amount: int | None = None,
+    start_month: str | None = None,
+    end_month: str | None = None,
 ) -> list[dict]:
     """取引一覧を取得する。条件を指定すると絞り込める。
+
     各引数が None でなければ WHERE 句に条件を追加する。
     複数指定すると AND で結合される。
-    store_name / item / payment_method はLIKEで部分一致検索。
-    ユーザーが「セブン」と略したり「QUICPay」で
-    「QUICPay」を含む支払方法を一括検索する場合に対応するため。
+    year_month と start_month/end_month はどちらか一方を指定する。
+    両方指定された場合は start_month/end_month を優先する。
+    store_name / item はLIKEで部分一致検索。
+    ユーザーが「セブン」と略して言う場合や、
+    「雪見」だけで「雪見だいふく」を探す場合に対応するため。
+    payment_method は完全一致検索。
     amount は完全一致検索。
+
     Args:
         user_id: ユーザーID。
         year_month: "YYYY-MM" 形式（例: "2025-04"）。
@@ -143,6 +150,9 @@ def get_transactions(
         item: 品目で部分一致検索。
         payment_method: 支払方法で完全一致検索。
         amount: 金額で完全一致検索。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+
     Returns:
         該当レコードのリスト（辞書のリスト）。日付降順。
     """
@@ -151,9 +161,15 @@ def get_transactions(
         cur = conn.cursor()
         conditions = ["user_id = %s"]
         params = [user_id]
-        if year_month:
+
+        if start_month and end_month:
+            conditions.append("to_char(date, 'YYYY-MM') >= %s")
+            conditions.append("to_char(date, 'YYYY-MM') <= %s")
+            params.extend([start_month, end_month])
+        elif year_month:
             conditions.append("to_char(date, 'YYYY-MM') = %s")
             params.append(year_month)
+
         if category:
             conditions.append("category = %s")
             params.append(category)
@@ -175,6 +191,7 @@ def get_transactions(
         if amount is not None:
             conditions.append("amount = %s")
             params.append(amount)
+
         where_clause = "WHERE " + " AND ".join(conditions)
         cur.execute(
             f"""
@@ -1082,17 +1099,25 @@ def get_monthly_summary(
 
 def get_category_summary(
     user_id: int,
-    year_month: str,
+    year_month: str | None = None,
     type: str = "expense",
     person: str = "自分",
+    start_month: str | None = None,
+    end_month: str | None = None,
 ) -> list[dict]:
     """カテゴリ別の集計を返す。金額が大きい順。
 
+    year_month と start_month/end_month はどちらか一方を指定する。
+    両方指定された場合は start_month/end_month を優先する。
+    どちらも指定しない場合は全期間を集計する。
+
     Args:
         user_id: ユーザーID。
-        year_month: "YYYY-MM" 形式。
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
         type: "expense" or "income"。
         person: 誰の集計か。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
 
     Returns:
         [{"category": "食費", "total": 35000, "count": 12}, ...]
@@ -1100,30 +1125,42 @@ def get_category_summary(
     conn = get_connection()
     try:
         cur = conn.cursor()
+        conditions = [
+            "user_id = %s",
+            "type = %s",
+            "person = %s",
+        ]
+        params = [user_id, type, person]
+
+        if start_month and end_month:
+            conditions.append("to_char(date, 'YYYY-MM') >= %s")
+            conditions.append("to_char(date, 'YYYY-MM') <= %s")
+            params.extend([start_month, end_month])
+        elif year_month:
+            conditions.append("to_char(date, 'YYYY-MM') = %s")
+            params.append(year_month)
+
+        where_clause = "WHERE " + " AND ".join(conditions)
         cur.execute(
-            """
+            f"""
             SELECT
                 category,
                 SUM(amount) as total,
                 COUNT(*) as count
             FROM transactions
-            WHERE user_id = %s
-                AND to_char(date, 'YYYY-MM') = %s
-                AND type = %s
-                AND person = %s
+            {where_clause}
             GROUP BY category
             ORDER BY total DESC
             """,
-            (user_id, year_month, type, person),
+            params,
         )
         result = [dict(row) for row in cur.fetchall()]
-
         logger.info(
-            f"カテゴリ集計: {year_month} {type} {person}"
-            f" {len(result)}カテゴリ"
+            f"カテゴリ集計: "
+            f"{year_month or f'{start_month}〜{end_month}'}"
+            f" {type} {person} {len(result)}カテゴリ"
         )
         return result
-
     except Exception:
         conn.rollback()
         raise
@@ -1411,22 +1448,29 @@ def set_setting(user_id: int, key: str, value: str) -> dict:
 
 def get_store_summary(
     user_id: int,
-    year_month: str,
+    year_month: str | None = None,
     type: str = "expense",
     person: str = "自分",
     store_name: str | None = None,
+    start_month: str | None = None,
+    end_month: str | None = None,
 ) -> list[dict]:
     """店別の集計を返す。金額が大きい順。
 
     store_nameを指定すると特定店舗に絞り込める。
     指定しない場合は全店舗の集計を返す。
+    year_month と start_month/end_month はどちらか一方を指定する。
+    両方指定された場合は start_month/end_month を優先する。
+    どちらも指定しない場合は全期間を集計する。
 
     Args:
         user_id: ユーザーID。
-        year_month: "YYYY-MM" 形式。
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
         type: "expense" or "income"。
         person: 誰の集計か。
         store_name: 店名で部分一致絞り込み（省略時は全店舗）。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
 
     Returns:
         [{"store_name": "セブンイレブン", "total": 15000, "count": 8}, ...]
@@ -1434,15 +1478,21 @@ def get_store_summary(
     conn = get_connection()
     try:
         cur = conn.cursor()
-
         conditions = [
             "user_id = %s",
-            "to_char(date, 'YYYY-MM') = %s",
             "type = %s",
             "person = %s",
             "store_name IS NOT NULL",
         ]
-        params = [user_id, year_month, type, person]
+        params = [user_id, type, person]
+
+        if start_month and end_month:
+            conditions.append("to_char(date, 'YYYY-MM') >= %s")
+            conditions.append("to_char(date, 'YYYY-MM') <= %s")
+            params.extend([start_month, end_month])
+        elif year_month:
+            conditions.append("to_char(date, 'YYYY-MM') = %s")
+            params.append(year_month)
 
         if store_name:
             conditions.append("store_name LIKE %s")
@@ -1464,10 +1514,11 @@ def get_store_summary(
         )
         result = [dict(row) for row in cur.fetchall()]
         logger.info(
-            f"店別集計: {year_month} {type} {person} {len(result)}店舗"
+            f"店別集計: "
+            f"{year_month or f'{start_month}〜{end_month}'}"
+            f" {type} {person} {len(result)}店舗"
         )
         return result
-
     except Exception:
         conn.rollback()
         raise
@@ -1477,22 +1528,29 @@ def get_store_summary(
 
 def get_item_summary(
     user_id: int,
-    year_month: str,
+    year_month: str | None = None,
     type: str = "expense",
     person: str = "自分",
     item: str | None = None,
+    start_month: str | None = None,
+    end_month: str | None = None,
 ) -> list[dict]:
     """品目別の集計を返す。金額が大きい順。
 
     itemを指定すると特定品目に絞り込める。
     指定しない場合は全品目の集計を返す。
+    year_month と start_month/end_month はどちらか一方を指定する。
+    両方指定された場合は start_month/end_month を優先する。
+    どちらも指定しない場合は全期間を集計する。
 
     Args:
         user_id: ユーザーID。
-        year_month: "YYYY-MM" 形式。
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
         type: "expense" or "income"。
         person: 誰の集計か。
         item: 品目で部分一致絞り込み（省略時は全品目）。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
 
     Returns:
         [{"item": "弁当", "total": 8000, "count": 12}, ...]
@@ -1500,15 +1558,21 @@ def get_item_summary(
     conn = get_connection()
     try:
         cur = conn.cursor()
-
         conditions = [
             "user_id = %s",
-            "to_char(date, 'YYYY-MM') = %s",
             "type = %s",
             "person = %s",
             "item IS NOT NULL",
         ]
-        params = [user_id, year_month, type, person]
+        params = [user_id, type, person]
+
+        if start_month and end_month:
+            conditions.append("to_char(date, 'YYYY-MM') >= %s")
+            conditions.append("to_char(date, 'YYYY-MM') <= %s")
+            params.extend([start_month, end_month])
+        elif year_month:
+            conditions.append("to_char(date, 'YYYY-MM') = %s")
+            params.append(year_month)
 
         if item:
             conditions.append("item LIKE %s")
@@ -1530,10 +1594,139 @@ def get_item_summary(
         )
         result = [dict(row) for row in cur.fetchall()]
         logger.info(
-            f"品目別集計: {year_month} {type} {person} {len(result)}品目"
+            f"品目別集計: "
+            f"{year_month or f'{start_month}〜{end_month}'}"
+            f" {type} {person} {len(result)}品目"
         )
         return result
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        release_connection(conn)
 
+
+def get_payment_method_summary(
+    user_id: int,
+    year_month: str | None = None,
+    type: str = "expense",
+    person: str = "自分",
+    start_month: str | None = None,
+    end_month: str | None = None,
+) -> list[dict]:
+    """支払方法別の集計を返す。金額が大きい順。
+
+    year_month と start_month/end_month はどちらか一方を指定する。
+    両方指定された場合は start_month/end_month を優先する。
+    どちらも指定しない場合は全期間を集計する。
+
+    Args:
+        user_id: ユーザーID。
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
+        type: "expense" or "income"。
+        person: 誰の集計か。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+
+    Returns:
+        [{"payment_method": "現金", "total": 15000, "count": 8}, ...]
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        conditions = [
+            "user_id = %s",
+            "type = %s",
+            "person = %s",
+        ]
+        params = [user_id, type, person]
+
+        if start_month and end_month:
+            conditions.append("to_char(date, 'YYYY-MM') >= %s")
+            conditions.append("to_char(date, 'YYYY-MM') <= %s")
+            params.extend([start_month, end_month])
+        elif year_month:
+            conditions.append("to_char(date, 'YYYY-MM') = %s")
+            params.append(year_month)
+
+        where_clause = "WHERE " + " AND ".join(conditions)
+        cur.execute(
+            f"""
+            SELECT
+                payment_method,
+                SUM(amount) as total,
+                COUNT(*) as count
+            FROM transactions
+            {where_clause}
+            GROUP BY payment_method
+            ORDER BY total DESC
+            """,
+            params,
+        )
+        result = [dict(row) for row in cur.fetchall()]
+        logger.info(
+            f"支払方法別集計: "
+            f"{year_month or f'{start_month}〜{end_month}'}"
+            f" {type} {person} {len(result)}種類"
+        )
+        return result
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        release_connection(conn)
+
+
+def get_monthly_trend(
+    user_id: int,
+    start_month: str,
+    end_month: str,
+    type: str = "expense",
+    person: str = "自分",
+) -> list[dict]:
+    """月別推移を返す。カテゴリ別の積み上げと月合計を含む。
+
+    start_month〜end_monthの範囲で月ごとに集計する。
+    グラフ描画側でカテゴリを積み上げて月合計ラベルを表示するため、
+    month・category・totalの3列を返す。
+
+    Args:
+        user_id: ユーザーID。
+        start_month: 開始月 "YYYY-MM" 形式。
+        end_month: 終了月 "YYYY-MM" 形式。
+        type: "expense" or "income"。
+        person: 誰の集計か。
+
+    Returns:
+        [{"month": "2024-01", "category": "食費", "total": 38000}, ...]
+        月・カテゴリの昇順。
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT
+                to_char(date, 'YYYY-MM') as month,
+                category,
+                SUM(amount) as total
+            FROM transactions
+            WHERE user_id = %s
+                AND to_char(date, 'YYYY-MM') >= %s
+                AND to_char(date, 'YYYY-MM') <= %s
+                AND type = %s
+                AND person = %s
+            GROUP BY month, category
+            ORDER BY month ASC, total DESC
+            """,
+            (user_id, start_month, end_month, type, person),
+        )
+        result = [dict(row) for row in cur.fetchall()]
+        logger.info(
+            f"月別推移: {start_month}〜{end_month} {type} {person}"
+            f" {len(result)}件"
+        )
+        return result
     except Exception:
         conn.rollback()
         raise

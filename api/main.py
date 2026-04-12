@@ -88,18 +88,24 @@ def get_transactions_endpoint(
     type: str | None = None,
     payment_method: str | None = None,
     amount: int | None = None,
-    limit: int = 20,
+    start_month: str | None = None,
+    end_month: str | None = None,
+    limit: int = 100,
     user_id: int | None = None,
 ):
     """取引履歴取得エンドポイント。
-    Streamlitのサイドバー表示など、チャットを経由しないデータ取得に使う。
+
+    year_month と start_month/end_month はどちらか一方を指定する。
     user_id省略時はデモユーザーのデータを返す。
+
     Args:
         year_month: "YYYY-MM" 形式で月絞り込み。
         category: カテゴリ名で絞り込み。
         type: "income" or "expense" で絞り込み。
         payment_method: 支払方法で完全一致検索。
         amount: 金額で完全一致検索。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         limit: 取得件数の上限。デフォルト20件。
         user_id: ユーザーID。省略時はデモユーザー。
     """
@@ -112,38 +118,182 @@ def get_transactions_endpoint(
         type=type,
         payment_method=payment_method,
         amount=amount,
+        start_month=start_month,
+        end_month=end_month,
     )
     return {"transactions": transactions[:limit]}
 
 
 @app.get("/category_summary")
 def get_category_summary_endpoint(
-    year_month: str,
+    year_month: str | None = None,
     type: str = "expense",
     person: str = "自分",
+    start_month: str | None = None,
+    end_month: str | None = None,
     user_id: int | None = None,
 ):
     """カテゴリ別集計取得エンドポイント。
 
-    Streamlitのグラフ表示など、チャットを経由しないデータ取得に使う。
+    year_month と start_month/end_month はどちらか一方を指定する。
     user_id省略時はデモユーザーのデータを返す。
 
     Args:
-        year_month: "YYYY-MM" 形式（必須）。
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
         type: "expense" or "income"。
         person: 誰の集計か。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         user_id: ユーザーID。省略時はデモユーザー。
     """
     from api.db.crud import get_category_summary
-
     uid = user_id if user_id is not None else get_demo_user_id()
     summary = get_category_summary(
         user_id=uid,
         year_month=year_month,
         type=type,
         person=person,
+        start_month=start_month,
+        end_month=end_month,
     )
     return {"summary": summary}
+
+
+@app.get("/store_summary")
+def get_store_summary_endpoint(
+    year_month: str | None = None,
+    type: str = "expense",
+    person: str = "自分",
+    start_month: str | None = None,
+    end_month: str | None = None,
+    user_id: int | None = None,
+):
+    """店別集計取得エンドポイント。
+
+    year_month と start_month/end_month はどちらか一方を指定する。
+    user_id省略時はデモユーザーのデータを返す。
+
+    Args:
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
+        type: "expense" or "income"。
+        person: 誰の集計か。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        user_id: ユーザーID。省略時はデモユーザー。
+    """
+    from api.db.crud import get_store_summary
+    uid = user_id if user_id is not None else get_demo_user_id()
+    summary = get_store_summary(
+        user_id=uid,
+        year_month=year_month,
+        type=type,
+        person=person,
+        start_month=start_month,
+        end_month=end_month,
+    )
+    return {"summary": summary}
+
+
+@app.get("/item_summary")
+def get_item_summary_endpoint(
+    year_month: str | None = None,
+    type: str = "expense",
+    person: str = "自分",
+    start_month: str | None = None,
+    end_month: str | None = None,
+    user_id: int | None = None,
+):
+    """品目別集計取得エンドポイント。
+
+    year_month と start_month/end_month はどちらか一方を指定する。
+    user_id省略時はデモユーザーのデータを返す。
+
+    Args:
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
+        type: "expense" or "income"。
+        person: 誰の集計か。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        user_id: ユーザーID。省略時はデモユーザー。
+    """
+    from api.db.crud import get_item_summary
+    uid = user_id if user_id is not None else get_demo_user_id()
+    summary = get_item_summary(
+        user_id=uid,
+        year_month=year_month,
+        type=type,
+        person=person,
+        start_month=start_month,
+        end_month=end_month,
+    )
+    return {"summary": summary}
+
+
+@app.get("/payment_method_summary")
+def get_payment_method_summary_endpoint(
+    year_month: str | None = None,
+    type: str = "expense",
+    person: str = "自分",
+    start_month: str | None = None,
+    end_month: str | None = None,
+    user_id: int | None = None,
+):
+    """支払方法別集計取得エンドポイント。
+
+    year_month と start_month/end_month はどちらか一方を指定する。
+    user_id省略時はデモユーザーのデータを返す。
+
+    Args:
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
+        type: "expense" or "income"。
+        person: 誰の集計か。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        user_id: ユーザーID。省略時はデモユーザー。
+    """
+    from api.db.crud import get_payment_method_summary
+    uid = user_id if user_id is not None else get_demo_user_id()
+    summary = get_payment_method_summary(
+        user_id=uid,
+        year_month=year_month,
+        type=type,
+        person=person,
+        start_month=start_month,
+        end_month=end_month,
+    )
+    return {"summary": summary}
+
+
+@app.get("/monthly_trend")
+def get_monthly_trend_endpoint(
+    start_month: str,
+    end_month: str,
+    type: str = "expense",
+    person: str = "自分",
+    user_id: int | None = None,
+):
+    """月別推移取得エンドポイント。
+
+    start_month〜end_monthの範囲で月別・カテゴリ別に集計する。
+    user_id省略時はデモユーザーのデータを返す。
+
+    Args:
+        start_month: 開始月 "YYYY-MM" 形式（必須）。
+        end_month: 終了月 "YYYY-MM" 形式（必須）。
+        type: "expense" or "income"。
+        person: 誰の集計か。
+        user_id: ユーザーID。省略時はデモユーザー。
+    """
+    from api.db.crud import get_monthly_trend
+    uid = user_id if user_id is not None else get_demo_user_id()
+    trend = get_monthly_trend(
+        user_id=uid,
+        start_month=start_month,
+        end_month=end_month,
+        type=type,
+        person=person,
+    )
+    return {"trend": trend}
 
 
 @app.get("/exports/{filename}")

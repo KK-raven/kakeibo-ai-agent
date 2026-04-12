@@ -33,7 +33,7 @@
         .filters {
             display: flex;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
             flex-wrap: wrap;
         }
 
@@ -48,12 +48,49 @@
             background: #fff;
         }
 
-        .chart-container {
-            background: #fff;
-            border-radius: 10px;
-            padding: 16px;
+        .period-row {
+            display: flex;
+            gap: 8px;
             margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .period-row select {
+            flex: 1;
+            min-width: 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: #fff;
+        }
+
+        .period-custom {
+            display: none;
+            gap: 6px;
+            align-items: center;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .period-custom.visible {
+            display: flex;
+        }
+
+        .period-custom input {
+            flex: 1;
+            min-width: 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: #fff;
+        }
+
+        .period-custom span {
+            color: #888;
+            font-size: 0.9rem;
         }
 
         .summary-bar {
@@ -65,7 +102,6 @@
             margin-bottom: 16px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             font-size: 0.95rem;
-            /* タップ可能であることを示す */
             cursor: pointer;
             user-select: none;
             -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
@@ -80,7 +116,6 @@
         }
 
         .summary-bar .label::after {
-            /* タップ可能であることのヒント */
             content: " 🔄";
             font-size: 0.75rem;
         }
@@ -90,11 +125,59 @@
             font-size: 1.1rem;
         }
 
+        .chart-section {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-selector {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: #fff;
+            margin-bottom: 12px;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
+
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .section-header h2 {
@@ -102,7 +185,14 @@
             color: #2c3e50;
         }
 
-        .section-header select {
+        .section-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .section-controls select {
             padding: 4px 8px;
             border: 1px solid #ddd;
             border-radius: 6px;
@@ -139,6 +229,26 @@
             font-weight: 600;
             color: #666;
             font-size: 0.8rem;
+        }
+
+        /* ソート可能な列ヘッダー */
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            background: #eef0f2;
+        }
+
+        th.sort-asc::after {
+            content: " ▲";
+            font-size: 0.7rem;
+        }
+
+        th.sort-desc::after {
+            content: " ▼";
+            font-size: 0.7rem;
         }
 
         td.amount {
@@ -208,7 +318,6 @@
     <h1>📊 家計簿ダッシュボード</h1>
 
     <div class="filters">
-        <input type="month" id="monthSelector">
         <select id="typeSelector">
             <option value="expense">支出</option>
             <option value="income">収入</option>
@@ -219,13 +328,40 @@
         </select>
     </div>
 
+    <div class="period-row">
+        <select id="periodPreset">
+            <option value="this_month">今月</option>
+            <option value="last_month">先月</option>
+            <option value="3months">直近3ヶ月</option>
+            <option value="6months">直近6ヶ月</option>
+            <option value="12months">直近12ヶ月</option>
+            <option value="custom">期間指定</option>
+        </select>
+    </div>
+
+    <div class="period-custom" id="periodCustom">
+        <input type="month" id="startMonth">
+        <span>〜</span>
+        <input type="month" id="endMonth">
+    </div>
+
     <div class="summary-bar" id="summaryBar">
-        <span class="label" id="summaryLabel">今月の支出合計</span>
+        <span class="label" id="summaryLabel">支出合計</span>
         <span class="value" id="summaryValue">-</span>
     </div>
 
-    <div class="chart-container">
-        <canvas id="categoryChart"></canvas>
+    <div class="chart-section">
+        <select class="chart-selector" id="chartSelector">
+            <option value="category">カテゴリ別</option>
+            <option value="store">店別</option>
+            <option value="item">品目別</option>
+            <option value="payment">支払方法別</option>
+            <option value="trend">月別推移</option>
+        </select>
+        <div class="chart-legend" id="chartLegend"></div>
+        <div class="chart-container">
+            <canvas id="mainChart" role="img" aria-label="集計グラフ"></canvas>
+        </div>
         <div id="chartLoading" class="loading">読み込み中...</div>
         <div id="chartEmpty" class="empty" style="display:none;">
             データがありません
@@ -243,11 +379,15 @@
 
     <div class="section-header">
         <h2>取引履歴</h2>
-        <select id="limitSelector">
-            <option value="20">20件</option>
-            <option value="50" selected>50件</option>
-            <option value="100">100件</option>
-        </select>
+        <div class="section-controls">
+            <select id="limitSelector">
+                <option value="100" selected>100件</option>
+                <option value="200">200件</option>
+                <option value="300">300件</option>
+                <option value="500">500件</option>
+                <option value="1000">1000件</option>
+            </select>
+        </div>
     </div>
     <div class="table-container">
         <div id="tableLoading" class="loading">読み込み中...</div>
@@ -257,12 +397,12 @@
         <table id="transactionTable" style="display:none;">
             <thead>
                 <tr>
-                    <th>日付</th>
-                    <th>金額</th>
+                    <th class="sortable" data-col="date" data-type="string">日付</th>
+                    <th class="sortable" data-col="category" data-type="string">カテゴリ</th>
                     <th>品目名</th>
-                    <th>カテゴリ</th>
-                    <th>店名</th>
-                    <th>支払方法</th>
+                    <th class="sortable" data-col="amount" data-type="number">金額</th>
+                    <th class="sortable" data-col="store_name" data-type="string">店名</th>
+                    <th class="sortable" data-col="payment_method" data-type="string">支払方法</th>
                     <th>メモ</th>
                 </tr>
             </thead>
@@ -277,16 +417,76 @@
         let currentUserId = null;
         let chartInstance = null;
 
-        // 現在表示中のデータを保持（ダウンロード用）
         let currentSummaryData = [];
         let currentTransactionData = [];
 
+        // ソート状態管理。colはソート列名、dirは"asc"/"desc"。
+        let sortCol = "date";
+        let sortDir = "desc";
+
         // サマリーバーのトグル管理。
-        // 'type': 現在のtypeSelectorの合計を表示。
-        // 'net': 収支（収入合計 - 支出合計）を表示。
+        // "type": 選択中のtype合計、"net": 収支を表示。
         let summaryMode = "type";
         let currentExpenseTotal = 0;
         let currentIncomeTotal = 0;
+
+        // グラフ描画用のカラーパレット。
+        // カテゴリ数が多くても対応できるよう10色用意する。
+        const CHART_COLORS = [
+            "rgba(226,75,74,0.75)",
+            "rgba(55,138,221,0.75)",
+            "rgba(99,153,34,0.75)",
+            "rgba(186,117,23,0.75)",
+            "rgba(136,74,183,0.75)",
+            "rgba(23,162,184,0.75)",
+            "rgba(253,126,20,0.75)",
+            "rgba(32,201,151,0.75)",
+            "rgba(102,16,242,0.75)",
+            "rgba(220,53,69,0.75)",
+        ];
+        const CHART_BORDERS = CHART_COLORS.map(c => c.replace("0.75", "1"));
+
+        // --- 期間ユーティリティ ---
+
+        function getYearMonth(offsetMonths) {
+            // 現在月からoffsetMonths分ずらした "YYYY-MM" を返す。
+            // 例: offsetMonths=-1 で先月、0 で今月。
+            const d = new Date();
+            d.setMonth(d.getMonth() + offsetMonths);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        }
+
+        function getPeriodRange() {
+            // 現在のプリセット選択から {startMonth, endMonth, yearMonth} を返す。
+            // 月別推移以外のグラフでは yearMonth（単月）を使い、
+            // 月別推移と期間指定では startMonth/endMonth を使う。
+            const preset = document.getElementById("periodPreset").value;
+            const now = getYearMonth(0);
+
+            if (preset === "this_month") {
+                return { yearMonth: now, startMonth: now, endMonth: now };
+            }
+            if (preset === "last_month") {
+                const last = getYearMonth(-1);
+                return { yearMonth: last, startMonth: last, endMonth: last };
+            }
+            if (preset === "3months") {
+                return { startMonth: getYearMonth(-2), endMonth: now };
+            }
+            if (preset === "6months") {
+                return { startMonth: getYearMonth(-5), endMonth: now };
+            }
+            if (preset === "12months") {
+                return { startMonth: getYearMonth(-11), endMonth: now };
+            }
+            // custom
+            return {
+                startMonth: document.getElementById("startMonth").value,
+                endMonth: document.getElementById("endMonth").value,
+            };
+        }
+
+        // --- 初期化 ---
 
         async function init() {
             try {
@@ -306,11 +506,10 @@
                 const data = await res.json();
                 currentUserId = data.user_id;
 
-                const now = new Date();
-                const currentMonth = `${now.getFullYear()}-${
-                    String(now.getMonth() + 1).padStart(2, "0")
-                }`;
-                document.getElementById("monthSelector").value = currentMonth;
+                // カスタム期間の初期値を今月に設定
+                const now = getYearMonth(0);
+                document.getElementById("startMonth").value = now;
+                document.getElementById("endMonth").value = now;
 
                 await loadAll();
 
@@ -324,91 +523,344 @@
 
         async function loadAll() {
             await Promise.all([
-                loadCategorySummary(),
+                loadChart(),
+                loadSummaryTotals(),
                 loadTransactions(),
             ]);
         }
 
-        async function loadCategorySummary() {
-            const yearMonth = document.getElementById("monthSelector").value;
+        // --- サマリーバー ---
+
+        async function loadSummaryTotals() {
+            // 収支トグルのために収入・支出両方のtotalを取得する。
+            const { yearMonth, startMonth, endMonth } = getPeriodRange();
+            const person = document.getElementById("personSelector").value;
+
+            const buildParams = (type) => {
+                const p = new URLSearchParams({ type, person, user_id: currentUserId });
+                if (yearMonth) {
+                    p.set("year_month", yearMonth);
+                } else {
+                    p.set("start_month", startMonth);
+                    p.set("end_month", endMonth);
+                }
+                return p;
+            };
+
+            try {
+                const [expRes, incRes] = await Promise.all([
+                    fetch(`${API_BASE}/category_summary?${buildParams("expense")}`),
+                    fetch(`${API_BASE}/category_summary?${buildParams("income")}`),
+                ]);
+                const expData = await expRes.json();
+                const incData = await incRes.json();
+
+                currentExpenseTotal = (expData.summary || [])
+                    .reduce((acc, s) => acc + s.total, 0);
+                currentIncomeTotal = (incData.summary || [])
+                    .reduce((acc, s) => acc + s.total, 0);
+
+                const type = document.getElementById("typeSelector").value;
+                updateSummaryBar(type);
+
+            } catch (err) {
+                console.error("サマリー取得エラー:", err);
+            }
+        }
+
+        function updateSummaryBar(type) {
+            const labelEl = document.getElementById("summaryLabel");
+            const valueEl = document.getElementById("summaryValue");
+
+            if (summaryMode === "net") {
+                const net = currentIncomeTotal - currentExpenseTotal;
+                labelEl.textContent = "収支";
+                const sign = net >= 0 ? "+" : "";
+                valueEl.textContent = sign + net.toLocaleString() + "円";
+                valueEl.style.color = net >= 0 ? "#27ae60" : "#e74c3c";
+            } else {
+                const isIncome = type === "income";
+                const total = isIncome ? currentIncomeTotal : currentExpenseTotal;
+                labelEl.textContent = isIncome ? "収入合計" : "支出合計";
+                valueEl.textContent = total.toLocaleString() + "円";
+                valueEl.style.color = "#333";
+            }
+        }
+
+        document.getElementById("summaryBar").addEventListener("click", () => {
+            summaryMode = summaryMode === "type" ? "net" : "type";
+            const type = document.getElementById("typeSelector").value;
+            updateSummaryBar(type);
+        });
+
+        // --- グラフ ---
+
+        async function loadChart() {
+            const chartType = document.getElementById("chartSelector").value;
             const type = document.getElementById("typeSelector").value;
             const person = document.getElementById("personSelector").value;
+            const { yearMonth, startMonth, endMonth } = getPeriodRange();
 
             const chartLoading = document.getElementById("chartLoading");
             const chartEmpty = document.getElementById("chartEmpty");
-            const canvas = document.getElementById("categoryChart");
+            const canvas = document.getElementById("mainChart");
 
             chartLoading.style.display = "block";
             chartEmpty.style.display = "none";
             canvas.style.display = "none";
+            document.getElementById("chartLegend").innerHTML = "";
+
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
 
             try {
-                // グラフ用（選択中のtype）と収支計算用（逆のtype）を並行取得。
-                // 収支 = 収入合計 - 支出合計 の計算に両方のtotalが必要。
-                const otherType = type === "expense" ? "income" : "expense";
-                const [mainRes, otherRes] = await Promise.all([
-                    fetch(`${API_BASE}/category_summary?${new URLSearchParams({
-                        year_month: yearMonth,
-                        type: type,
-                        person: person,
-                        user_id: currentUserId,
-                    })}`),
-                    fetch(`${API_BASE}/category_summary?${new URLSearchParams({
-                        year_month: yearMonth,
-                        type: otherType,
-                        person: person,
-                        user_id: currentUserId,
-                    })}`),
-                ]);
-
-                const mainData = await mainRes.json();
-                const otherData = await otherRes.json();
-
-                const mainSummary = mainData.summary || [];
-                const otherSummary = otherData.summary || [];
-
-                const mainTotal = mainSummary.reduce(
-                    (acc, s) => acc + s.total, 0
-                );
-                const otherTotal = otherSummary.reduce(
-                    (acc, s) => acc + s.total, 0
-                );
-
-                // expense/incomeどちらが選ばれているかに関わらず
-                // 常に両方のtotalを最新状態に保つ。
-                if (type === "expense") {
-                    currentExpenseTotal = mainTotal;
-                    currentIncomeTotal = otherTotal;
+                if (chartType === "trend") {
+                    // 月別推移は常に期間指定。単月の場合も startMonth/endMonth を使う。
+                    const sm = startMonth || yearMonth;
+                    const em = endMonth || yearMonth;
+                    await loadTrendChart(type, person, sm, em);
                 } else {
-                    currentIncomeTotal = mainTotal;
-                    currentExpenseTotal = otherTotal;
+                    await loadSummaryChart(chartType, type, person, yearMonth, startMonth, endMonth);
                 }
-
                 chartLoading.style.display = "none";
-                currentSummaryData = mainSummary;
-
-                if (mainSummary.length === 0) {
-                    chartEmpty.style.display = "block";
-                } else {
-                    canvas.style.display = "block";
-                    renderChart(
-                        mainSummary.map(s => s.category),
-                        mainSummary.map(s => s.total),
-                        type,
-                    );
-                }
-
-                updateSummaryBar(type);
-
             } catch (err) {
-                console.error("集計取得エラー:", err);
+                console.error("グラフ取得エラー:", err);
                 chartLoading.innerHTML =
                     '<span class="error">データの取得に失敗しました</span>';
             }
         }
 
+        async function loadSummaryChart(chartType, type, person, yearMonth, startMonth, endMonth) {
+            // カテゴリ・店・品目・支払方法別の横棒グラフを描画する。
+            const endpointMap = {
+                category: "category_summary",
+                store: "store_summary",
+                item: "item_summary",
+                payment: "payment_method_summary",
+            };
+            const labelKeyMap = {
+                category: "category",
+                store: "store_name",
+                item: "item",
+                payment: "payment_method",
+            };
+
+            const endpoint = endpointMap[chartType];
+            const labelKey = labelKeyMap[chartType];
+
+            const params = new URLSearchParams({ type, person, user_id: currentUserId });
+            if (yearMonth) {
+                params.set("year_month", yearMonth);
+            } else {
+                params.set("start_month", startMonth);
+                params.set("end_month", endMonth);
+            }
+
+            const res = await fetch(`${API_BASE}/${endpoint}?${params}`);
+            const data = await res.json();
+            const summary = data.summary || [];
+
+            currentSummaryData = summary;
+
+            const canvas = document.getElementById("mainChart");
+            const chartEmpty = document.getElementById("chartEmpty");
+
+            if (summary.length === 0) {
+                chartEmpty.style.display = "block";
+                return;
+            }
+
+            canvas.style.display = "block";
+
+            const labels = summary.map(s => s[labelKey] || "不明");
+            const values = summary.map(s => s.total);
+
+            // 横棒グラフ。ラベルが多くなる店別・品目別でも
+            // 縦に並ぶため視認性を保てる。
+            const barColor = type === "income"
+                ? "rgba(39,174,96,0.75)" : "rgba(226,75,74,0.75)";
+            const borderColor = type === "income"
+                ? "rgba(39,174,96,1)" : "rgba(226,75,74,1)";
+
+            // 件数に応じてcanvasの高さを動的に調整する。
+            // 1件あたり36px + 上下の余白80pxを確保する。
+            const wrapperHeight = Math.max(200, labels.length * 36 + 80);
+            canvas.parentElement.style.height = wrapperHeight + "px";
+
+            const ctx = canvas.getContext("2d");
+            chartInstance = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: barColor,
+                        borderColor: borderColor,
+                        borderWidth: 1,
+                    }],
+                },
+                options: {
+                    indexAxis: "y",
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx =>
+                                    ctx.parsed.x.toLocaleString() + "円",
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: v => (v / 10000) + "万",
+                                font: { size: 11 },
+                            },
+                        },
+                        y: {
+                            ticks: { font: { size: 11 } },
+                        },
+                    },
+                },
+            });
+        }
+
+        async function loadTrendChart(type, person, startMonth, endMonth) {
+            // 月別推移の積み上げ棒グラフ＋月合計ラベルを描画する。
+            const params = new URLSearchParams({
+                start_month: startMonth,
+                end_month: endMonth,
+                type,
+                person,
+                user_id: currentUserId,
+            });
+
+            const res = await fetch(`${API_BASE}/monthly_trend?${params}`);
+            const data = await res.json();
+            const trend = data.trend || [];
+
+            const canvas = document.getElementById("mainChart");
+            const chartEmpty = document.getElementById("chartEmpty");
+
+            if (trend.length === 0) {
+                chartEmpty.style.display = "block";
+                return;
+            }
+
+            // APIの戻り値（month・category・totalのフラットリスト）を
+            // グラフ用のデータ構造に変換する。
+            // months: ["2024-01", "2024-02", ...]
+            // categories: ["食費", "交通費", ...]
+            // dataMap: { "食費": [38000, 41000, ...], ... }
+            const months = [...new Set(trend.map(r => r.month))].sort();
+            const categories = [...new Set(trend.map(r => r.category))];
+            const dataMap = {};
+            categories.forEach(cat => {
+                dataMap[cat] = months.map(m => {
+                    const row = trend.find(
+                        r => r.month === m && r.category === cat
+                    );
+                    return row ? row.total : 0;
+                });
+            });
+
+            // 月合計をカテゴリ別の積み上げから計算する。
+            const totals = months.map((_, i) =>
+                categories.reduce((acc, cat) => acc + dataMap[cat][i], 0)
+            );
+
+            canvas.parentElement.style.height = "300px";
+            canvas.style.display = "block";
+
+            // 凡例をHTML要素として描画する（Chart.jsデフォルトより視認性が高い）。
+            const legendEl = document.getElementById("chartLegend");
+            legendEl.innerHTML = categories.map((cat, i) =>
+                `<span class="legend-item">
+                    <span class="legend-color"
+                        style="background:${CHART_COLORS[i % CHART_COLORS.length]}">
+                    </span>${cat}
+                </span>`
+            ).join("");
+
+            // 棒の上に月合計を表示するカスタムプラグイン。
+            const totalLabelPlugin = {
+                id: "totalLabel",
+                afterDatasetsDraw(chart) {
+                    const { ctx, scales: { x, y } } = chart;
+                    ctx.save();
+                    ctx.font = "500 11px sans-serif";
+                    ctx.fillStyle = "#5F5E5A";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "bottom";
+                    totals.forEach((total, i) => {
+                        const xPos = x.getPixelForValue(i);
+                        const yPos = y.getPixelForValue(total);
+                        ctx.fillText(
+                            total.toLocaleString() + "円", xPos, yPos - 4
+                        );
+                    });
+                    ctx.restore();
+                },
+            };
+
+            const ctx = canvas.getContext("2d");
+            chartInstance = new Chart(ctx, {
+                plugins: [totalLabelPlugin],
+                type: "bar",
+                data: {
+                    labels: months,
+                    datasets: categories.map((cat, i) => ({
+                        label: cat,
+                        data: dataMap[cat],
+                        backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+                        borderColor: CHART_BORDERS[i % CHART_BORDERS.length],
+                        borderWidth: 1,
+                        stack: "stack",
+                    })),
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 24 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx =>
+                                    ctx.dataset.label + ": " +
+                                    ctx.parsed.y.toLocaleString() + "円",
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 45,
+                                font: { size: 11 },
+                            },
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: {
+                                callback: v => (v / 10000) + "万",
+                                font: { size: 11 },
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
+        // --- 取引履歴 ---
+
         async function loadTransactions() {
-            const yearMonth = document.getElementById("monthSelector").value;
+            const { yearMonth, startMonth, endMonth } = getPeriodRange();
             const limit = document.getElementById("limitSelector").value;
 
             const tableLoading = document.getElementById("tableLoading");
@@ -422,13 +874,17 @@
 
             try {
                 const params = new URLSearchParams({
-                    year_month: yearMonth,
-                    limit: limit,
+                    limit,
                     user_id: currentUserId,
                 });
-                const res = await fetch(
-                    `${API_BASE}/transactions?${params}`
-                );
+                if (yearMonth) {
+                    params.set("year_month", yearMonth);
+                } else if (startMonth && endMonth) {
+                    params.set("start_month", startMonth);
+                    params.set("end_month", endMonth);
+                }
+
+                const res = await fetch(`${API_BASE}/transactions?${params}`);
                 const data = await res.json();
                 const transactions = data.transactions;
 
@@ -440,29 +896,7 @@
                     return;
                 }
 
-                table.style.display = "table";
-                tbody.innerHTML = "";
-
-                for (const tx of transactions) {
-                    const tr = document.createElement("tr");
-                    const isIncome = tx.type === "income";
-                    const amountClass = isIncome
-                        ? "amount income" : "amount expense";
-                    const sign = isIncome ? "+" : "-";
-
-                    tr.innerHTML = `
-                        <td>${tx.date}</td>
-                        <td class="${amountClass}">
-                            ${sign}${tx.amount.toLocaleString()}円
-                        </td>
-                        <td>${tx.item || ""}</td>
-                        <td>${tx.category}</td>
-                        <td>${tx.store_name || ""}</td>
-                        <td>${tx.payment_method || ""}</td>
-                        <td>${tx.memo || ""}</td>
-                    `;
-                    tbody.appendChild(tr);
-                }
+                renderTable(currentTransactionData);
 
             } catch (err) {
                 console.error("取引取得エラー:", err);
@@ -471,110 +905,109 @@
             }
         }
 
-        function renderChart(labels, values, type) {
-            const ctx = document.getElementById("categoryChart")
-                .getContext("2d");
+        function renderTable(transactions) {
+            const table = document.getElementById("transactionTable");
+            const tableEmpty = document.getElementById("tableEmpty");
+            const tbody = document.getElementById("tableBody");
 
-            if (chartInstance) {
-                chartInstance.destroy();
+            if (!transactions || transactions.length === 0) {
+                table.style.display = "none";
+                tableEmpty.style.display = "block";
+                return;
             }
 
-            const barColor = type === "income"
-                ? "rgba(39, 174, 96, 0.7)"
-                : "rgba(231, 76, 60, 0.7)";
-            const borderColor = type === "income"
-                ? "rgba(39, 174, 96, 1)"
-                : "rgba(231, 76, 60, 1)";
+            table.style.display = "table";
+            tableEmpty.style.display = "none";
+            tbody.innerHTML = "";
 
-            chartInstance = new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: type === "income" ? "収入" : "支出",
-                        data: values,
-                        backgroundColor: barColor,
-                        borderColor: borderColor,
-                        borderWidth: 1,
-                    }],
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(ctx) {
-                                    return ctx.parsed.y.toLocaleString() + "円";
-                                },
-                            },
-                        },
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                font: { size: 11 },
-                            },
-                        },
-                        y: {
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString() + "円";
-                                },
-                            },
-                        },
-                    },
-                },
+            for (const tx of transactions) {
+                const tr = document.createElement("tr");
+                const isIncome = tx.type === "income";
+                const amountClass = isIncome ? "amount income" : "amount expense";
+                const sign = isIncome ? "+" : "-";
+
+                tr.innerHTML = `
+                    <td>${tx.date}</td>
+                    <td>${tx.category}</td>
+                    <td>${tx.item || ""}</td>
+                    <td class="${amountClass}">
+                        ${sign}${tx.amount.toLocaleString()}円
+                    </td>
+                    <td>${tx.store_name || ""}</td>
+                    <td>${tx.payment_method || ""}</td>
+                    <td>${tx.memo || ""}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            // ソートアイコンを更新する。
+            document.querySelectorAll("th.sortable").forEach(th => {
+                th.classList.remove("sort-asc", "sort-desc");
+                if (th.dataset.col === sortCol) {
+                    th.classList.add(sortDir === "asc" ? "sort-asc" : "sort-desc");
+                }
             });
         }
 
-        function updateSummaryBar(type) {
-            const labelEl = document.getElementById("summaryLabel");
-            const valueEl = document.getElementById("summaryValue");
-
-            if (summaryMode === "net") {
-                // 収支モード：黒字は緑、赤字は赤
-                const net = currentIncomeTotal - currentExpenseTotal;
-                labelEl.textContent = "収支";
-                const sign = net >= 0 ? "+" : "";
-                valueEl.textContent = sign + net.toLocaleString() + "円";
-                valueEl.style.color = net >= 0 ? "#27ae60" : "#e74c3c";
+        function sortTable(col, colType) {
+            // 同じ列を再クリックした場合: 昇順→降順→解除（デフォルトに戻る）の3段階。
+            if (sortCol === col) {
+                if (sortDir === "asc") {
+                    sortDir = "desc";
+                } else if (sortDir === "desc") {
+                    // 3回目のクリックでソート解除。日付降順に戻す。
+                    sortCol = "date";
+                    sortDir = "desc";
+                    renderTable(currentTransactionData);
+                    return;
+                }
             } else {
-                // 合計モード：色は付けず黒で表示
-                const isIncome = type === "income";
-                const total = isIncome
-                    ? currentIncomeTotal : currentExpenseTotal;
-                labelEl.textContent = isIncome ? "収入合計" : "支出合計";
-                valueEl.textContent = total.toLocaleString() + "円";
-                valueEl.style.color = "#333";
+                sortCol = col;
+                sortDir = col === "amount" ? "desc" : "asc";
             }
+
+            const sorted = [...currentTransactionData].sort((a, b) => {
+                let valA = a[col] ?? "";
+                let valB = b[col] ?? "";
+                if (colType === "number") {
+                    valA = Number(valA);
+                    valB = Number(valB);
+                } else {
+                    valA = String(valA);
+                    valB = String(valB);
+                }
+                if (valA < valB) return sortDir === "asc" ? -1 : 1;
+                if (valA > valB) return sortDir === "asc" ? 1 : -1;
+                return 0;
+            });
+
+            renderTable(sorted);
         }
 
-        // サマリーバーのタップでtype合計↔収支をトグルする。
-        document.getElementById("summaryBar").addEventListener("click", () => {
-            summaryMode = summaryMode === "type" ? "net" : "type";
-            const type = document.getElementById("typeSelector").value;
-            updateSummaryBar(type);
+        // ソートのイベントリスナー（テーブルヘッダーのクリック）。
+        document.querySelectorAll("th.sortable").forEach(th => {
+            th.addEventListener("click", () => {
+                sortTable(th.dataset.col, th.dataset.type);
+            });
         });
 
-        // --- ダウンロード機能 ---
+        // --- ダウンロード ---
+
         function downloadCSV() {
             if (currentTransactionData.length === 0) {
                 alert("ダウンロードするデータがありません");
                 return;
             }
-            const yearMonth = document.getElementById("monthSelector").value;
+            const { yearMonth } = getPeriodRange();
             const person = document.getElementById("personSelector").value;
             const params = new URLSearchParams({
                 user_id: currentUserId,
-                year_month: yearMonth,
-                person: person,
+                year_month: yearMonth || getYearMonth(0),
+                person,
             });
             const url = `${API_BASE}/download/csv?${params}`;
-
             if (liff.isInClient()) {
-                liff.openWindow({ url: url, external: true });
+                liff.openWindow({ url, external: true });
             } else {
                 window.location.href = url;
             }
@@ -586,41 +1019,54 @@
                 alert("ダウンロードするデータがありません");
                 return;
             }
-            const yearMonth = document.getElementById("monthSelector").value;
+            const { yearMonth } = getPeriodRange();
             const type = document.getElementById("typeSelector").value;
             const person = document.getElementById("personSelector").value;
             const params = new URLSearchParams({
                 user_id: currentUserId,
-                year_month: yearMonth,
-                type: type,
-                person: person,
+                year_month: yearMonth || getYearMonth(0),
+                type,
+                person,
             });
             const url = `${API_BASE}/download/txt?${params}`;
-
             if (liff.isInClient()) {
-                liff.openWindow({ url: url, external: true });
+                liff.openWindow({ url, external: true });
             } else {
                 window.location.href = url;
             }
         }
 
         // --- イベントリスナー ---
-        document.getElementById("monthSelector")
-            .addEventListener("change", () => {
-                // 月が変わったらトグル状態をリセットして再読み込み
-                summaryMode = "type";
-                loadAll();
-            });
-        document.getElementById("typeSelector")
-            .addEventListener("change", () => {
-                // typeが変わったらトグル状態をリセット
-                summaryMode = "type";
-                loadCategorySummary();
-            });
-        document.getElementById("personSelector")
-            .addEventListener("change", loadCategorySummary);
-        document.getElementById("limitSelector")
-            .addEventListener("change", loadTransactions);
+
+        document.getElementById("periodPreset").addEventListener("change", () => {
+            const isCustom = document.getElementById("periodPreset").value === "custom";
+            document.getElementById("periodCustom").classList.toggle("visible", isCustom);
+            summaryMode = "type";
+            loadAll();
+        });
+
+        document.getElementById("startMonth").addEventListener("change", () => {
+            summaryMode = "type";
+            loadAll();
+        });
+
+        document.getElementById("endMonth").addEventListener("change", () => {
+            summaryMode = "type";
+            loadAll();
+        });
+
+        document.getElementById("typeSelector").addEventListener("change", () => {
+            summaryMode = "type";
+            loadAll();
+        });
+
+        document.getElementById("personSelector").addEventListener("change", () => {
+            summaryMode = "type";
+            loadAll();
+        });
+
+        document.getElementById("chartSelector").addEventListener("change", loadChart);
+        document.getElementById("limitSelector").addEventListener("change", loadTransactions);
 
         init();
     </script>
