@@ -65,10 +65,24 @@
             margin-bottom: 16px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             font-size: 0.95rem;
+            /* タップ可能であることを示す */
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-bar:active {
+            background: #f0f0f0;
         }
 
         .summary-bar .label {
             color: #888;
+        }
+
+        .summary-bar .label::after {
+            /* タップ可能であることのヒント */
+            content: " 🔄";
+            font-size: 0.75rem;
         }
 
         .summary-bar .value {
@@ -133,7 +147,7 @@
         }
 
         td.amount.income {
-            color: #27ae60;
+            color: #2980b9;
         }
 
         td.amount.expense {
@@ -205,7 +219,7 @@
         </select>
     </div>
 
-    <div class="summary-bar">
+    <div class="summary-bar" id="summaryBar">
         <span class="label" id="summaryLabel">今月の支出合計</span>
         <span class="value" id="summaryValue">-</span>
     </div>
@@ -244,10 +258,12 @@
             <thead>
                 <tr>
                     <th>日付</th>
-                    <th>種別</th>
                     <th>カテゴリ</th>
+                    <th>品目名</th>
                     <th>金額</th>
                     <th>店名</th>
+                    <th>支払方法</th>
+                    <th>メモ</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -264,6 +280,13 @@
         // 現在表示中のデータを保持（ダウンロード用）
         let currentSummaryData = [];
         let currentTransactionData = [];
+
+        // サマリーバーのトグル管理。
+        // 'type': 現在のtypeSelectorの合計を表示。
+        // 'net': 収支（収入合計 - 支出合計）を表示。
+        let summaryMode = "type";
+        let currentExpenseTotal = 0;
+        let currentIncomeTotal = 0;
 
         async function init() {
             try {
@@ -320,35 +343,62 @@
             canvas.style.display = "none";
 
             try {
-                const params = new URLSearchParams({
-                    year_month: yearMonth,
-                    type: type,
-                    person: person,
-                    user_id: currentUserId,
-                });
-                const res = await fetch(
-                    `${API_BASE}/category_summary?${params}`
+                // グラフ用（選択中のtype）と収支計算用（逆のtype）を並行取得。
+                // 収支 = 収入合計 - 支出合計 の計算に両方のtotalが必要。
+                const otherType = type === "expense" ? "income" : "expense";
+                const [mainRes, otherRes] = await Promise.all([
+                    fetch(`${API_BASE}/category_summary?${new URLSearchParams({
+                        year_month: yearMonth,
+                        type: type,
+                        person: person,
+                        user_id: currentUserId,
+                    })}`),
+                    fetch(`${API_BASE}/category_summary?${new URLSearchParams({
+                        year_month: yearMonth,
+                        type: otherType,
+                        person: person,
+                        user_id: currentUserId,
+                    })}`),
+                ]);
+
+                const mainData = await mainRes.json();
+                const otherData = await otherRes.json();
+
+                const mainSummary = mainData.summary || [];
+                const otherSummary = otherData.summary || [];
+
+                const mainTotal = mainSummary.reduce(
+                    (acc, s) => acc + s.total, 0
                 );
-                const data = await res.json();
-                const summary = data.summary;
+                const otherTotal = otherSummary.reduce(
+                    (acc, s) => acc + s.total, 0
+                );
 
-                chartLoading.style.display = "none";
-                currentSummaryData = summary || [];
-
-                if (!summary || summary.length === 0) {
-                    chartEmpty.style.display = "block";
-                    updateSummaryBar(0, type);
-                    return;
+                // expense/incomeどちらが選ばれているかに関わらず
+                // 常に両方のtotalを最新状態に保つ。
+                if (type === "expense") {
+                    currentExpenseTotal = mainTotal;
+                    currentIncomeTotal = otherTotal;
+                } else {
+                    currentIncomeTotal = mainTotal;
+                    currentExpenseTotal = otherTotal;
                 }
 
-                canvas.style.display = "block";
+                chartLoading.style.display = "none";
+                currentSummaryData = mainSummary;
 
-                const labels = summary.map(s => s.category);
-                const values = summary.map(s => s.total);
-                const total = values.reduce((a, b) => a + b, 0);
+                if (mainSummary.length === 0) {
+                    chartEmpty.style.display = "block";
+                } else {
+                    canvas.style.display = "block";
+                    renderChart(
+                        mainSummary.map(s => s.category),
+                        mainSummary.map(s => s.total),
+                        type,
+                    );
+                }
 
-                updateSummaryBar(total, type);
-                renderChart(labels, values, type);
+                updateSummaryBar(type);
 
             } catch (err) {
                 console.error("集計取得エラー:", err);
@@ -395,19 +445,21 @@
 
                 for (const tx of transactions) {
                     const tr = document.createElement("tr");
-                    const typeLabel = tx.type === "income" ? "収入" : "支出";
-                    const amountClass = tx.type === "income"
+                    const isIncome = tx.type === "income";
+                    const amountClass = isIncome
                         ? "amount income" : "amount expense";
-                    const sign = tx.type === "income" ? "+" : "-";
+                    const sign = isIncome ? "+" : "-";
 
                     tr.innerHTML = `
                         <td>${tx.date}</td>
-                        <td>${typeLabel}</td>
                         <td>${tx.category}</td>
+                        <td>${tx.item || ""}</td>
                         <td class="${amountClass}">
-                            ${sign}¥${tx.amount.toLocaleString()}
+                            ${sign}${tx.amount.toLocaleString()}円
                         </td>
                         <td>${tx.store_name || ""}</td>
+                        <td>${tx.payment_method || ""}</td>
+                        <td>${tx.memo || ""}</td>
                     `;
                     tbody.appendChild(tr);
                 }
@@ -428,10 +480,10 @@
             }
 
             const barColor = type === "income"
-                ? "rgba(39, 174, 96, 0.7)"
+                ? "rgba(41, 128, 185, 0.7)"
                 : "rgba(231, 76, 60, 0.7)";
             const borderColor = type === "income"
-                ? "rgba(39, 174, 96, 1)"
+                ? "rgba(41, 128, 185, 1)"
                 : "rgba(231, 76, 60, 1)";
 
             chartInstance = new Chart(ctx, {
@@ -453,7 +505,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function(ctx) {
-                                    return "¥" + ctx.parsed.y.toLocaleString();
+                                    return ctx.parsed.y.toLocaleString() + "円";
                                 },
                             },
                         },
@@ -468,7 +520,7 @@
                         y: {
                             ticks: {
                                 callback: function(value) {
-                                    return "¥" + value.toLocaleString();
+                                    return value.toLocaleString() + "円";
                                 },
                             },
                         },
@@ -477,12 +529,33 @@
             });
         }
 
-        function updateSummaryBar(total, type) {
-            const label = type === "income" ? "収入合計" : "支出合計";
-            document.getElementById("summaryLabel").textContent = label;
-            document.getElementById("summaryValue").textContent =
-                "¥" + total.toLocaleString();
+        function updateSummaryBar(type) {
+            const labelEl = document.getElementById("summaryLabel");
+            const valueEl = document.getElementById("summaryValue");
+
+            if (summaryMode === "net") {
+                const net = currentIncomeTotal - currentExpenseTotal;
+                labelEl.textContent = "収支";
+                const sign = net >= 0 ? "+" : "";
+                valueEl.textContent = sign + net.toLocaleString() + "円";
+                // 黒字は青、赤字は赤
+                valueEl.style.color = net >= 0 ? "#2980b9" : "#e74c3c";
+            } else {
+                const isIncome = type === "income";
+                const total = isIncome
+                    ? currentIncomeTotal : currentExpenseTotal;
+                labelEl.textContent = isIncome ? "収入合計" : "支出合計";
+                valueEl.textContent = total.toLocaleString() + "円";
+                valueEl.style.color = isIncome ? "#2980b9" : "#e74c3c";
+            }
         }
+
+        // サマリーバーのタップでtype合計↔収支をトグルする。
+        document.getElementById("summaryBar").addEventListener("click", () => {
+            summaryMode = summaryMode === "type" ? "net" : "type";
+            const type = document.getElementById("typeSelector").value;
+            updateSummaryBar(type);
+        });
 
         // --- ダウンロード機能 ---
         function downloadCSV() {
@@ -499,8 +572,6 @@
             });
             const url = `${API_BASE}/download/csv?${params}`;
 
-            // LINEアプリ内ブラウザではダウンロードが制限されるため
-            // 外部ブラウザで開く
             if (liff.isInClient()) {
                 liff.openWindow({ url: url, external: true });
             } else {
@@ -534,9 +605,17 @@
 
         // --- イベントリスナー ---
         document.getElementById("monthSelector")
-            .addEventListener("change", loadAll);
+            .addEventListener("change", () => {
+                // 月が変わったらトグル状態をリセットして再読み込み
+                summaryMode = "type";
+                loadAll();
+            });
         document.getElementById("typeSelector")
-            .addEventListener("change", loadCategorySummary);
+            .addEventListener("change", () => {
+                // typeが変わったらトグル状態をリセット
+                summaryMode = "type";
+                loadCategorySummary();
+            });
         document.getElementById("personSelector")
             .addEventListener("change", loadCategorySummary);
         document.getElementById("limitSelector")
