@@ -113,6 +113,7 @@ def get_transactions_endpoint(
         payment_method=payment_method,
         amount=amount,
     )
+    return {"transactions": transactions[:limit]}
 
 
 @app.get("/category_summary")
