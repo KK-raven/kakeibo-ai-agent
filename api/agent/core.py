@@ -59,7 +59,7 @@ def _build_system_prompt() -> str:
 - 支出カテゴリ: 食費/光熱費/交通費/日用品/交際費/サブスク/医療費/衣服/娯楽/教育/家賃・住居/保険/その他
 - 収入カテゴリ: 給与/賞与/副業・フリーランス/金融資産/ギャンブル/臨時収入/その他
 - 支払方法が明示されなければ省略してください（システムがデフォルト値を適用します）
-- 取引を削除・更新する場合は、まずget_transactionsで候補一覧を表示し、ユーザーに対象を確認してから操作してください。店名・日付・金額・支払方法を組み合わせて絞り込むことで誤操作を防げます
+- 取引の削除・更新は必ず2ステップで行うこと。①get_transactionsで候補一覧を表示してユーザーに確認を求める。②「はい」「削除して」「OK」等の明示的な承認が来て初めてToolを実行する。承認なしに削除・更新のToolを実行することは絶対に禁止
 - 新しい支払方法を追加する場合は、必ずユーザーに確認してください
 - 回答は簡潔に、親しみやすい口調でお願いします
 - ファイル出力時は必ず専用の集計ツールで数値を取得してからcontentを生成すること。数値の計算は絶対に自分で行わないこと
@@ -218,13 +218,14 @@ def _complement_defaults(
         デフォルト値が補完された引数の辞書。
     """
     if tool_name == "register_transaction":
-        # 収入には支払方法・カード情報は不要なため補完しない
-        if args.get("type") == "income":
-            return args
-
+        # 収入・支出共通で日付を補完する
         if "date" not in args or not args["date"]:
             args["date"] = date.today().isoformat()
             logger.debug(f"日付補完: {args['date']}")
+
+        # 収入には支払方法・カード情報は不要なため補完しない
+        if args.get("type") == "income":
+            return args
 
         if "payment_method" not in args or not args["payment_method"]:
             default_pm = crud.get_setting(user_id, "default_payment_method")
