@@ -1043,7 +1043,10 @@
                     <td class="${amountClass}">
                         ${sign}${tx.amount.toLocaleString()}円
                     </td>
-                    <td title="${tx.item || ""}">${
+                    <td ${tx.item && !itemFullLength && tx.item.length > 17
+                        ? `onclick="alert('${tx.item.replace(/'/g, "\\'")}')" style="cursor:pointer;"`
+                        : ""
+                    } title="${tx.item || ""}">${
                         tx.item
                             ? (itemFullLength
                                 ? tx.item
