@@ -25,6 +25,7 @@ from openai import OpenAI
 from api.agent.tools import TOOLS
 from api.db import crud
 from api.utils.file_export import export_file as export_file_util
+from api.agent.help import get_help as get_help_func
 from api.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -37,7 +38,7 @@ MAX_TOOL_CALLS = 5
 
 # user_idを必要としないツールの一覧。
 # これ以外のツールは全てcrud関数であり、user_idを第一引数に取る。
-_NO_USER_ID_TOOLS = {"export_file"}
+_NO_USER_ID_TOOLS = {"export_file", "get_help"}
 
 
 def _build_system_prompt() -> str:
@@ -194,6 +195,7 @@ TOOL_FUNCTIONS = {
     "export_file": export_file_util,
     "get_store_summary": crud.get_store_summary,
     "get_item_summary": crud.get_item_summary,
+    "get_help": get_help_func,
 }
 
 
