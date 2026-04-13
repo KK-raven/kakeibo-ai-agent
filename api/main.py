@@ -131,6 +131,7 @@ def get_category_summary_endpoint(
     person: str = "自分",
     start_month: str | None = None,
     end_month: str | None = None,
+    fixed_mode: str = "show",
     user_id: int | None = None,
 ):
     """カテゴリ別集計取得エンドポイント。
@@ -144,6 +145,7 @@ def get_category_summary_endpoint(
         person: 誰の集計か。
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
     """
     from api.db.crud import get_category_summary
@@ -155,6 +157,7 @@ def get_category_summary_endpoint(
         person=person,
         start_month=start_month,
         end_month=end_month,
+        fixed_mode=fixed_mode,
     )
     return {"summary": summary}
 
@@ -166,6 +169,7 @@ def get_store_summary_endpoint(
     person: str = "自分",
     start_month: str | None = None,
     end_month: str | None = None,
+    fixed_mode: str = "show",
     user_id: int | None = None,
 ):
     """店別集計取得エンドポイント。
@@ -179,6 +183,7 @@ def get_store_summary_endpoint(
         person: 誰の集計か。
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
     """
     from api.db.crud import get_store_summary
@@ -190,6 +195,7 @@ def get_store_summary_endpoint(
         person=person,
         start_month=start_month,
         end_month=end_month,
+        fixed_mode=fixed_mode,
     )
     return {"summary": summary}
 
@@ -201,6 +207,7 @@ def get_item_summary_endpoint(
     person: str = "自分",
     start_month: str | None = None,
     end_month: str | None = None,
+    fixed_mode: str = "show",
     user_id: int | None = None,
 ):
     """品目別集計取得エンドポイント。
@@ -214,6 +221,7 @@ def get_item_summary_endpoint(
         person: 誰の集計か。
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
     """
     from api.db.crud import get_item_summary
@@ -225,6 +233,7 @@ def get_item_summary_endpoint(
         person=person,
         start_month=start_month,
         end_month=end_month,
+        fixed_mode=fixed_mode,
     )
     return {"summary": summary}
 
@@ -236,6 +245,7 @@ def get_payment_method_summary_endpoint(
     person: str = "自分",
     start_month: str | None = None,
     end_month: str | None = None,
+    fixed_mode: str = "show",
     user_id: int | None = None,
 ):
     """支払方法別集計取得エンドポイント。
@@ -249,6 +259,7 @@ def get_payment_method_summary_endpoint(
         person: 誰の集計か。
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
     """
     from api.db.crud import get_payment_method_summary
@@ -260,6 +271,7 @@ def get_payment_method_summary_endpoint(
         person=person,
         start_month=start_month,
         end_month=end_month,
+        fixed_mode=fixed_mode,
     )
     return {"summary": summary}
 
@@ -270,6 +282,7 @@ def get_monthly_trend_endpoint(
     end_month: str,
     type: str = "expense",
     person: str = "自分",
+    fixed_mode: str = "show",
     user_id: int | None = None,
 ):
     """月別推移取得エンドポイント。
@@ -282,6 +295,7 @@ def get_monthly_trend_endpoint(
         end_month: 終了月 "YYYY-MM" 形式（必須）。
         type: "expense" or "income"。
         person: 誰の集計か。
+        fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
     """
     from api.db.crud import get_monthly_trend
@@ -292,6 +306,7 @@ def get_monthly_trend_endpoint(
         end_month=end_month,
         type=type,
         person=person,
+        fixed_mode=fixed_mode,
     )
     return {"trend": trend}
 

@@ -526,14 +526,14 @@ def apply_fixed_expenses(
             cur.execute(
                 """
                 INSERT INTO transactions
-                    (user_id, date, type, amount, category, memo,
+                    (user_id, date, type, amount, category, item, memo,
                      payment_method, person)
-                VALUES (%s, %s, 'expense', %s, %s, %s, %s, '自分')
+                VALUES (%s, %s, 'expense', %s, %s, %s, %s, %s, '自分')
                 RETURNING *
                 """,
                 (
                     user_id, tx_date_str, fe["amount"], fe["category"],
-                    memo, fe["payment_method"],
+                    fe["name"], memo, fe["payment_method"],
                 ),
             )
             row = cur.fetchone()
@@ -1104,12 +1104,18 @@ def get_category_summary(
     person: str = "自分",
     start_month: str | None = None,
     end_month: str | None = None,
+    fixed_mode: str = "show",
 ) -> list[dict]:
     """カテゴリ別の集計を返す。金額が大きい順。
 
     year_month と start_month/end_month はどちらか一方を指定する。
     両方指定された場合は start_month/end_month を優先する。
     どちらも指定しない場合は全期間を集計する。
+
+    fixed_modeで固定費（memo が '[固定]' で始まる取引）の扱いを制御する。
+    show:  固定費を通常通り集計する（デフォルト）。
+    group: 固定費を「固定費」カテゴリに統合して集計する。
+    hide:  固定費を集計から除外する。
 
     Args:
         user_id: ユーザーID。
@@ -1118,6 +1124,7 @@ def get_category_summary(
         person: 誰の集計か。
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        fixed_mode: "show" / "group" / "hide"。
 
     Returns:
         [{"category": "食費", "total": 35000, "count": 12}, ...]
@@ -1140,16 +1147,28 @@ def get_category_summary(
             conditions.append("to_char(date, 'YYYY-MM') = %s")
             params.append(year_month)
 
+        if fixed_mode == "hide":
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+
         where_clause = "WHERE " + " AND ".join(conditions)
+
+        # group モードでは固定費を「固定費」カテゴリに統合する。
+        # CASE式でmemoが '[固定]' で始まる取引のcategoryを上書きする。
+        category_expr = (
+            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE category END"
+            if fixed_mode == "group"
+            else "category"
+        )
+
         cur.execute(
             f"""
             SELECT
-                category,
+                {category_expr} as category,
                 SUM(amount) as total,
                 COUNT(*) as count
             FROM transactions
             {where_clause}
-            GROUP BY category
+            GROUP BY {category_expr}
             ORDER BY total DESC
             """,
             params,
@@ -1158,7 +1177,7 @@ def get_category_summary(
         logger.info(
             f"カテゴリ集計: "
             f"{year_month or f'{start_month}〜{end_month}'}"
-            f" {type} {person} {len(result)}カテゴリ"
+            f" {type} {person} fixed={fixed_mode} {len(result)}カテゴリ"
         )
         return result
     except Exception:
@@ -1454,6 +1473,7 @@ def get_store_summary(
     store_name: str | None = None,
     start_month: str | None = None,
     end_month: str | None = None,
+    fixed_mode: str = "show",
 ) -> list[dict]:
     """店別の集計を返す。金額が大きい順。
 
@@ -1463,6 +1483,11 @@ def get_store_summary(
     両方指定された場合は start_month/end_month を優先する。
     どちらも指定しない場合は全期間を集計する。
 
+    fixed_modeで固定費（memo が '[固定]' で始まる取引）の扱いを制御する。
+    show:  固定費を通常通り集計する（デフォルト）。
+    group: 固定費の店名を「固定費」に統合して集計する。
+    hide:  固定費を集計から除外する。
+
     Args:
         user_id: ユーザーID。
         year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
@@ -1471,6 +1496,7 @@ def get_store_summary(
         store_name: 店名で部分一致絞り込み（省略時は全店舗）。
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        fixed_mode: "show" / "group" / "hide"。
 
     Returns:
         [{"store_name": "セブンイレブン", "total": 15000, "count": 8}, ...]
@@ -1498,16 +1524,26 @@ def get_store_summary(
             conditions.append("store_name LIKE %s")
             params.append(f"%{store_name}%")
 
+        if fixed_mode == "hide":
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+
         where_clause = "WHERE " + " AND ".join(conditions)
+
+        store_expr = (
+            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE store_name END"
+            if fixed_mode == "group"
+            else "store_name"
+        )
+
         cur.execute(
             f"""
             SELECT
-                store_name,
+                {store_expr} as store_name,
                 SUM(amount) as total,
                 COUNT(*) as count
             FROM transactions
             {where_clause}
-            GROUP BY store_name
+            GROUP BY {store_expr}
             ORDER BY total DESC
             """,
             params,
@@ -1516,7 +1552,7 @@ def get_store_summary(
         logger.info(
             f"店別集計: "
             f"{year_month or f'{start_month}〜{end_month}'}"
-            f" {type} {person} {len(result)}店舗"
+            f" {type} {person} fixed={fixed_mode} {len(result)}店舗"
         )
         return result
     except Exception:
@@ -1534,6 +1570,7 @@ def get_item_summary(
     item: str | None = None,
     start_month: str | None = None,
     end_month: str | None = None,
+    fixed_mode: str = "show",
 ) -> list[dict]:
     """品目別の集計を返す。金額が大きい順。
 
@@ -1543,6 +1580,13 @@ def get_item_summary(
     両方指定された場合は start_month/end_month を優先する。
     どちらも指定しない場合は全期間を集計する。
 
+    fixed_modeで固定費（memo が '[固定]' で始まる取引）の扱いを制御する。
+    show:  固定費を通常通り集計する（デフォルト）。itemがNULLの取引は除外。
+    group: 固定費を「固定費」品目に統合して集計する。
+           固定費はitemがNULLのケースが多いため、このモードのみ
+           item IS NOT NULL 条件を外して固定費も集計対象に含める。
+    hide:  固定費を集計から除外する。itemがNULLの取引は除外。
+
     Args:
         user_id: ユーザーID。
         year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
@@ -1551,6 +1595,7 @@ def get_item_summary(
         item: 品目で部分一致絞り込み（省略時は全品目）。
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        fixed_mode: "show" / "group" / "hide"。
 
     Returns:
         [{"item": "弁当", "total": 8000, "count": 12}, ...]
@@ -1562,8 +1607,12 @@ def get_item_summary(
             "user_id = %s",
             "type = %s",
             "person = %s",
-            "item IS NOT NULL",
         ]
+        # group モードでは固定費（item が NULL のケースが多い）も
+        # 「固定費」として集計するため、item IS NOT NULL 条件を外す。
+        # show / hide モードでは item が NULL の取引は集計対象外とする。
+        if fixed_mode != "group":
+            conditions.append("item IS NOT NULL")
         params = [user_id, type, person]
 
         if start_month and end_month:
@@ -1578,16 +1627,26 @@ def get_item_summary(
             conditions.append("item LIKE %s")
             params.append(f"%{item}%")
 
+        if fixed_mode == "hide":
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+
         where_clause = "WHERE " + " AND ".join(conditions)
+
+        item_expr = (
+            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE item END"
+            if fixed_mode == "group"
+            else "item"
+        )
+
         cur.execute(
             f"""
             SELECT
-                item,
+                {item_expr} as item,
                 SUM(amount) as total,
                 COUNT(*) as count
             FROM transactions
             {where_clause}
-            GROUP BY item
+            GROUP BY {item_expr}
             ORDER BY total DESC
             """,
             params,
@@ -1596,7 +1655,7 @@ def get_item_summary(
         logger.info(
             f"品目別集計: "
             f"{year_month or f'{start_month}〜{end_month}'}"
-            f" {type} {person} {len(result)}品目"
+            f" {type} {person} fixed={fixed_mode} {len(result)}品目"
         )
         return result
     except Exception:
@@ -1613,12 +1672,18 @@ def get_payment_method_summary(
     person: str = "自分",
     start_month: str | None = None,
     end_month: str | None = None,
+    fixed_mode: str = "show",
 ) -> list[dict]:
     """支払方法別の集計を返す。金額が大きい順。
 
     year_month と start_month/end_month はどちらか一方を指定する。
     両方指定された場合は start_month/end_month を優先する。
     どちらも指定しない場合は全期間を集計する。
+
+    fixed_modeで固定費（memo が '[固定]' で始まる取引）の扱いを制御する。
+    show:  固定費を通常通り集計する（デフォルト）。
+    group: 固定費の支払方法を「固定費」に統合して集計する。
+    hide:  固定費を集計から除外する。
 
     Args:
         user_id: ユーザーID。
@@ -1627,6 +1692,7 @@ def get_payment_method_summary(
         person: 誰の集計か。
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        fixed_mode: "show" / "group" / "hide"。
 
     Returns:
         [{"payment_method": "現金", "total": 15000, "count": 8}, ...]
@@ -1649,16 +1715,26 @@ def get_payment_method_summary(
             conditions.append("to_char(date, 'YYYY-MM') = %s")
             params.append(year_month)
 
+        if fixed_mode == "hide":
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+
         where_clause = "WHERE " + " AND ".join(conditions)
+
+        payment_expr = (
+            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE payment_method END"
+            if fixed_mode == "group"
+            else "payment_method"
+        )
+
         cur.execute(
             f"""
             SELECT
-                payment_method,
+                {payment_expr} as payment_method,
                 SUM(amount) as total,
                 COUNT(*) as count
             FROM transactions
             {where_clause}
-            GROUP BY payment_method
+            GROUP BY {payment_expr}
             ORDER BY total DESC
             """,
             params,
@@ -1667,7 +1743,7 @@ def get_payment_method_summary(
         logger.info(
             f"支払方法別集計: "
             f"{year_month or f'{start_month}〜{end_month}'}"
-            f" {type} {person} {len(result)}種類"
+            f" {type} {person} fixed={fixed_mode} {len(result)}種類"
         )
         return result
     except Exception:
@@ -1683,12 +1759,18 @@ def get_monthly_trend(
     end_month: str,
     type: str = "expense",
     person: str = "自分",
+    fixed_mode: str = "show",
 ) -> list[dict]:
     """月別推移を返す。カテゴリ別の積み上げと月合計を含む。
 
     start_month〜end_monthの範囲で月ごとに集計する。
-    グラフ描画側でカテゴリを積み上げて月合計ラベルを表示するため、
+    グラフ描画側でカテゴリを積み上げて表示するため、
     month・category・totalの3列を返す。
+
+    fixed_modeで固定費（memo が '[固定]' で始まる取引）の扱いを制御する。
+    show:  固定費を通常通り集計する（デフォルト）。
+    group: 固定費を「固定費」カテゴリに統合して集計する。
+    hide:  固定費を集計から除外する。
 
     Args:
         user_id: ユーザーID。
@@ -1696,6 +1778,7 @@ def get_monthly_trend(
         end_month: 終了月 "YYYY-MM" 形式。
         type: "expense" or "income"。
         person: 誰の集計か。
+        fixed_mode: "show" / "group" / "hide"。
 
     Returns:
         [{"month": "2024-01", "category": "食費", "total": 38000}, ...]
@@ -1704,27 +1787,43 @@ def get_monthly_trend(
     conn = get_connection()
     try:
         cur = conn.cursor()
+        conditions = [
+            "user_id = %s",
+            "to_char(date, 'YYYY-MM') >= %s",
+            "to_char(date, 'YYYY-MM') <= %s",
+            "type = %s",
+            "person = %s",
+        ]
+        params = [user_id, start_month, end_month, type, person]
+
+        if fixed_mode == "hide":
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+        category_expr = (
+            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE category END"
+            if fixed_mode == "group"
+            else "category"
+        )
+
         cur.execute(
-            """
+            f"""
             SELECT
                 to_char(date, 'YYYY-MM') as month,
-                category,
+                {category_expr} as category,
                 SUM(amount) as total
             FROM transactions
-            WHERE user_id = %s
-                AND to_char(date, 'YYYY-MM') >= %s
-                AND to_char(date, 'YYYY-MM') <= %s
-                AND type = %s
-                AND person = %s
-            GROUP BY month, category
+            {where_clause}
+            GROUP BY month, {category_expr}
             ORDER BY month ASC, total DESC
             """,
-            (user_id, start_month, end_month, type, person),
+            params,
         )
         result = [dict(row) for row in cur.fetchall()]
         logger.info(
             f"月別推移: {start_month}〜{end_month} {type} {person}"
-            f" {len(result)}件"
+            f" fixed={fixed_mode} {len(result)}件"
         )
         return result
     except Exception:

@@ -111,6 +111,40 @@
             background: #f0f0f0;
         }
 
+        .toggle-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: #fff;
+            cursor: pointer;
+            text-align: center;
+            color: #333;
+        }
+
+        .toggle-btn:active {
+            opacity: 0.7;
+        }
+
+        .toggle-btn.active-group {
+            background: #e8f4fd;
+            border-color: #2980b9;
+            color: #2980b9;
+        }
+
+        .toggle-btn.active-hide {
+            background: #fdecea;
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
         .summary-bar .label {
             color: #888;
         }
@@ -350,6 +384,15 @@
         <span class="value" id="summaryValue">-</span>
     </div>
 
+    <div class="toggle-buttons">
+        <button class="toggle-btn" id="graphToggleBtn" onclick="toggleGraph()">
+            📊 グラフ: 表示
+        </button>
+        <button class="toggle-btn" id="fixedModeBtn" onclick="toggleFixedMode()">
+            📌 固定費: 表示
+        </button>
+    </div>
+
     <div class="chart-section">
         <select class="chart-selector" id="chartSelector">
             <option value="category">カテゴリ別</option>
@@ -380,6 +423,12 @@
     <div class="section-header">
         <h2>取引履歴</h2>
         <div class="section-controls">
+            <button id="itemLengthToggle" onclick="toggleItemLength()"
+                style="padding: 4px 8px; border: 1px solid #ddd;
+                    border-radius: 6px; font-size: 0.85rem;
+                    background: #fff; cursor: pointer;">
+                品目名: 省略
+            </button>
             <select id="limitSelector">
                 <option value="100" selected>100件</option>
                 <option value="200">200件</option>
@@ -398,9 +447,9 @@
             <thead>
                 <tr>
                     <th class="sortable" data-col="date" data-type="string">日付</th>
-                    <th class="sortable" data-col="category" data-type="string">カテゴリ</th>
-                    <th>品目名</th>
                     <th class="sortable" data-col="amount" data-type="number">金額</th>
+                    <th class="sortable" data-col="item" data-type="string">品目名</th>
+                    <th class="sortable" data-col="category" data-type="string">カテゴリ</th>
                     <th class="sortable" data-col="store_name" data-type="string">店名</th>
                     <th class="sortable" data-col="payment_method" data-type="string">支払方法</th>
                     <th>メモ</th>
@@ -429,6 +478,58 @@
         let summaryMode = "type";
         let currentExpenseTotal = 0;
         let currentIncomeTotal = 0;
+
+        // グラフ表示状態。localStorageで保持する。
+        let graphVisible = localStorage.getItem("graphVisible") !== "false";
+
+        // 固定費表示モード。localStorageで保持する。
+        // "show" / "group" / "hide" の3段階。
+        let fixedMode = localStorage.getItem("fixedMode") || "show";
+
+        function toggleGraph() {
+            graphVisible = !graphVisible;
+            localStorage.setItem("graphVisible", graphVisible);
+            applyGraphVisible();
+        }
+
+        function applyGraphVisible() {
+            const section = document.querySelector(".chart-section");
+            const btn = document.getElementById("graphToggleBtn");
+            section.style.display = graphVisible ? "block" : "none";
+            btn.textContent = graphVisible ? "📊 グラフ: 表示" : "📊 グラフ: 非表示";
+            btn.className = graphVisible ? "toggle-btn" : "toggle-btn active-hide";
+        }
+
+        function toggleFixedMode() {
+            // "show" → "group" → "hide" → "show" の3段階ループ。
+            if (fixedMode === "show") {
+                fixedMode = "group";
+            } else if (fixedMode === "group") {
+                fixedMode = "hide";
+            } else {
+                fixedMode = "show";
+            }
+            localStorage.setItem("fixedMode", fixedMode);
+            applyFixedModeBtn();
+            // グラフと集計を再読み込みする。
+            summaryMode = "type";
+            loadChart();
+            loadSummaryTotals();
+        }
+
+        function applyFixedModeBtn() {
+            const btn = document.getElementById("fixedModeBtn");
+            if (fixedMode === "show") {
+                btn.textContent = "📌 固定費: 表示";
+                btn.className = "toggle-btn";
+            } else if (fixedMode === "group") {
+                btn.textContent = "📌 固定費: まとめて表示";
+                btn.className = "toggle-btn active-group";
+            } else {
+                btn.textContent = "📌 固定費: 非表示";
+                btn.className = "toggle-btn active-hide";
+            }
+        }
 
         // グラフ描画用のカラーパレット。
         // カテゴリ数が多くても対応できるよう10色用意する。
@@ -511,6 +612,8 @@
                 document.getElementById("startMonth").value = now;
                 document.getElementById("endMonth").value = now;
 
+                applyGraphVisible();
+                applyFixedModeBtn();
                 await loadAll();
 
             } catch (err) {
@@ -537,7 +640,12 @@
             const person = document.getElementById("personSelector").value;
 
             const buildParams = (type) => {
-                const p = new URLSearchParams({ type, person, user_id: currentUserId });
+                const p = new URLSearchParams({
+                    type,
+                    person,
+                    user_id: currentUserId,
+                    fixed_mode: fixedMode,
+                });
                 if (yearMonth) {
                     p.set("year_month", yearMonth);
                 } else {
@@ -650,7 +758,13 @@
             const endpoint = endpointMap[chartType];
             const labelKey = labelKeyMap[chartType];
 
-            const params = new URLSearchParams({ type, person, user_id: currentUserId });
+            const params = new URLSearchParams({
+                type,
+                person,
+                user_id: currentUserId,
+                fixed_mode: fixedMode,
+            });
+
             if (yearMonth) {
                 params.set("year_month", yearMonth);
             } else {
@@ -730,45 +844,60 @@
         }
 
         async function loadTrendChart(type, person, startMonth, endMonth) {
-            // 月別推移の積み上げ棒グラフ＋月合計ラベルを描画する。
+            // 月別推移の積み上げ棒グラフを描画する。
+            // 最大12ヶ月に制限する。超える場合はエラーメッセージを表示する。
+            const chartEmpty = document.getElementById("chartEmpty");
+            const canvas = document.getElementById("mainChart");
+
+            // 期間が12ヶ月以内かチェックする。
+            const [sy, sm] = startMonth.split("-").map(Number);
+            const [ey, em] = endMonth.split("-").map(Number);
+            const monthDiff = (ey - sy) * 12 + (em - sm);
+            if (monthDiff > 11) {
+                chartEmpty.style.display = "block";
+                chartEmpty.textContent = "月別推移は最大12ヶ月まで表示できます。期間を1年以内に設定してください。";
+                return;
+            }
+
             const params = new URLSearchParams({
                 start_month: startMonth,
                 end_month: endMonth,
                 type,
                 person,
                 user_id: currentUserId,
+                fixed_mode: fixedMode,
             });
 
             const res = await fetch(`${API_BASE}/monthly_trend?${params}`);
             const data = await res.json();
             const trend = data.trend || [];
 
-            const canvas = document.getElementById("mainChart");
-            const chartEmpty = document.getElementById("chartEmpty");
-
             if (trend.length === 0) {
                 chartEmpty.style.display = "block";
+                chartEmpty.textContent = "データがありません";
                 return;
             }
 
             // APIの戻り値（month・category・totalのフラットリスト）を
             // グラフ用のデータ構造に変換する。
-            // months: ["2024-01", "2024-02", ...]
-            // categories: ["食費", "交通費", ...]
-            // dataMap: { "食費": [38000, 41000, ...], ... }
             const months = [...new Set(trend.map(r => r.month))].sort();
             const categories = [...new Set(trend.map(r => r.category))];
             const dataMap = {};
             categories.forEach(cat => {
                 dataMap[cat] = months.map(m => {
-                    const row = trend.find(
-                        r => r.month === m && r.category === cat
-                    );
+                    const row = trend.find(r => r.month === m && r.category === cat);
                     return row ? row.total : 0;
                 });
             });
 
-            // 月合計をカテゴリ別の積み上げから計算する。
+            // 月ラベルを "2024-01" → "'24/1" の短縮形に変換する。
+            // 12ヶ月並んでも重ならないよう文字数を最小限にする。
+            const shortLabels = months.map(m => {
+                const [y, mo] = m.split("-").map(Number);
+                return `'${String(y).slice(2)}/${mo}`;
+            });
+
+            // 月ごとの合計をツールチップのfooterに表示するために計算する。
             const totals = months.map((_, i) =>
                 categories.reduce((acc, cat) => acc + dataMap[cat][i], 0)
             );
@@ -776,7 +905,7 @@
             canvas.parentElement.style.height = "300px";
             canvas.style.display = "block";
 
-            // 凡例をHTML要素として描画する（Chart.jsデフォルトより視認性が高い）。
+            // 凡例をHTML要素として描画する。
             const legendEl = document.getElementById("chartLegend");
             legendEl.innerHTML = categories.map((cat, i) =>
                 `<span class="legend-item">
@@ -786,33 +915,11 @@
                 </span>`
             ).join("");
 
-            // 棒の上に月合計を表示するカスタムプラグイン。
-            const totalLabelPlugin = {
-                id: "totalLabel",
-                afterDatasetsDraw(chart) {
-                    const { ctx, scales: { x, y } } = chart;
-                    ctx.save();
-                    ctx.font = "500 11px sans-serif";
-                    ctx.fillStyle = "#5F5E5A";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "bottom";
-                    totals.forEach((total, i) => {
-                        const xPos = x.getPixelForValue(i);
-                        const yPos = y.getPixelForValue(total);
-                        ctx.fillText(
-                            total.toLocaleString() + "円", xPos, yPos - 4
-                        );
-                    });
-                    ctx.restore();
-                },
-            };
-
             const ctx = canvas.getContext("2d");
             chartInstance = new Chart(ctx, {
-                plugins: [totalLabelPlugin],
                 type: "bar",
                 data: {
-                    labels: months,
+                    labels: shortLabels,
                     datasets: categories.map((cat, i) => ({
                         label: cat,
                         data: dataMap[cat],
@@ -825,7 +932,6 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 24 } },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -833,6 +939,11 @@
                                 label: ctx =>
                                     ctx.dataset.label + ": " +
                                     ctx.parsed.y.toLocaleString() + "円",
+                                // footerに月合計を表示する。
+                                footer: tooltipItems => {
+                                    const i = tooltipItems[0].dataIndex;
+                                    return "合計: " + totals[i].toLocaleString() + "円";
+                                },
                             },
                         },
                     },
@@ -842,6 +953,7 @@
                             ticks: {
                                 autoSkip: false,
                                 maxRotation: 45,
+                                minRotation: 0,
                                 font: { size: 11 },
                             },
                         },
@@ -928,11 +1040,19 @@
 
                 tr.innerHTML = `
                     <td>${tx.date}</td>
-                    <td>${tx.category}</td>
-                    <td>${tx.item || ""}</td>
                     <td class="${amountClass}">
                         ${sign}${tx.amount.toLocaleString()}円
                     </td>
+                    <td title="${tx.item || ""}">${
+                        tx.item
+                            ? (itemFullLength
+                                ? tx.item
+                                : tx.item.length > 17
+                                    ? tx.item.slice(0, 17) + "…"
+                                    : tx.item)
+                            : ""
+                    }</td>
+                    <td>${tx.category}</td>
                     <td>${tx.store_name || ""}</td>
                     <td>${tx.payment_method || ""}</td>
                     <td>${tx.memo || ""}</td>
@@ -983,6 +1103,22 @@
 
             renderTable(sorted);
         }
+
+        // 品目名の表示制限設定。
+        // localStorageに保存してページをまたいで状態を保持する。
+        let itemFullLength = localStorage.getItem("itemFullLength") === "true";
+
+        function toggleItemLength() {
+            itemFullLength = !itemFullLength;
+            localStorage.setItem("itemFullLength", itemFullLength);
+            document.getElementById("itemLengthToggle").textContent =
+                itemFullLength ? "品目名: 全表示" : "品目名: 省略";
+            renderTable(currentTransactionData);
+        }
+
+        // 初期表示時にlocalStorageの状態を反映する。
+        document.getElementById("itemLengthToggle").textContent =
+            itemFullLength ? "品目名: 全表示" : "品目名: 省略";
 
         // ソートのイベントリスナー（テーブルヘッダーのクリック）。
         document.querySelectorAll("th.sortable").forEach(th => {
