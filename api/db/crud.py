@@ -1148,14 +1148,14 @@ def get_category_summary(
             params.append(year_month)
 
         if fixed_mode == "hide":
-            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%%')")
 
         where_clause = "WHERE " + " AND ".join(conditions)
 
         # group モードでは固定費を「固定費」カテゴリに統合する。
         # CASE式でmemoが '[固定]' で始まる取引のcategoryを上書きする。
         category_expr = (
-            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE category END"
+            "CASE WHEN memo LIKE '[固定]%%' THEN '固定費' ELSE category END"
             if fixed_mode == "group"
             else "category"
         )
@@ -1525,12 +1525,12 @@ def get_store_summary(
             params.append(f"%{store_name}%")
 
         if fixed_mode == "hide":
-            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%%')")
 
         where_clause = "WHERE " + " AND ".join(conditions)
 
         store_expr = (
-            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE store_name END"
+            "CASE WHEN memo LIKE '[固定]%%' THEN '固定費' ELSE store_name END"
             if fixed_mode == "group"
             else "store_name"
         )
@@ -1628,12 +1628,12 @@ def get_item_summary(
             params.append(f"%{item}%")
 
         if fixed_mode == "hide":
-            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%%')")
 
         where_clause = "WHERE " + " AND ".join(conditions)
 
         item_expr = (
-            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE item END"
+            "CASE WHEN memo LIKE '[固定]%%' THEN '固定費' ELSE item END"
             if fixed_mode == "group"
             else "item"
         )
@@ -1716,12 +1716,12 @@ def get_payment_method_summary(
             params.append(year_month)
 
         if fixed_mode == "hide":
-            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%%')")
 
         where_clause = "WHERE " + " AND ".join(conditions)
 
         payment_expr = (
-            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE payment_method END"
+            "CASE WHEN memo LIKE '[固定]%%' THEN '固定費' ELSE payment_method END"
             if fixed_mode == "group"
             else "payment_method"
         )
@@ -1797,12 +1797,12 @@ def get_monthly_trend(
         params = [user_id, start_month, end_month, type, person]
 
         if fixed_mode == "hide":
-            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%')")
+            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%%')")
 
         where_clause = "WHERE " + " AND ".join(conditions)
 
         category_expr = (
-            "CASE WHEN memo LIKE '[固定]%' THEN '固定費' ELSE category END"
+            "CASE WHEN memo LIKE '[固定]%%' THEN '固定費' ELSE category END"
             if fixed_mode == "group"
             else "category"
         )
