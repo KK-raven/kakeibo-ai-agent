@@ -1141,13 +1141,18 @@
                 alert("ダウンロードするデータがありません");
                 return;
             }
-            const { yearMonth } = getPeriodRange();
+            const { yearMonth, startMonth, endMonth } = getPeriodRange();
             const person = document.getElementById("personSelector").value;
             const params = new URLSearchParams({
                 user_id: currentUserId,
-                year_month: yearMonth || getYearMonth(0),
                 person,
             });
+            if (yearMonth) {
+                params.set("year_month", yearMonth);
+            } else if (startMonth && endMonth) {
+                params.set("start_month", startMonth);
+                params.set("end_month", endMonth);
+            }
             const url = `${API_BASE}/download/csv?${params}`;
             if (liff.isInClient()) {
                 liff.openWindow({ url, external: true });
@@ -1162,15 +1167,20 @@
                 alert("ダウンロードするデータがありません");
                 return;
             }
-            const { yearMonth } = getPeriodRange();
+            const { yearMonth, startMonth, endMonth } = getPeriodRange();
             const type = document.getElementById("typeSelector").value;
             const person = document.getElementById("personSelector").value;
             const params = new URLSearchParams({
                 user_id: currentUserId,
-                year_month: yearMonth || getYearMonth(0),
                 type,
                 person,
             });
+            if (yearMonth) {
+                params.set("year_month", yearMonth);
+            } else if (startMonth && endMonth) {
+                params.set("start_month", startMonth);
+                params.set("end_month", endMonth);
+            }
             const url = `${API_BASE}/download/txt?${params}`;
             if (liff.isInClient()) {
                 liff.openWindow({ url, external: true });

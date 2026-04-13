@@ -393,24 +393,34 @@ def liff_guide():
 @app.get("/download/csv")
 def download_csv(
     user_id: int,
-    year_month: str,
+    year_month: str | None = None,
+    start_month: str | None = None,
+    end_month: str | None = None,
     person: str = "自分",
 ):
     """取引データをCSVファイルとして返す。
 
+    year_month と start_month/end_month はどちらか一方を指定する。
     LIFFダッシュボードのダウンロードボタンから呼ばれる。
+
+    Args:
+        user_id: ユーザーID。
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        person: 誰のデータか。
     """
     from io import StringIO
     import csv
     from fastapi.responses import StreamingResponse
     from api.db.crud import get_transactions
-
     transactions = get_transactions(
         user_id=user_id,
         year_month=year_month,
+        start_month=start_month,
+        end_month=end_month,
         person=person,
     )
-
     output = StringIO()
     # BOM付きUTF-8でExcelでも文字化けしない
     output.write("\ufeff")
@@ -431,11 +441,10 @@ def download_csv(
             tx.get("payment_method", ""),
             tx.get("person", ""),
         ])
-
     output.seek(0)
     from urllib.parse import quote
-    filename = f"家計簿_{year_month}.csv"
-
+    period = year_month or f"{start_month}_{end_month}"
+    filename = f"家計簿_{period}.csv"
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
@@ -450,33 +459,46 @@ def download_csv(
 @app.get("/download/txt")
 def download_txt(
     user_id: int,
-    year_month: str,
+    year_month: str | None = None,
+    start_month: str | None = None,
+    end_month: str | None = None,
     type: str = "expense",
     person: str = "自分",
 ):
     """集計レポートをTXTファイルとして返す。
 
+    year_month と start_month/end_month はどちらか一方を指定する。
     LIFFダッシュボードのダウンロードボタンから呼ばれる。
+
+    Args:
+        user_id: ユーザーID。
+        year_month: "YYYY-MM" 形式。1ヶ月指定の場合に使用。
+        start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
+        end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
+        type: "expense" or "income"。
+        person: 誰のデータか。
     """
     from fastapi.responses import StreamingResponse
     from api.db.crud import get_category_summary, get_transactions
-
     summary = get_category_summary(
         user_id=user_id,
         year_month=year_month,
+        start_month=start_month,
+        end_month=end_month,
         type=type,
         person=person,
     )
     transactions = get_transactions(
         user_id=user_id,
         year_month=year_month,
+        start_month=start_month,
+        end_month=end_month,
         person=person,
     )
-
+    period = year_month or f"{start_month}〜{end_month}"
     type_label = "収入" if type == "income" else "支出"
-    text = f"家計簿レポート（{year_month}）\n"
+    text = f"家計簿レポート（{period}）\n"
     text += "=" * 40 + "\n\n"
-
     if summary:
         text += f"【カテゴリ別{type_label}】\n"
         text += "-" * 30 + "\n"
@@ -486,7 +508,6 @@ def download_txt(
             total += s["total"]
         text += "-" * 30 + "\n"
         text += f"合計: ¥{total:,}\n\n"
-
     if transactions:
         text += "【取引明細】\n"
         text += "-" * 30 + "\n"
@@ -498,10 +519,8 @@ def download_txt(
                 f"{tx['category']}{store} "
                 f"¥{tx['amount']:,}\n"
             )
-
     from urllib.parse import quote
-    filename = f"家計簿_{year_month}.txt"
-
+    filename = f"家計簿_{period.replace('〜', '_')}.txt"
     return StreamingResponse(
         iter([text]),
         media_type="text/plain; charset=utf-8",
