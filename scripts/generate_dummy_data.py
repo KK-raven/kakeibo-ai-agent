@@ -1,4 +1,18 @@
 # scripts/generate_dummy_data.py
+"""
+ダミーデータ生成スクリプト
+
+2023-01-01〜2024-12-31 の2年分の家計簿ダミーデータを生成し、
+CSV ファイルとして出力する。生成されたCSVは scripts/seed.py で
+DBに投入することを想定している。
+
+生成対象:
+    transactions.csv: 通常の収支データ（食費・交通費・給与等）
+    fixed_expenses.csv: 固定費マスタ（家賃・サブスク・保険等）
+
+再現性のためシードを固定（numpy: 42, random: 42）しており、
+実行のたびに同一データが生成される。
+"""
 import pandas as pd
 import numpy as np
 from datetime import date, timedelta

@@ -63,6 +63,10 @@ def chat_endpoint(request: ChatRequest):
         "message": "セブンで弁当500円買った",
         "conversation_history": [...]
     }
+
+    Returns:
+        ChatResponse: response（AIの返答テキスト）と
+        tool_results（実行されたツールの一覧）を含むオブジェクト。
     """
     logger.info(
         f"リクエスト受信: user_id={request.user_id}"
@@ -108,6 +112,10 @@ def get_transactions_endpoint(
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         limit: 取得件数の上限。デフォルト20件。
         user_id: ユーザーID。省略時はデモユーザー。
+
+    Returns:
+        dict: {"transactions": list[dict]} 形式。各dictは取引1件分の
+        date/type/amount/category/store_name 等のフィールドを含む。
     """
     from api.db.crud import get_transactions
     uid = user_id if user_id is not None else get_demo_user_id()
@@ -147,6 +155,10 @@ def get_category_summary_endpoint(
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
+
+    Returns:
+        dict: {"summary": list[dict]} 形式。各dictは category/total/count
+        フィールドを含む。
     """
     from api.db.crud import get_category_summary
     uid = user_id if user_id is not None else get_demo_user_id()
@@ -185,6 +197,10 @@ def get_store_summary_endpoint(
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
+
+    Returns:
+        dict: {"summary": list[dict]} 形式。各dictは store_name/total/count
+        フィールドを含む。
     """
     from api.db.crud import get_store_summary
     uid = user_id if user_id is not None else get_demo_user_id()
@@ -223,6 +239,10 @@ def get_item_summary_endpoint(
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
+
+    Returns:
+        dict: {"summary": list[dict]} 形式。各dictは item/total/count
+        フィールドを含む。
     """
     from api.db.crud import get_item_summary
     uid = user_id if user_id is not None else get_demo_user_id()
@@ -261,6 +281,10 @@ def get_payment_method_summary_endpoint(
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
+
+    Returns:
+        dict: {"summary": list[dict]} 形式。各dictは payment_method/total/count
+        フィールドを含む。
     """
     from api.db.crud import get_payment_method_summary
     uid = user_id if user_id is not None else get_demo_user_id()
@@ -297,6 +321,10 @@ def get_monthly_trend_endpoint(
         person: 誰の集計か。
         fixed_mode: "show" / "group" / "hide"。固定費の表示制御。
         user_id: ユーザーID。省略時はデモユーザー。
+
+    Returns:
+        dict: {"trend": list[dict]} 形式。各dictは year_month とカテゴリ別金額の
+        フィールドを含む（グラフ描画用）。
     """
     from api.db.crud import get_monthly_trend
     uid = user_id if user_id is not None else get_demo_user_id()
@@ -317,6 +345,9 @@ def download_export(filename: str):
 
     Args:
         filename: ダウンロードするファイル名。
+
+    Returns:
+        FileResponse: ファイルの内容。ファイルが存在しない場合は404を返す。
     """
     from pathlib import Path
     from fastapi.responses import FileResponse
@@ -350,6 +381,9 @@ def resolve_user_id(line_user_id: str):
 
     Args:
         line_user_id: LINEのユーザーID。
+
+    Returns:
+        dict: {"user_id": int} 形式。ユーザーが未登録の場合は新規作成して返す。
     """
     from api.db.connection import get_or_create_user
 
@@ -363,6 +397,9 @@ def liff_dashboard():
 
     LIFF IDを環境変数から読み取り、HTMLに埋め込んで返す。
     LIFF IDはLINE DevelopersコンソールでLIFFアプリ登録後に取得する。
+
+    Returns:
+        HTMLResponse: LIFF_ID を埋め込んだダッシュボードHTML。
     """
     liff_id = os.environ.get("LIFF_ID", "")
 
@@ -382,6 +419,9 @@ def liff_guide():
 
     LINEリッチメニューからアクセスする説明書ページ。
     認証不要で誰でも閲覧できる。
+
+    Returns:
+        HTMLResponse: 使い方ガイドのHTML。
     """
     html_path = os.path.join(
         os.path.dirname(__file__), "liff", "guide.html",
@@ -409,6 +449,10 @@ def download_csv(
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         person: 誰のデータか。
+
+    Returns:
+        StreamingResponse: BOM付きUTF-8のCSVファイル。ファイル名は
+        「家計簿_{period}.csv」形式（例: 家計簿_2024-01.csv）。
     """
     from io import StringIO
     import csv
@@ -477,6 +521,10 @@ def download_txt(
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         type: "expense" or "income"。
         person: 誰のデータか。
+
+    Returns:
+        StreamingResponse: カテゴリ別集計と取引明細を含むテキストファイル。
+        ファイル名は「家計簿_{period}.txt」形式。
     """
     from fastapi.responses import StreamingResponse
     from api.db.crud import get_category_summary, get_transactions

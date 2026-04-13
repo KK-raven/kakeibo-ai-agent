@@ -142,7 +142,21 @@ def send_message(
 
 
 def main():
-    """Streamlitアプリのエントリーポイント。"""
+    """Streamlitアプリのエントリーポイント。
+
+    サイドバーにヘルスチェック状態と取引履歴テーブルを表示し、
+    メイン領域にカテゴリ別支出グラフとチャット UI を配置する。
+
+    st.session_state で以下の状態を管理する:
+        messages: 画面表示用の会話ログ（role/content のリスト）。
+        conversation_history: APIに送る会話履歴（role/content のリスト）。
+        last_export_filename: 直近のエクスポートファイル名。
+            レスポンスにファイル名が含まれた場合にのみ更新され、
+            ダウンロードボタンの表示に使用する。
+
+    書き込み系ツール（get_/check_ 以外）が実行された場合、または
+    エクスポートファイルが生成された場合は st.rerun() でUI を再描画する。
+    """
     st.title("家計簿AIエージェント")
 
     with st.sidebar:
