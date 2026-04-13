@@ -1070,12 +1070,16 @@
         }
 
         function sortTable(col, colType) {
-            // 同じ列を再クリックした場合: 昇順→降順→解除（デフォルトに戻る）の3段階。
+            // 同じ列を再クリックした場合のサイクル:
+            // 金額列: desc → asc → 解除
+            // その他: asc → desc → 解除
             if (sortCol === col) {
-                if (sortDir === "asc") {
-                    sortDir = "desc";
-                } else if (sortDir === "desc") {
-                    // 3回目のクリックでソート解除。日付降順に戻す。
+                const firstDir = col === "amount" ? "desc" : "asc";
+                const secondDir = col === "amount" ? "asc" : "desc";
+                if (sortDir === firstDir) {
+                    sortDir = secondDir;
+                } else {
+                    // 3回目で解除。日付降順に戻す。
                     sortCol = "date";
                     sortDir = "desc";
                     renderTable(currentTransactionData);
