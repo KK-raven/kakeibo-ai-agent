@@ -89,6 +89,9 @@ def _build_system_prompt(user_id: int) -> str:
 - 収入カテゴリ: 給与/賞与/副業・フリーランス/金融資産/ギャンブル/臨時収入/その他
 - 支払方法が明示されなければ省略してください（システムがデフォルト値を適用します）
 - 取引の削除・更新は必ず2ステップで行うこと。①get_transactionsで候補一覧を表示してユーザーに確認を求める。②「はい」「削除して」「OK」等の明示的な承認が来て初めてToolを実行する。承認なしに削除・更新のToolを実行することは絶対に禁止
+- 削除・更新の対象は、直前のget_transactionsで取得した結果の中からのみ選ぶこと。過去の会話で取得した取引IDを再利用してはならない
+- get_transactionsの検索結果に複数件ヒットした場合は、全件を表示してどれを対象とするかユーザーに選ばせること。特に短い検索語（1〜2文字）では意図しない部分一致が起きやすいため注意
+- 品目名だけでカテゴリが曖昧な場合（「水」「チョコ」等の短い語）は、ユーザーにカテゴリを確認すること。店名等の文脈から明らかな場合は確認不要
 - 新しい支払方法を追加する場合は、必ずユーザーに確認してください
 - 回答は簡潔に、親しみやすい口調でお願いします
 - ファイル出力時は必ず専用の集計ツールで数値を取得してからcontentを生成すること。数値の計算は絶対に自分で行わないこと
@@ -370,6 +373,60 @@ def _post_process(
     return None
 
 
+# 確認フローが必要な更新系ツール。
+# これらのツールは事前に get_transactions で候補を表示し、
+# ユーザーの承認を得てから実行する必要がある。
+_CONFIRMATION_REQUIRED_TOOLS = {"delete_transaction", "update_transaction"}
+
+
+def _has_get_transactions_result(messages: list[dict]) -> bool:
+    """直近の get_transactions 実行後に確認フローが有効か判定する。
+
+    以下の条件を全て満たす場合に True を返す:
+    1. 会話履歴内に get_transactions の実行結果がある
+    2. get_transactions の後に user メッセージが1つ以下（承認のみ）
+    3. get_transactions の後に他の更新系ツールが実行されていない
+
+    条件3により、確認フロー中に別の操作（登録等）が割り込んだ場合は
+    フローを無効化し、再度 get_transactions から始めさせる。
+
+    Args:
+        messages: 現在の会話のメッセージリスト。
+
+    Returns:
+        直近の確認フローが有効なら True。
+    """
+    last_get_idx = None
+    for i in range(len(messages) - 1, -1, -1):
+        msg = messages[i]
+        if msg.get("role") != "assistant":
+            continue
+        tool_calls = msg.get("tool_calls", [])
+        for tc in tool_calls:
+            if tc.get("function", {}).get("name") == "get_transactions":
+                last_get_idx = i
+                break
+        if last_get_idx is not None:
+            break
+
+    if last_get_idx is None:
+        return False
+
+    user_msg_count = 0
+    for i in range(last_get_idx + 1, len(messages)):
+        msg = messages[i]
+        if msg.get("role") == "user":
+            user_msg_count += 1
+        elif msg.get("role") == "assistant":
+            tool_calls = msg.get("tool_calls", [])
+            for tc in tool_calls:
+                name = tc.get("function", {}).get("name", "")
+                if not name.startswith(("get_", "check_")):
+                    return False
+
+    return user_msg_count <= 1
+
+
 def chat(
     user_id: int,
     user_message: str,
@@ -462,6 +519,37 @@ def chat(
                     "content": json.dumps(
                         {"error": error_msg}, ensure_ascii=False,
                     ),
+                })
+                continue
+            
+            # 確認フローが必要なツールのプログラム的ガード。
+            # 直近のget_transactionsの結果が有効な状態でないと
+            # delete/updateを実行できない。
+            # messages[:-1]で現在のターンのassistantメッセージを
+            # 除外する。自身のtool_callが更新系ツールとして
+            # 検出され、誤ってブロックされるのを防ぐため。
+            if (
+                tool_name in _CONFIRMATION_REQUIRED_TOOLS
+                and not _has_get_transactions_result(messages[:-1])
+            ):
+                block_msg = (
+                    "このツールを実行する前に、get_transactionsで"
+                    "対象の取引を検索し、ユーザーに確認してください。"
+                )
+                logger.warning(
+                    f"確認フロー未完了のためブロック: {tool_name}"
+                )
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": json.dumps(
+                        {"error": block_msg}, ensure_ascii=False,
+                    ),
+                })
+                tool_results.append({
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "error": block_msg,
                 })
                 continue
 
