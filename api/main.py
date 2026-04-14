@@ -17,6 +17,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+from api.db import crud
 from api.db.connection import close_pool, get_demo_user_id, init_db
 from api.models.schemas import ChatRequest, ChatResponse
 from api.agent.core import chat
@@ -578,3 +579,20 @@ def download_txt(
             ),
         },
     )
+
+
+@app.get("/health_indicators")
+async def get_health_indicators(
+    user_id: int,
+    year_month: str | None = None,
+):
+    """家計健全性指標を返すエンドポイント。
+
+    エンゲル係数・住居費比率・固定費比率・貯蓄率をSQL集計で算出する。
+    ダッシュボードの健全性指標セクションから呼び出される。
+
+    Args:
+        user_id: ユーザーID。
+        year_month: 集計対象年月（YYYY-MM形式）。省略時は当月。
+    """
+    return crud.get_health_indicators(user_id=user_id, year_month=year_month)

@@ -346,6 +346,63 @@
             padding: 20px;
             color: #888;
         }
+
+        .health-section {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .health-section h2 {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+
+        .health-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .health-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .health-card .indicator-label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .health-card .indicator-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .health-card .indicator-detail {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .health-note {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .health-month {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -418,6 +475,37 @@
         <button class="download-btn txt" onclick="downloadTXT()">
             📥 TXT ダウンロード
         </button>
+    </div>
+
+    <div class="health-section">
+        <h2>🏥 家計健全性指標</h2>
+        <div id="healthLoading" class="loading">読み込み中...</div>
+        <div id="healthContent" style="display:none;">
+            <div class="health-month" id="healthMonth"></div>
+            <div class="health-grid">
+                <div class="health-card">
+                    <div class="indicator-label">エンゲル係数</div>
+                    <div class="indicator-value" id="engelValue">-</div>
+                    <div class="indicator-detail" id="engelDetail"></div>
+                </div>
+                <div class="health-card">
+                    <div class="indicator-label">住居費比率</div>
+                    <div class="indicator-value" id="housingValue">-</div>
+                    <div class="indicator-detail" id="housingDetail"></div>
+                </div>
+                <div class="health-card">
+                    <div class="indicator-label">固定費比率</div>
+                    <div class="indicator-value" id="fixedCostValue">-</div>
+                    <div class="indicator-detail" id="fixedCostDetail"></div>
+                </div>
+                <div class="health-card">
+                    <div class="indicator-label">貯蓄率</div>
+                    <div class="indicator-value" id="savingsValue">-</div>
+                    <div class="indicator-detail" id="savingsDetail"></div>
+                </div>
+            </div>
+            <div class="health-note" id="healthNote"></div>
+        </div>
     </div>
 
     <div class="section-header">
@@ -629,6 +717,7 @@
                 loadChart(),
                 loadSummaryTotals(),
                 loadTransactions(),
+                loadHealthIndicators(),
             ]);
         }
 
@@ -1186,6 +1275,83 @@
                 liff.openWindow({ url, external: true });
             } else {
                 window.location.href = url;
+            }
+        }
+
+        // --- 家計健全性指標 ---
+
+        async function loadHealthIndicators() {
+            // 健全性指標は単月集計のため、期間指定時は終了月を使用する。
+            const { yearMonth, endMonth } = getPeriodRange();
+            const targetMonth = yearMonth || endMonth;
+
+            const healthLoading = document.getElementById("healthLoading");
+            const healthContent = document.getElementById("healthContent");
+
+            healthLoading.style.display = "block";
+            healthContent.style.display = "none";
+
+            try {
+                const params = new URLSearchParams({
+                    user_id: currentUserId,
+                    year_month: targetMonth,
+                });
+
+                const res = await fetch(`${API_BASE}/health_indicators?${params}`);
+                const data = await res.json();
+
+                healthLoading.style.display = "none";
+                healthContent.style.display = "block";
+
+                document.getElementById("healthMonth").textContent =
+                    `${targetMonth} 実績`;
+
+                // 比率を百分率にフォーマット。計算不可の場合は "-" を表示。
+                const formatRatio = (value) => {
+                    if (value === null || value === undefined) return "-";
+                    return (value * 100).toFixed(1) + "%";
+                };
+
+                // 内訳を万円単位でフォーマット。
+                const formatMan = (yen) => {
+                    if (!yen) return "0円";
+                    return yen >= 10000
+                        ? (yen / 10000).toFixed(1) + "万円"
+                        : yen.toLocaleString() + "円";
+                };
+
+                const e = data.engel;
+                document.getElementById("engelValue").textContent =
+                    formatRatio(e.value);
+                document.getElementById("engelDetail").textContent =
+                    `食費 ${formatMan(e.food_expense)} / 支出 ${formatMan(e.total_expense)}`;
+
+                const h = data.housing;
+                document.getElementById("housingValue").textContent =
+                    formatRatio(h.value);
+                document.getElementById("housingDetail").textContent =
+                    `住居費 ${formatMan(h.housing_expense)} / 支出 ${formatMan(h.total_expense)}`;
+
+                const f = data.fixed_cost;
+                document.getElementById("fixedCostValue").textContent =
+                    formatRatio(f.value);
+                document.getElementById("fixedCostDetail").textContent =
+                    `固定費 ${formatMan(f.fixed_total)} / 支出 ${formatMan(f.total_expense)}`;
+
+                const s = data.savings;
+                document.getElementById("savingsValue").textContent =
+                    data.has_income ? formatRatio(s.value) : "収入データなし";
+                document.getElementById("savingsDetail").textContent =
+                    data.has_income
+                        ? `収入 ${formatMan(s.income)} - 支出 ${formatMan(s.expense)}`
+                        : "";
+
+                document.getElementById("healthNote").textContent = data.note;
+
+            } catch (err) {
+                console.error("健全性指標取得エラー:", err);
+                healthLoading.innerHTML =
+                    '<span class="error">データの取得に失敗しました</span>';
             }
         }
 

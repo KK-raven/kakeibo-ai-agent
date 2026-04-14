@@ -266,7 +266,7 @@ TOOL_FUNCTIONS = {
     "get_help": get_help_func,
     "set_character": set_character,
     "get_character": get_character,
-    
+    "get_health_indicators": crud.get_health_indicators,
 }
 
 

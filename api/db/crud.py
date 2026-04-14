@@ -1950,3 +1950,160 @@ def save_conversation_messages(
         raise
     finally:
         release_connection(conn)
+
+
+def get_health_indicators(
+    user_id: int,
+    year_month: str | None = None,
+) -> dict:
+    """家計健全性指標を算出する。
+
+    エンゲル係数・住居費比率・固定費比率・貯蓄率の4指標を
+    SQL集計で算出する。ステータス判定は行わず、実測値と参考値を
+    返してLLMに解釈させる設計とする（ハルシネーション対策として
+    参考値はtool戻り値に含め、LLMが自分の知識から生成しない）。
+
+    固定費比率の固定費はfixed_expensesテーブル（is_active=1）の
+    月額合計を使用する。住居費は固定費に含まれるが、両指標は
+    視点が異なる（住居費比率：住居費の圧迫度、固定費比率：
+    支出全体に占める削れない費用の割合）。
+
+    Args:
+        user_id: ユーザーID。
+        year_month: 集計対象年月（"YYYY-MM" 形式）。
+            Noneの場合は当月を使用する。
+
+    Returns:
+        以下のキーを持つ辞書。
+        {
+            "year_month": "2026-04",
+            "engel": {
+                "value": 0.28,         # 実測値（比率）。Noneは計算不可
+                "food_expense": 28000,
+                "total_expense": 100000,
+                "reference": "...",    # LLMが参照する参考値
+            },
+            "housing": { ... },
+            "fixed_cost": { ... },
+            "savings": {
+                "value": 0.15,
+                "income": 300000,
+                "expense": 255000,
+                "reference": "...",
+            },
+            "has_income": True,  # Falseの場合、貯蓄率は計算不可
+            "note": "...",
+        }
+    """
+    from datetime import date
+
+    if year_month is None:
+        today = date.today()
+        year_month = today.strftime("%Y-%m")
+
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+
+        # 支出合計・カテゴリ別集計を一括取得
+        cur.execute(
+            """
+            SELECT
+                COALESCE(SUM(amount) FILTER (WHERE type = 'expense'), 0)
+                    AS total_expense,
+                COALESCE(SUM(amount) FILTER (
+                    WHERE type = 'expense' AND category = '食費'
+                ), 0) AS food_expense,
+                COALESCE(SUM(amount) FILTER (
+                    WHERE type = 'expense' AND category = '家賃/住居'
+                ), 0) AS housing_expense,
+                COALESCE(SUM(amount) FILTER (WHERE type = 'income'), 0)
+                    AS total_income
+            FROM transactions
+            WHERE user_id = %s
+              AND to_char(date, 'YYYY-MM') = %s
+            """,
+            (user_id, year_month),
+        )
+        row = cur.fetchone()
+
+        total_expense = row["total_expense"]
+        food_expense = row["food_expense"]
+        housing_expense = row["housing_expense"]
+        total_income = row["total_income"]
+
+        # 固定費合計はマスタ側（fixed_expenses）から取得する。
+        # transactionsのmemo "[固定]" ではなく、登録済みの設定値を使うことで
+        # 計上タイミングに依存しない安定した集計が可能。
+        
+        cur.execute(
+            """
+            SELECT COALESCE(SUM(amount), 0) AS fixed_total
+            FROM fixed_expenses
+            WHERE user_id = %s AND is_active = 1
+            """,
+            (user_id,),
+        )
+        fixed_total = cur.fetchone()["fixed_total"]
+
+        def _calc_ratio(numerator: int, denominator: int) -> float | None:
+            """比率を計算する。分母が0の場合はNoneを返す。"""
+            if denominator == 0:
+                return None
+            return round(numerator / denominator, 4)
+
+        engel = _calc_ratio(food_expense, total_expense)
+        housing = _calc_ratio(housing_expense, total_expense)
+        fixed_cost = _calc_ratio(fixed_total, total_expense)
+        savings = _calc_ratio(total_income - total_expense, total_income)
+
+        return {
+            "year_month": year_month,
+            "engel": {
+                "value": engel,
+                "food_expense": food_expense,
+                "total_expense": total_expense,
+                "reference": (
+                    "一般的な目安は25%程度とされているが、"
+                    "総務省家計調査では現代日本の平均は25〜28%程度"
+                ),
+            },
+            "housing": {
+                "value": housing,
+                "housing_expense": housing_expense,
+                "total_expense": total_expense,
+                "reference": (
+                    "一般的な目安は25%程度とされているが、"
+                    "地域・収入水準により大きく異なる"
+                ),
+            },
+            "fixed_cost": {
+                "value": fixed_cost,
+                "fixed_total": fixed_total,
+                "total_expense": total_expense,
+                "reference": (
+                    "一般的な目安は50%以下とされているが、"
+                    "厳密な統計的根拠はなく参考値として扱うこと"
+                ),
+            },
+            "savings": {
+                "value": savings,
+                "income": total_income,
+                "expense": total_expense,
+                "reference": (
+                    "一般的な目安は20%以上とされているが、"
+                    "ライフステージ・家族構成により適切な値は異なる"
+                ),
+            },
+            "has_income": total_income > 0,
+            "note": (
+                "各目安値は参考値であり、収入水準・ライフステージ・"
+                "地域によって適切な値は異なる。断定的な評価は避けること"
+            ),
+        }
+
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        release_connection(conn)

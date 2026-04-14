@@ -958,4 +958,34 @@ TOOLS = [
             },
         },
     },
+    
+    # === 家計健全性指標 ===
+    {
+        "type": "function",
+        "function": {
+            "name": "get_health_indicators",
+            "description": (
+                "家計健全性指標（エンゲル係数・住居費比率・固定費比率・貯蓄率）を算出する。"
+                "「家計の健全性を確認したい」「貯蓄率はどのくらい？」"
+                "「家計診断して」などと聞かれたときに使う。"
+                "結果のreferenceフィールドに各指標の参考値が含まれるため、"
+                "目安値は必ずreferenceフィールドを参照すること。"
+                "自分の知識から閾値・目安値を生成しないこと。"
+                "has_incomeがFalseの場合、貯蓄率は計算不可であることを伝えること。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "year_month": {
+                        "type": "string",
+                        "description": (
+                            "集計対象年月（YYYY-MM形式）。"
+                            "指定がない場合は省略する（当月が自動適用される）。"
+                        ),
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
 ]
