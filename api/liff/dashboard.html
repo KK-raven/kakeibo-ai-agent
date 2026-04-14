@@ -452,9 +452,6 @@
         <button class="toggle-btn" id="fixedModeBtn" onclick="toggleFixedMode()">
             📌 固定費: 表示
         </button>
-        <button class="toggle-btn active-hide" id="healthToggleBtn" onclick="toggleHealth()">
-            🏥 健全性: 非表示
-        </button>
     </div>
 
     <div class="chart-section">
@@ -518,6 +515,12 @@
     <div class="section-header">
         <h2>取引履歴</h2>
         <div class="section-controls">
+            <button id="healthToggleBtn" onclick="toggleHealth()"
+                style="padding: 4px 8px; border: 1px solid #ddd;
+                    border-radius: 6px; font-size: 0.85rem;
+                    background: #fff; cursor: pointer;">
+                🏥 非表示
+            </button>
             <button id="itemLengthToggle" onclick="toggleItemLength()"
                 style="padding: 4px 8px; border: 1px solid #ddd;
                     border-radius: 6px; font-size: 0.85rem;
@@ -609,8 +612,7 @@
             const section = document.querySelector(".health-section");
             const btn = document.getElementById("healthToggleBtn");
             section.classList.toggle("hidden", !healthVisible);
-            btn.textContent = healthVisible ? "🏥 健全性: 表示" : "🏥 健全性: 非表示";
-            btn.className = healthVisible ? "toggle-btn" : "toggle-btn active-hide";
+            btn.textContent = healthVisible ? "🏥 表示" : "🏥 非表示";
         }
 
         function toggleFixedMode() {
