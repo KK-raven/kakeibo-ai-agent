@@ -384,7 +384,8 @@ def _has_get_transactions_result(messages: list[dict]) -> bool:
 
     以下の条件を全て満たす場合に True を返す:
     1. 会話履歴内に get_transactions の実行結果がある
-    2. get_transactions の後に user メッセージが1つ以下（承認のみ）
+    2. get_transactions の後に user メッセージが3つ以下
+       （複数件ヒット時の選択 + 2ステップ確認を許容）
     3. get_transactions の後に他の更新系ツールが実行されていない
 
     条件3により、確認フロー中に別の操作（登録等）が割り込んだ場合は
@@ -424,7 +425,7 @@ def _has_get_transactions_result(messages: list[dict]) -> bool:
                 if not name.startswith(("get_", "check_")):
                     return False
 
-    return user_msg_count <= 1
+    return user_msg_count <= 3
 
 
 def chat(
