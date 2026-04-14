@@ -67,6 +67,21 @@ def register_transaction(
     try:
         cur = conn.cursor()
 
+        # クレジットカード払いでカード名が未指定の場合、
+        # デフォルトカードを自動補完する。
+        if payment_method == "クレジットカード" and card_name is None:
+            cur.execute(
+                """
+                SELECT name FROM credit_cards
+                WHERE user_id = %s AND is_default = 1
+                LIMIT 1
+                """,
+                (user_id,),
+            )
+            row = cur.fetchone()
+            if row:
+                card_name = row["name"]
+
         cur.execute(
             """
             INSERT INTO transactions
@@ -2035,7 +2050,7 @@ def get_health_indicators(
         # 固定費合計はマスタ側（fixed_expenses）から取得する。
         # transactionsのmemo "[固定]" ではなく、登録済みの設定値を使うことで
         # 計上タイミングに依存しない安定した集計が可能。
-        
+
         cur.execute(
             """
             SELECT COALESCE(SUM(amount), 0) AS fixed_total
