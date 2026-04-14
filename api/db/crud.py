@@ -7,6 +7,7 @@
 
 import calendar
 from datetime import date
+import json
 
 from api.db.connection import get_connection, release_connection
 from api.utils.business_day import next_business_day
@@ -1856,6 +1857,8 @@ def get_conversation_history(
 
     最終メッセージから一定時間経過していた場合は
     履歴をクリアして新しいセッションとして扱う。
+    tool_calls や tool_call_id が保存されている場合は
+    それらも復元し、削除・更新の確認フローを継続可能にする。
 
     Args:
         user_id: ユーザーID。
@@ -1865,12 +1868,12 @@ def get_conversation_history(
     Returns:
         (会話履歴リスト, セッションリセットされたかどうか) のタプル。
         会話履歴は [{"role": "user", "content": "..."}, ...] 形式。
+        assistantロールはtool_calls、toolロールはtool_call_idを含む場合がある。
     """
     conn = get_connection()
     try:
         cur = conn.cursor()
 
-        # 最新メッセージのタイムスタンプを確認
         cur.execute(
             """
             SELECT created_at FROM conversation_history
@@ -1890,12 +1893,10 @@ def get_conversation_history(
             now = datetime.now(timezone.utc)
             last_time = last_row["created_at"]
 
-            # PostgreSQLのTIMESTAMPはタイムゾーン情報なしで返る場合がある
             if last_time.tzinfo is None:
                 last_time = last_time.replace(tzinfo=timezone.utc)
 
             if now - last_time > timedelta(minutes=timeout_minutes):
-                # タイムアウト: 古い履歴を全削除
                 cur.execute(
                     "DELETE FROM conversation_history WHERE user_id = %s",
                     (user_id,),
@@ -1904,10 +1905,10 @@ def get_conversation_history(
                 is_new_session = True
                 return [], is_new_session
 
-        # セッション継続中: 全履歴を取得
         cur.execute(
             """
-            SELECT role, content FROM conversation_history
+            SELECT role, content, tool_calls, tool_call_id
+            FROM conversation_history
             WHERE user_id = %s
             ORDER BY created_at ASC, id ASC
             """,
@@ -1915,11 +1916,16 @@ def get_conversation_history(
         )
         rows = cur.fetchall()
 
-        return (
-            [{"role": row["role"], "content": row["content"]}
-             for row in rows],
-            is_new_session,
-        )
+        history = []
+        for row in rows:
+            msg = {"role": row["role"], "content": row["content"]}
+            if row["tool_calls"] is not None:
+                msg["tool_calls"] = row["tool_calls"]
+            if row["tool_call_id"] is not None:
+                msg["tool_call_id"] = row["tool_call_id"]
+            history.append(msg)
+
+        return history, is_new_session
 
     except Exception:
         conn.rollback()
@@ -1935,27 +1941,36 @@ def save_conversation_messages(
     """会話メッセージを保存する。
 
     セッション内のメッセージを蓄積する。
+    tool_calls（assistantのツール呼び出し情報）や
+    tool_call_id（toolロールの紐付けID）がある場合は
+    それらも保存する。
     古い履歴の削除はget_conversation_historyの
     タイムアウト判定時に行う。
 
     Args:
         user_id: ユーザーID。
         messages: 保存するメッセージのリスト。
-            [{"role": "user", "content": "..."},
-             {"role": "assistant", "content": "..."}]
+            user/assistant/tool の各ロールを含む。
     """
     conn = get_connection()
     try:
         cur = conn.cursor()
 
         for msg in messages:
+            tool_calls = msg.get("tool_calls")
             cur.execute(
                 """
                 INSERT INTO conversation_history
-                    (user_id, role, content)
-                VALUES (%s, %s, %s)
+                    (user_id, role, content, tool_calls, tool_call_id)
+                VALUES (%s, %s, %s, %s, %s)
                 """,
-                (user_id, msg["role"], msg["content"]),
+                (
+                    user_id,
+                    msg["role"],
+                    msg.get("content"),
+                    json.dumps(tool_calls) if tool_calls else None,
+                    msg.get("tool_call_id"),
+                ),
             )
 
         conn.commit()

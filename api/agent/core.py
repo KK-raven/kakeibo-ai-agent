@@ -460,6 +460,9 @@ def chat(
     messages.append({"role": "user", "content": user_message})
 
     tool_results = []
+    messages_to_save = []
+
+    tool_results = []
 
     for iteration in range(MAX_TOOL_CALLS):
         logger.debug(f"LLM呼び出し: iteration={iteration + 1}")
@@ -476,6 +479,7 @@ def chat(
             return {
                 "response": "申し訳ありません、処理中にエラーが発生しました。",
                 "tool_results": tool_results,
+                "messages_to_save": messages_to_save,
             }
 
         choice = response.choices[0]
@@ -486,6 +490,7 @@ def chat(
             return {
                 "response": assistant_message.content,
                 "tool_results": tool_results,
+                "messages_to_save": messages_to_save,
             }
 
         messages.append({
@@ -503,6 +508,7 @@ def chat(
                 for tc in assistant_message.tool_calls
             ],
         })
+        messages_to_save.append(messages[-1])
 
         for tc in assistant_message.tool_calls:
             tool_name = tc.function.name
@@ -521,6 +527,7 @@ def chat(
                         {"error": error_msg}, ensure_ascii=False,
                     ),
                 })
+                messages_to_save.append(messages[-1])
                 continue
             
             # 確認フローが必要なツールのプログラム的ガード。
@@ -547,6 +554,7 @@ def chat(
                         {"error": block_msg}, ensure_ascii=False,
                     ),
                 })
+                messages_to_save.append(messages[-1])
                 tool_results.append({
                     "tool": tool_name,
                     "args": tool_args,
@@ -573,6 +581,7 @@ def chat(
                         {"error": error_msg}, ensure_ascii=False,
                     ),
                 })
+                messages_to_save.append(messages[-1])
                 tool_results.append({
                     "tool": tool_name,
                     "args": tool_args,
@@ -604,6 +613,7 @@ def chat(
                     tool_content, ensure_ascii=False, default=str,
                 ),
             })
+            messages_to_save.append(messages[-1])
 
     logger.warning(f"Tool呼び出し上限到達: {MAX_TOOL_CALLS}回")
     messages.append({
@@ -631,4 +641,5 @@ def chat(
     return {
         "response": final_content,
         "tool_results": tool_results,
+        "messages_to_save": messages_to_save,
     }

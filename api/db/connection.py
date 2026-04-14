@@ -155,14 +155,35 @@ def init_db() -> None:
         # --- conversation_history テーブル ---
         # LINE Bot用の会話履歴。ユーザーごとに直近の会話を保持し、
         # 複数ターンにまたがる対話（削除確認、固定出金登録等）を実現する。
+        # tool_calls: assistantのツール呼び出し情報（JSONB）
+        # tool_call_id: toolロールのメッセージがどのtool_callへの応答かを示すID
         cur.execute("""
             CREATE TABLE IF NOT EXISTS conversation_history (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL REFERENCES users(id),
                 role TEXT NOT NULL,
-                content TEXT NOT NULL,
+                content TEXT,
+                tool_calls JSONB,
+                tool_call_id TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+        """)
+        # conversation_history: マイグレーション
+        # 削除・更新の確認フローで tool_calls / tool ロールの
+        # メッセージを復元するために必要なカラムを追加
+        for col, col_type in [
+            ("tool_calls", "JSONB"),
+            ("tool_call_id", "TEXT"),
+        ]:
+            cur.execute(f"""
+                ALTER TABLE conversation_history
+                ADD COLUMN IF NOT EXISTS {col} {col_type}
+            """)
+
+        # ツール呼び出しのみ（テキストなし）のassistantメッセージに対応
+        cur.execute("""
+            ALTER TABLE conversation_history
+            ALTER COLUMN content DROP NOT NULL
         """)
 
         # --- store_category_mapping テーブル ---

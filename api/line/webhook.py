@@ -278,6 +278,7 @@ def _handle_message_common(
 
     crud.save_conversation_messages(user_id, [
         {"role": "user", "content": user_message},
+        *result["messages_to_save"],
         {"role": "assistant", "content": response_text},
     ])
 
