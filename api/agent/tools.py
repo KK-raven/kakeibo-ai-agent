@@ -883,7 +883,7 @@ TOOLS = [
             },
         },
     },
-    
+
     # === ヘルプ ===
     {
         "type": "function",
@@ -907,6 +907,53 @@ TOOLS = [
                         ),
                     },
                 },
+                "required": [],
+            },
+        },
+    },
+
+    # === キャラ設定 ===
+    {
+        "type": "function",
+        "function": {
+            "name": "set_character",
+            "description": (
+                "アシスタントのキャラクターを変更する。"
+                "「ぴよちゃんにして」「キャラを鴉に変えて」"
+                "「キャラをデフォルトに戻して」「キャラリセット」"
+                "のように言われたときに使う。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "preset": {
+                        "type": "string",
+                        "enum": ["デフォルト", "ぴよちゃん", "鴉", "賢者"],
+                        "description": (
+                            "キャラクターのプリセット名。"
+                            "デフォルト: 通常の家計簿アシスタント。"
+                            "ぴよちゃん: 癒し系。"
+                            "鴉: 尊大だが忠実。"
+                            "賢者: 哲学的。"
+                        ),
+                    },
+                },
+                "required": ["preset"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_character",
+            "description": (
+                "現在のキャラクター設定を確認する。"
+                "「今のキャラは？」「キャラ設定を見せて」"
+                "と聞かれたときに使う。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {},
                 "required": [],
             },
         },

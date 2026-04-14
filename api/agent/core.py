@@ -26,6 +26,7 @@ from api.agent.tools import TOOLS
 from api.db import crud
 from api.utils.file_export import export_file as export_file_util
 from api.agent.help import get_help as get_help_func
+from api.agent.character import set_character, get_character
 from api.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -41,16 +42,43 @@ MAX_TOOL_CALLS = 5
 _NO_USER_ID_TOOLS = {"export_file", "get_help"}
 
 
-def _build_system_prompt() -> str:
+def _build_system_prompt(user_id: int) -> str:
     """システムプロンプトを生成する。
 
     今日の日付を動的に埋め込む。
     LLM は学習データの日付を使ってしまうことがあるため、
     明示的に「今日はYYYY-MM-DD」と伝える必要がある。
+
+    キャラ設定がある場合は、名前・性格・口調を
+    プロンプト冒頭に埋め込む。LLMはプロンプトの先頭付近の
+    指示をより強く遵守するため、キャラ情報は冒頭に配置する。
+
+    Args:
+        user_id: ユーザーID。キャラ設定の読み込みに使用。
     """
     today = date.today().isoformat()
-    return f"""あなたは家計簿アシスタントです。
-ユーザーの自然言語入力から意図を判断し、適切なToolを使って家計管理を支援します。
+
+    # キャラ設定の読み込み
+    character = get_character(user_id)
+
+    if character:
+        name = character.get("character_name", "アシスタント")
+        personality = character.get("character_personality", "")
+        tone = character.get("character_tone", "")
+        role_section = (
+            f"あなたは「{name}」という名前の家計簿アシスタントです。\n"
+            f"性格: {personality}\n"
+            f"口調: {tone}\n\n"
+            "ユーザーの自然言語入力から意図を判断し、適切なToolを使って家計管理を支援します。\n"
+            "上記の性格と口調を守りつつ、以下のルールに従って応答してください。"
+        )
+    else:
+        role_section = (
+            "あなたは家計簿アシスタントです。\n"
+            "ユーザーの自然言語入力から意図を判断し、適切なToolを使って家計管理を支援します。"
+        )
+
+    return f"""{role_section}
 
 今日の日付: {today}
 
@@ -196,6 +224,9 @@ TOOL_FUNCTIONS = {
     "get_store_summary": crud.get_store_summary,
     "get_item_summary": crud.get_item_summary,
     "get_help": get_help_func,
+    "set_character": set_character,
+    "get_character": get_character,
+    
 }
 
 
@@ -326,7 +357,7 @@ def chat(
     """
     logger.info(f"ユーザー入力: {user_message}")
 
-    messages = [{"role": "system", "content": _build_system_prompt()}]
+    messages = [{"role": "system", "content": _build_system_prompt(user_id)}]
 
     if conversation_history:
         messages.extend(conversation_history)
