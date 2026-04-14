@@ -510,6 +510,8 @@ def chat(
         })
         messages_to_save.append(messages[-1])
 
+        guard_messages = messages[:-1]
+
         for tc in assistant_message.tool_calls:
             tool_name = tc.function.name
             tool_args = json.loads(tc.function.arguments)
@@ -538,7 +540,7 @@ def chat(
             # 検出され、誤ってブロックされるのを防ぐため。
             if (
                 tool_name in _CONFIRMATION_REQUIRED_TOOLS
-                and not _has_get_transactions_result(messages[:-1])
+                and not _has_get_transactions_result(guard_messages)
             ):
                 block_msg = (
                     "このツールを実行する前に、get_transactionsで"
