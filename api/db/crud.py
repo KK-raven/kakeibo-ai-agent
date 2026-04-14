@@ -39,6 +39,10 @@ def register_transaction(
     取引登録とマッピング更新は常にセットで行うべき処理のため、
     同一トランザクション内で実行する。
 
+    クレジットカード払いでカード名が未指定の場合、
+    デフォルトカードを自動補完する。デフォルトカード未登録時は
+    エラーを返して登録を促す。
+
     Args:
         user_id: ユーザーID。
         date: 取引日（"YYYY-MM-DD" 形式）。
@@ -54,6 +58,7 @@ def register_transaction(
 
     Returns:
         登録されたレコードの辞書（id を含む）。
+        デフォルトカード未登録時は {"error": "..."} を返す。
     """
     conn = get_connection()
 
@@ -70,6 +75,7 @@ def register_transaction(
 
         # クレジットカード払いでカード名が未指定の場合、
         # デフォルトカードを自動補完する。
+        # デフォルトカード未登録なら登録を促すエラーを返す。
         if payment_method == "クレジットカード" and card_name is None:
             cur.execute(
                 """
@@ -82,6 +88,11 @@ def register_transaction(
             row = cur.fetchone()
             if row:
                 card_name = row["name"]
+            else:
+                return {
+                    "error": "デフォルトのクレジットカードが登録されていません。"
+                    "先にカードを登録してください。"
+                }
 
         cur.execute(
             """
@@ -134,6 +145,7 @@ def register_transaction(
 def get_transactions(
     user_id: int,
     year_month: str | None = None,
+    date: str | None = None,
     category: str | None = None,
     person: str | None = None,
     type: str | None = None,
@@ -150,6 +162,7 @@ def get_transactions(
     複数指定すると AND で結合される。
     year_month と start_month/end_month はどちらか一方を指定する。
     両方指定された場合は start_month/end_month を優先する。
+    date を指定すると特定日の取引に絞り込める。
     store_name / item はLIKEで部分一致検索。
     ユーザーが「セブン」と略して言う場合や、
     「雪見」だけで「雪見だいふく」を探す場合に対応するため。
@@ -159,6 +172,7 @@ def get_transactions(
     Args:
         user_id: ユーザーID。
         year_month: "YYYY-MM" 形式（例: "2025-04"）。
+        date: "YYYY-MM-DD" 形式。特定日の取引に絞り込む。
         category: カテゴリ名で絞り込み。
         person: person で絞り込み。
         type: "income" or "expense" で絞り込み。
@@ -185,6 +199,10 @@ def get_transactions(
         elif year_month:
             conditions.append("to_char(date, 'YYYY-MM') = %s")
             params.append(year_month)
+
+        if date:
+            conditions.append("date = %s")
+            params.append(date)
 
         if category:
             conditions.append("category = %s")
@@ -2137,3 +2155,44 @@ def get_health_indicators(
         raise
     finally:
         release_connection(conn)
+
+
+def get_categories(user_id: int) -> dict:
+    """ユーザーの取引で使用されたカテゴリ一覧を取得する。
+
+    transactionsテーブルから支出・収入それぞれの
+    カテゴリをDISTINCTで取得して返す。
+
+    Args:
+        user_id: ユーザーID。
+
+    Returns:
+        {"expense": [...], "income": [...]} 形式の辞書。
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            SELECT DISTINCT type, category
+            FROM transactions
+            WHERE user_id = %s
+            ORDER BY type, category
+            """,
+            (user_id,),
+        )
+        rows = cur.fetchall()
+
+        result = {"expense": [], "income": []}
+        for row in rows:
+            result[row["type"]].append(row["category"])
+
+        return result
+
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        release_connection(conn)
+        

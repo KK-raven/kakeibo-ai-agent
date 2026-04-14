@@ -98,6 +98,9 @@ def _build_system_prompt(user_id: int) -> str:
 - ファイル出力後は保存完了とファイル名のみを伝えること。リンクやURLは生成しないこと
 - 「確認します」「調べます」と言うだけで終わらず、必ずToolを実行して結果を返してください
 - get_transactionsを呼ぶときは、特に指定がなければ今月のyear_monthを指定してください
+- ユーザーが明示的にカテゴリや店名を指定した場合は、そのまま使うこと。勝手に変換しない
+- カテゴリの判定は常識的に行うこと。食べ物・飲み物は「食費」、日用消耗品は「日用品」が基本。「その他」は他のカテゴリに該当しない場合にのみ使う
+- テキストで複数件の支出をまとめて入力された場合は、1件ずつregister_transactionを実行すること。レシートOCRの確認フロー（ステップ1〜4）はテキスト入力には適用しない
 
 ---
 
@@ -267,6 +270,7 @@ TOOL_FUNCTIONS = {
     "set_character": set_character,
     "get_character": get_character,
     "get_health_indicators": crud.get_health_indicators,
+    "get_categories": crud.get_categories,
 }
 
 

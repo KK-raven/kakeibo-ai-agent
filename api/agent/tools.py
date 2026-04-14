@@ -82,6 +82,8 @@ TOOLS = [
                         "type": "string",
                         "description": (
                             "支払方法。ユーザーが明示しなければ「現金」。"
+                            "「カード」「クレカ」「カード払い」等は"
+                            "「クレジットカード」に統一すること。"
                             "選択肢: 現金/口座振替/クレジットカード/"
                             "QUICPay/PayPay/Suica/PASMO/"
                             "Amazon Pay/楽天ペイ/メルペイ/PayPal/その他。"
@@ -112,6 +114,14 @@ TOOLS = [
                     "year_month": {
                         "type": "string",
                         "description": "YYYY-MM形式。「今月」「先月」等から判断。",
+                    },
+                    "date": {
+                        "type": "string",
+                        "description": (
+                            "YYYY-MM-DD形式。「今日」「昨日」等、"
+                            "特定の日付の取引を検索する場合に使う。"
+                            "year_monthより優先される。"
+                        ),
                     },
                     "category": {
                         "type": "string",
@@ -911,6 +921,22 @@ TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_categories",
+            "description": (
+                "ユーザーの取引で使用されたカテゴリ一覧を取得する。"
+                "ユーザーが「カテゴリ一覧を教えて」「何のカテゴリがある？」"
+                "等と聞いたときに使う。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+    },
 
     # === キャラ設定 ===
     {
@@ -958,7 +984,7 @@ TOOLS = [
             },
         },
     },
-    
+
     # === 家計健全性指標 ===
     {
         "type": "function",
