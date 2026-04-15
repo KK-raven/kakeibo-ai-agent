@@ -404,6 +404,23 @@ def _has_get_transactions_result(messages: list[dict]) -> bool:
     Returns:
         直近の確認フローが有効なら True。
     """
+
+    # デバッグ用（問題解決後に削除）
+    for i, msg in enumerate(messages):
+        role = msg.get("role")
+        has_tc = "tool_calls" in msg and msg["tool_calls"] is not None
+        tc_names = []
+        if has_tc:
+            tc_names = [
+                tc.get("function", {}).get("name", "?")
+                for tc in msg["tool_calls"]
+            ]
+        logger.debug(
+            f"guard check [{i}] role={role} "
+            f"has_tool_calls={has_tc} tc_names={tc_names} "
+            f"tool_call_id={msg.get('tool_call_id', '-')}"
+        )
+
     last_get_idx = None
     for i in range(len(messages) - 1, -1, -1):
         msg = messages[i]
