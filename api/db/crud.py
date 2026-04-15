@@ -73,6 +73,13 @@ def register_transaction(
     try:
         cur = conn.cursor()
 
+        # LLMが「カード」「クレカ」等の略称を渡した場合に
+        # 「クレジットカード」に正規化する
+        if type != "income" and payment_method is not None:
+            if "カード" in payment_method or "クレカ" in payment_method:
+                if payment_method != "クレジットカード":
+                    payment_method = "クレジットカード"
+
         # クレジットカード払いでカード名が未指定の場合、
         # デフォルトカードを自動補完する。
         # デフォルトカード未登録なら登録を促すエラーを返す。
