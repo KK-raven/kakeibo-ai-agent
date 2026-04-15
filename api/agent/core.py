@@ -518,6 +518,7 @@ def chat(
         messages_to_save.append(messages[-1])
 
         guard_messages = messages[:-1]
+        confirmation_blocked = False
 
         for tc in assistant_message.tool_calls:
             tool_name = tc.function.name
@@ -572,6 +573,7 @@ def chat(
                     "args": tool_args,
                     "error": block_msg,
                 })
+                confirmation_blocked = True
                 continue
 
             tool_args = _complement_defaults(user_id, tool_name, tool_args)
@@ -626,6 +628,28 @@ def chat(
                 ),
             })
             messages_to_save.append(messages[-1])
+
+        # 確認フロー未完了でブロックされた場合、
+        # ツールなしでLLMを呼び直して確認メッセージを生成させる。
+        # ツールを提供しないことで、LLMはテキスト応答を返すしかなくなる。
+        if confirmation_blocked:
+            try:
+                response = client.chat.completions.create(
+                    model=MODEL,
+                    messages=messages,
+                )
+                return {
+                    "response": response.choices[0].message.content,
+                    "tool_results": tool_results,
+                    "messages_to_save": messages_to_save,
+                }
+            except Exception as e:
+                logger.error(f"確認メッセージ生成エラー: {e}")
+                return {
+                    "response": "対象の取引を確認してください。削除・更新してよろしいですか？",
+                    "tool_results": tool_results,
+                    "messages_to_save": messages_to_save,
+                }
 
     logger.warning(f"Tool呼び出し上限到達: {MAX_TOOL_CALLS}回")
     messages.append({
