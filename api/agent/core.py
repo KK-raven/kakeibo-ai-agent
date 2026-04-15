@@ -550,8 +550,11 @@ def chat(
                 and not _has_get_transactions_result(guard_messages)
             ):
                 block_msg = (
-                    "このツールを実行する前に、get_transactionsで"
-                    "対象の取引を検索し、ユーザーに確認してください。"
+                    "ユーザーの確認が必要です。get_transactionsで"
+                    "対象の取引を検索し、結果をユーザーに表示して"
+                    "削除・更新の承認を求めてください。"
+                    "ユーザーの承認メッセージを受け取ってから"
+                    "再度このツールを実行してください。"
                 )
                 logger.warning(
                     f"確認フロー未完了のためブロック: {tool_name}"
