@@ -661,15 +661,22 @@ def deactivate_fixed_expense(
 def get_payment_methods(
     user_id: int,
     category: str | None = None,
-) -> list[dict]:
-    """支払方法の一覧を取得する。
+) -> dict:
+    """支払方法の一覧をクレジットカード情報とあわせて取得する。
+
+    payment_methodsテーブルの全件に加え、
+    credit_cardsテーブルの登録カードも返す。
+    linked_cardがある支払方法はどのカードに紐付いているかを示す。
 
     Args:
         user_id: ユーザーID。
         category: "現金" or "非現金" で絞り込み。None なら全件。
 
     Returns:
-        支払方法レコードのリスト。
+        {
+            "payment_methods": [...],
+            "credit_cards": [...],
+        }
     """
     conn = get_connection()
     try:
@@ -688,7 +695,22 @@ def get_payment_methods(
                 "SELECT * FROM payment_methods WHERE user_id = %s",
                 (user_id,),
             )
-        return [dict(row) for row in cur.fetchall()]
+        methods = [dict(row) for row in cur.fetchall()]
+
+        cur.execute(
+            """
+            SELECT name, is_default FROM credit_cards
+            WHERE user_id = %s
+            ORDER BY is_default DESC, name ASC
+            """,
+            (user_id,),
+        )
+        cards = [dict(row) for row in cur.fetchall()]
+
+        return {
+            "payment_methods": methods,
+            "credit_cards": cards,
+        }
 
     except Exception:
         conn.rollback()
@@ -2158,10 +2180,10 @@ def get_health_indicators(
 
 
 def get_categories(user_id: int) -> dict:
-    """ユーザーの取引で使用されたカテゴリ一覧を取得する。
+    """ユーザーが使用可能なカテゴリ一覧を取得する。
 
-    transactionsテーブルから支出・収入それぞれの
-    カテゴリをDISTINCTで取得して返す。
+    デフォルトの全カテゴリに加え、transactionsテーブルから
+    ユーザーが独自に使用したカテゴリもマージして返す。
 
     Args:
         user_id: ユーザーID。
@@ -2169,6 +2191,16 @@ def get_categories(user_id: int) -> dict:
     Returns:
         {"expense": [...], "income": [...]} 形式の辞書。
     """
+    default_expense = [
+        "食費", "光熱費", "交通費", "日用品", "交際費",
+        "サブスク", "医療費", "衣服", "娯楽", "教育",
+        "家賃・住居", "保険", "その他",
+    ]
+    default_income = [
+        "給与", "賞与", "副業・フリーランス", "金融資産",
+        "ギャンブル", "臨時収入", "その他",
+    ]
+
     conn = get_connection()
     try:
         cur = conn.cursor()
@@ -2178,17 +2210,23 @@ def get_categories(user_id: int) -> dict:
             SELECT DISTINCT type, category
             FROM transactions
             WHERE user_id = %s
-            ORDER BY type, category
             """,
             (user_id,),
         )
         rows = cur.fetchall()
 
-        result = {"expense": [], "income": []}
+        expense_set = set(default_expense)
+        income_set = set(default_income)
         for row in rows:
-            result[row["type"]].append(row["category"])
+            if row["type"] == "expense":
+                expense_set.add(row["category"])
+            else:
+                income_set.add(row["category"])
 
-        return result
+        return {
+            "expense": sorted(expense_set),
+            "income": sorted(income_set),
+        }
 
     except Exception:
         conn.rollback()

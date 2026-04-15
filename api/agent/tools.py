@@ -89,6 +89,14 @@ TOOLS = [
                             "Amazon Pay/楽天ペイ/メルペイ/PayPal/その他。"
                         ),
                     },
+                    "card_name": {
+                        "type": "string",
+                        "description": (
+                            "クレジットカード払い時のカード名。必須。"
+                            "credit_cardsテーブルの登録名を使うこと。"
+                            "不明な場合はget_payment_methodsで確認する。"
+                        ),
+                    },
                     "person": {
                         "type": "string",
                         "description": "誰の取引か。デフォルトは「自分」。",
@@ -613,8 +621,8 @@ TOOLS = [
         "function": {
             "name": "get_payment_methods",
             "description": (
-                "登録されている支払方法の一覧を返す。"
-                "「支払方法の一覧を見せて」や、"
+                "登録されている支払方法とクレジットカードの一覧を返す。"
+                "「支払方法の一覧を見せて」「カード一覧」や、"
                 "ユーザーが未登録の支払方法を使おうとしたときに"
                 "候補を提示するために使う。"
             ),
