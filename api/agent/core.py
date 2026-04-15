@@ -392,11 +392,13 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
     以下の条件を全て満たす場合に True を返す:
     1. 会話履歴内に get_transactions または register_transaction
        の実行結果がある
-    2. その後に他の更新系ツールが実行されていない
+    2. その後に user メッセージが2つ以上
+       （削除・更新の指示 + 確認応答の最低2ステップを強制）
+    3. その後に他の更新系ツールが実行されていない
 
-    確認ステップの強制はシステムプロンプトに委ねる。
-    このガードは「検索も登録もしていないのに
-    いきなり削除・更新を呼ぶ」ケースのみをブロックする。
+    このガードは「検索も登録もしていない」または
+    「ユーザーの確認がない」状態での削除・更新をブロックする。
+    ブロック時は呼び出し元がreturnで即座にユーザーに確認を求める。
 
     Args:
         messages: 現在の会話のメッセージリスト。
@@ -422,16 +424,19 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
     if last_idx is None:
         return False
 
+    user_msg_count = 0
     for i in range(last_idx + 1, len(messages)):
         msg = messages[i]
-        if msg.get("role") == "assistant":
+        if msg.get("role") == "user":
+            user_msg_count += 1
+        elif msg.get("role") == "assistant":
             tool_calls = msg.get("tool_calls", [])
             for tc in tool_calls:
                 name = tc.get("function", {}).get("name", "")
                 if not name.startswith(("get_", "check_")):
                     return False
 
-    return True
+    return user_msg_count >= 2
 
 
 def chat(
