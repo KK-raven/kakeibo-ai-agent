@@ -386,17 +386,17 @@ def _post_process(
 _CONFIRMATION_REQUIRED_TOOLS = {"delete_transaction", "update_transaction"}
 
 
-def _has_get_transactions_result(messages: list[dict]) -> bool:
-    """直近の get_transactions 実行後に確認フローが有効か判定する。
+def _has_confirmable_result(messages: list[dict]) -> bool:
+    """直近の確認フローが有効か判定する。
 
     以下の条件を全て満たす場合に True を返す:
-    1. 会話履歴内に get_transactions の実行結果がある
-    2. get_transactions の後に user メッセージが1〜3つ
-       （確認応答の存在を必須とし、複数件ヒット時の選択 + 2ステップ確認を許容）
-    3. get_transactions の後に他の更新系ツールが実行されていない
+    1. 会話履歴内に get_transactions または register_transaction
+       の実行結果がある
+    2. その後に user メッセージが1〜3つ
+    3. その後に他の更新系ツールが実行されていない
 
-    条件3により、確認フロー中に別の操作（登録等）が割り込んだ場合は
-    フローを無効化し、再度 get_transactions から始めさせる。
+    register_transaction を含めることで、登録直後の
+    「やっぱりキャンセル」にget_transactionsなしで対応できる。
 
     Args:
         messages: 現在の会話のメッセージリスト。
@@ -404,41 +404,26 @@ def _has_get_transactions_result(messages: list[dict]) -> bool:
     Returns:
         直近の確認フローが有効なら True。
     """
+    CONFIRMABLE_TOOLS = {"get_transactions", "register_transaction"}
 
-    # デバッグ用（問題解決後に削除）
-    for i, msg in enumerate(messages):
-        role = msg.get("role")
-        has_tc = "tool_calls" in msg and msg["tool_calls"] is not None
-        tc_names = []
-        if has_tc:
-            tc_names = [
-                tc.get("function", {}).get("name", "?")
-                for tc in msg["tool_calls"]
-            ]
-        logger.debug(
-            f"guard check [{i}] role={role} "
-            f"has_tool_calls={has_tc} tc_names={tc_names} "
-            f"tool_call_id={msg.get('tool_call_id', '-')}"
-        )
-
-    last_get_idx = None
+    last_idx = None
     for i in range(len(messages) - 1, -1, -1):
         msg = messages[i]
         if msg.get("role") != "assistant":
             continue
         tool_calls = msg.get("tool_calls", [])
         for tc in tool_calls:
-            if tc.get("function", {}).get("name") == "get_transactions":
-                last_get_idx = i
+            if tc.get("function", {}).get("name") in CONFIRMABLE_TOOLS:
+                last_idx = i
                 break
-        if last_get_idx is not None:
+        if last_idx is not None:
             break
 
-    if last_get_idx is None:
+    if last_idx is None:
         return False
 
     user_msg_count = 0
-    for i in range(last_get_idx + 1, len(messages)):
+    for i in range(last_idx + 1, len(messages)):
         msg = messages[i]
         if msg.get("role") == "user":
             user_msg_count += 1
@@ -564,7 +549,7 @@ def chat(
             # 検出され、誤ってブロックされるのを防ぐため。
             if (
                 tool_name in _CONFIRMATION_REQUIRED_TOOLS
-                and not _has_get_transactions_result(guard_messages)
+                and not _has_confirmable_result(guard_messages)
             ):
                 logger.warning(
                     f"確認フロー未完了のためブロック: {tool_name}"
