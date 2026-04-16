@@ -1886,32 +1886,26 @@ def get_payment_method_summary(
     end_month: str | None = None,
     fixed_mode: str = "show",
 ) -> list[dict]:
-    """支払方法別の集計を返す。個別行 + カード合算行を含む。
-
-    year_month と start_month/end_month はどちらか一方を指定する。
-    両方指定された場合は start_month/end_month を優先する。
-    どちらも指定しない場合は全期間を集計する。
-
-    fixed_modeで固定費（memo が '[固定]' で始まる取引）の扱いを制御する。
-    show:  固定費を通常通り集計する（デフォルト）。
-    group: 固定費の支払方法を「固定費」に統合して集計する。
-    hide:  固定費を集計から除外する。
+    """支払方法別の集計を返す。
 
     表示ロジック:
-    - payment_method='クレジットカード' かつ card_name がある
-      → card_name で個別集計
-    - payment_methods.linked_card が設定されている支払方法
-      → 個別行に加え、linked_card のカードへ合算行を生成
-    - 合算行は is_rollup=True で返す
+    - payment_method='クレジットカード': card_name をカードキーとして集計する。
+      「クレジットカード」という行は一切出力しない。
+    - linked_card 付き支払方法（QUICPay（JCB）等）:
+      個別行として出力し、かつ linked_card カードキーの合算にも加算する。
+    - カードキー行（JCB等）: クレカ直接払い + linked_card 紐付け分の合算。
+      ラベルはカード名のみ（「〜含む」なし）。is_rollup=True。
+      linked_card 紐付けがない純粋な直接払いのみの場合も is_rollup=True で出力。
+    - includes: そのカード行に合算された linked 支払方法名のリスト（tooltip用）。
 
-    例 (JCBに QUICPay（JCB） と PayPay（JCB） が紐付く場合):
+    例 (JCB直接10,000 + QUICPay（JCB）5,000 + PayPay（JCB）3,000):
     [
-      {"payment_method": "JCB",              "total": 10000, "is_rollup": False},
-      {"payment_method": "QUICPay（JCB）",   "total":  5000, "is_rollup": False, "linked_card": "JCB"},
-      {"payment_method": "PayPay（JCB）",    "total":  3000, "is_rollup": False, "linked_card": "JCB"},
-      {"payment_method": "JCB（QUICPay（JCB）・PayPay（JCB）含む）",
-                                             "total": 18000, "is_rollup": True,
-                                             "includes": ["QUICPay（JCB）", "PayPay（JCB）"]},
+      {"payment_method": "QUICPay（JCB）", "total":  5000, "is_rollup": False,
+       "linked_card": "JCB", "includes": []},
+      {"payment_method": "PayPay（JCB）",  "total":  3000, "is_rollup": False,
+       "linked_card": "JCB", "includes": []},
+      {"payment_method": "JCB",            "total": 18000, "is_rollup": True,
+       "linked_card": None, "includes": ["QUICPay（JCB）", "PayPay（JCB）"]},
     ]
 
     Args:
@@ -1922,19 +1916,6 @@ def get_payment_method_summary(
         start_month: 開始月 "YYYY-MM" 形式。期間指定の場合に使用。
         end_month: 終了月 "YYYY-MM" 形式。期間指定の場合に使用。
         fixed_mode: "show" / "group" / "hide"。
-
-    Returns:
-        [
-            {
-                "payment_method": str,
-                "total": int,
-                "count": int,
-                "linked_card": str | None,   # 個別行のみ
-                "is_rollup": bool,
-                "includes": list[str],        # 合算行のみ
-            },
-            ...
-        ]
     """
     conn = get_connection()
     try:
@@ -1959,101 +1940,100 @@ def get_payment_method_summary(
 
         where_clause = "WHERE " + " AND ".join(conditions)
 
-        # fixed_mode == "group" のとき固定費を一括ラベルにまとめる
-        # それ以外: payment_method='クレジットカード' なら card_name を使う
-        if fixed_mode == "group":
-            label_expr = """
-                CASE
-                    WHEN t.memo LIKE '[固定]%%' THEN '固定費'
-                    WHEN t.payment_method = 'クレジットカード'
-                         AND t.card_name IS NOT NULL THEN t.card_name
-                    ELSE t.payment_method
-                END
-            """
-            direct_card_expr = """
-                CASE
-                    WHEN t.memo LIKE '[固定]%%' THEN NULL
-                    WHEN t.payment_method = 'クレジットカード'
-                         AND t.card_name IS NOT NULL THEN t.card_name
-                    ELSE NULL
-                END
-            """
-        else:
-            label_expr = """
-                CASE
-                    WHEN t.payment_method = 'クレジットカード'
-                         AND t.card_name IS NOT NULL THEN t.card_name
-                    ELSE t.payment_method
-                END
-            """
-            direct_card_expr = """
-                CASE
-                    WHEN t.payment_method = 'クレジットカード'
-                         AND t.card_name IS NOT NULL THEN t.card_name
-                    ELSE NULL
-                END
-            """
+        # fixed_mode == "group" のとき固定費を「固定費」ラベルに統合
+        fixed_label = (
+            "CASE WHEN t.memo LIKE '[固定]%%' THEN '固定費' ELSE t.payment_method END"
+            if fixed_mode == "group"
+            else "t.payment_method"
+        )
 
         cur.execute(
             f"""
             SELECT
-                ({label_expr})       AS label,
-                ({direct_card_expr}) AS direct_card,
-                pm.linked_card       AS linked_card,
-                SUM(t.amount)        AS total,
-                COUNT(*)             AS cnt
+                ({fixed_label})          AS raw_method,
+                t.card_name              AS card_name,
+                pm.linked_card           AS linked_card,
+                SUM(t.amount)            AS total,
+                COUNT(*)                 AS cnt
             FROM transactions t
             LEFT JOIN payment_methods pm
                 ON pm.user_id = t.user_id
                AND pm.name    = t.payment_method
             {where_clause}
-            GROUP BY label, direct_card, pm.linked_card
+            GROUP BY raw_method, t.card_name, pm.linked_card
             ORDER BY total DESC
             """,
             params,
         )
         rows = cur.fetchall()
 
-        # --- 個別行の構築 ---
+        # card_key → {total, count, includes}
+        # クレカ直接払い / linked_card 紐付き払いの両方を集約する
+        card_rollup: dict[str, dict] = {}
+        # 個別行（クレカ以外・linked付き）
         individual: list[dict] = []
-        # card → {total, count, includes}
-        rollup: dict[str, dict] = {}
 
         for row in rows:
-            label = row["label"]
-            direct_card = row["direct_card"]
+            raw_method = row["raw_method"]
+            card_name = row["card_name"]
             linked_card = row["linked_card"]
             total = int(row["total"])
             count = int(row["cnt"])
 
-            individual.append({
-                "payment_method": label,
-                "total": total,
-                "count": count,
-                "linked_card": linked_card,
-                "is_rollup": False,
-                "includes": [],
-            })
+            if raw_method == "クレジットカード" and card_name:
+                # クレカ直接払い → カード合算行に加算（個別行は出さない）
+                key = card_name
+                if key not in card_rollup:
+                    card_rollup[key] = {"total": 0, "count": 0, "includes": []}
+                card_rollup[key]["total"] += total
+                card_rollup[key]["count"] += count
 
-            # 合算対象カードを決定
-            card_key = direct_card or linked_card
-            if card_key:
-                if card_key not in rollup:
-                    rollup[card_key] = {"total": 0, "count": 0, "includes": []}
-                rollup[card_key]["total"] += total
-                rollup[card_key]["count"] += count
-                # 紐付け支払方法のみ includes に追加（直接カード払いは含めない）
-                if linked_card:
-                    rollup[card_key]["includes"].append(label)
+            elif raw_method == "クレジットカード":
+                # card_name が NULL の残存データ（マイグレーション漏れ等）
+                # 「クレジットカード」としてそのまま個別行に出す
+                individual.append({
+                    "payment_method": "クレジットカード",
+                    "total": total,
+                    "count": count,
+                    "linked_card": None,
+                    "is_rollup": False,
+                    "includes": [],
+                })
 
-        # --- 合算行の構築（linked_card が存在する場合のみ） ---
-        rollup_rows: list[dict] = []
-        for card, data in rollup.items():
-            if not data["includes"]:
-                continue  # 紐付け方法がなければ合算行は不要
-            includes_str = "・".join(data["includes"])
-            rollup_rows.append({
-                "payment_method": f"{card}（{includes_str}含む）",
+            elif linked_card:
+                # linked_card 付き支払方法（QUICPay（JCB）等）
+                # 個別行として出力し、カード合算行にも加算
+                individual.append({
+                    "payment_method": raw_method,
+                    "total": total,
+                    "count": count,
+                    "linked_card": linked_card,
+                    "is_rollup": False,
+                    "includes": [],
+                })
+                key = linked_card
+                if key not in card_rollup:
+                    card_rollup[key] = {"total": 0, "count": 0, "includes": []}
+                card_rollup[key]["total"] += total
+                card_rollup[key]["count"] += count
+                card_rollup[key]["includes"].append(raw_method)
+
+            else:
+                # 現金・PayPay（口座）等の通常の支払方法
+                individual.append({
+                    "payment_method": raw_method,
+                    "total": total,
+                    "count": count,
+                    "linked_card": None,
+                    "is_rollup": False,
+                    "includes": [],
+                })
+
+        # カード合算行の構築
+        card_rows: list[dict] = []
+        for card, data in card_rollup.items():
+            card_rows.append({
+                "payment_method": card,
                 "total": data["total"],
                 "count": data["count"],
                 "linked_card": None,
@@ -2061,14 +2041,16 @@ def get_payment_method_summary(
                 "includes": data["includes"],
             })
 
-        rollup_rows.sort(key=lambda x: x["total"], reverse=True)
-        result = individual + rollup_rows
+        # 個別行・合算行それぞれ金額降順で並べて結合
+        individual.sort(key=lambda x: x["total"], reverse=True)
+        card_rows.sort(key=lambda x: x["total"], reverse=True)
+        result = individual + card_rows
 
         logger.info(
             f"支払方法別集計: "
             f"{year_month or f'{start_month}〜{end_month}'}"
             f" {type} {person} fixed={fixed_mode}"
-            f" 個別={len(individual)} 合算={len(rollup_rows)}"
+            f" 個別={len(individual)} カード合算={len(card_rows)}"
         )
         return result
     except Exception:

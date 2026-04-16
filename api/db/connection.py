@@ -316,6 +316,27 @@ def init_db() -> None:
             )
         """)
 
+        # transactions マイグレーション: card_name 遡及補完
+        # payment_method='クレジットカード' かつ card_name が NULL の既存取引に
+        # 同ユーザーのデフォルトカード名を設定する。
+        # デフォルトカードが存在しないユーザーは対象外（NULLのまま）。
+        cur.execute("""
+            UPDATE transactions t
+            SET card_name = (
+                SELECT cc.name
+                FROM credit_cards cc
+                WHERE cc.user_id = t.user_id
+                  AND cc.is_default = 1
+                LIMIT 1
+            )
+            WHERE t.payment_method = 'クレジットカード'
+              AND t.card_name IS NULL
+              AND EXISTS (
+                  SELECT 1 FROM credit_cards cc2
+                  WHERE cc2.user_id = t.user_id AND cc2.is_default = 1
+              )
+        """)
+
         # --- デモユーザーの作成 ---
         cur.execute(
             """

@@ -1195,7 +1195,9 @@
                     }</td>
                     <td>${tx.category}</td>
                     <td>${tx.store_name || ""}</td>
-                    <td>${tx.payment_method || ""}</td>
+                    <td>${(tx.payment_method === "クレジットカード" && tx.card_name)
+                            ? tx.card_name
+                            : (tx.payment_method || "")}</td>
                     <td>${tx.memo || ""}</td>
                 `;
                 tbody.appendChild(tr);

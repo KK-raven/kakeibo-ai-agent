@@ -108,7 +108,7 @@ def _build_system_prompt(user_id: int) -> str:
 - ユーザーがカード名を指定したが登録済みカードと完全一致しない場合（例: 「JCB」と言ったがJCBを含むカードが複数ある場合）は、候補を提示して確認する。デフォルトカードの名前に含まれる場合はデフォルトカードを使う
 - クレジットカードが1枚も登録されていない状態でカード払いを指示された場合は、「カードが未登録です。カード名を教えてください（例: ドコモカード（JCB）、楽天カード（VISA）等）」と案内し、登録を促す
 - 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
-- グループ型支払方法（QUICPay・PayPay等）の取引登録フロー:
+- グループ型支払方法（QUICPay・PayPay等）の取引登録フロー。「クレジットカード」はグループフローの対象外（card_nameは省略してregister_transactionを実行すること）:
   1. ユーザーが「QUICPay」「PayPay」等のグループ名で支払いを言った場合、get_payment_methodsでそのgroup_nameに属するエントリを確認する
   2. グループ内にis_group_default=TrueのエントリがあればそのnameをPayment_methodとして使用する
   3. グループ内に複数エントリがあるがis_group_defaultが設定されていない場合は、どちらを使うか聞き、デフォルト設定を提案する（set_payment_method_group_defaultで設定）
