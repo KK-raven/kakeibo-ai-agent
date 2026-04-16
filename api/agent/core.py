@@ -101,9 +101,11 @@ def _build_system_prompt(user_id: int) -> str:
 - ユーザーが明示的にカテゴリや店名を指定した場合は、そのまま使うこと。勝手に変換しない
 - カテゴリの判定は常識的に行うこと。食べ物・飲み物は「食費」、日用消耗品は「日用品」が基本。「その他」は他のカテゴリに該当しない場合にのみ使う
 - テキストで複数件の支出をまとめて入力された場合は、1件ずつregister_transactionを実行すること。レシートOCRの確認フロー（ステップ1〜4）はテキスト入力には適用しない
-- クレジットカード払いの場合、card_nameは必須。ユーザーがカード名を言わなかった場合は、get_payment_methodsでカード一覧を取得し、デフォルトカードがあればそのカード名を使う。デフォルトがなければユーザーにどのカードか確認する
+- クレジットカード払いの場合、card_nameはユーザーが明示した場合のみ設定すること。言わなかった場合は省略してregister_transactionを実行すればよい（システムがデフォルトカードを自動補完する）。get_payment_methodsを呼ぶ必要はない
+- ユーザーが「カード払い」「クレカで払った」等とだけ入力し金額・品目の指定がない場合は、「何を登録しますか？」と聞くこと
 - ユーザーがカード名を指定したが登録済みカードと完全一致しない場合（例: 「JCB」と言ったがJCBを含むカードが複数ある場合）は、候補を提示して確認する。デフォルトカードの名前に含まれる場合はデフォルトカードを使う
 - クレジットカードが1枚も登録されていない状態でカード払いを指示された場合は、「カードが未登録です。カード名を教えてください（例: ドコモカード（JCB）、楽天カード（VISA）等）」と案内し、登録を促す
+- 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
 
 ---
 
@@ -436,7 +438,7 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
                 if not name.startswith(("get_", "check_")):
                     return False
 
-    return user_msg_count >= 2
+    return user_msg_count >= 1
 
 
 def chat(
@@ -556,12 +558,81 @@ def chat(
                 logger.warning(
                     f"確認フロー未完了のためブロック: {tool_name}"
                 )
+                # 現在のassistantメッセージ（tool_call含む）を履歴から除去
+                messages.pop()
                 messages_to_save.pop()
-                return {
-                    "response": (
-                        "対象の取引を確認します。"
-                        "どの取引を削除・更新しますか？"
+                # ブロック理由をシステムメッセージとして注入し、
+                # LLMに文脈に応じた応答を生成させる
+                messages.append({
+                    "role": "system",
+                    "content": (
+                        "削除・更新のToolを実行する前に、対象の取引を"
+                        "ユーザーに確認する必要があります。"
+                        "会話履歴に取引結果が含まれている場合はその内容を"
+                        "提示してください。含まれていない場合はget_transactions"
+                        "で取引を検索してください。"
+                        "いずれの場合も、取引内容を示した上で"
+                        "削除・更新してよいかユーザーに確認すること。"
                     ),
+                })
+                try:
+                    block_response = client.chat.completions.create(
+                        model=MODEL,
+                        messages=messages,
+                        tools=TOOLS,
+                        tool_choice="auto",
+                    )
+                    block_content = block_response.choices[0].message.content or ""
+                    block_tool_calls = block_response.choices[0].message.tool_calls
+                except Exception as e:
+                    logger.error(f"ブロック時LLM呼び出しエラー: {e}")
+                    return {
+                        "response": "対象の取引を確認します。どの取引を削除・更新しますか？",
+                        "tool_results": tool_results,
+                        "messages_to_save": messages_to_save,
+                    }
+                # ブロック時にget_transactionsを呼んだ場合は実行して返す
+                if block_tool_calls:
+                    block_tc = block_tool_calls[0]
+                    block_name = block_tc.function.name
+                    if block_name == "get_transactions":
+                        block_args = json.loads(block_tc.function.arguments)
+                        block_args = _complement_defaults(user_id, block_name, block_args)
+                        try:
+                            block_result = crud.get_transactions(user_id, **block_args)
+                        except Exception as e:
+                            block_result = {"error": str(e)}
+                        messages.append({
+                            "role": "assistant",
+                            "content": block_content,
+                            "tool_calls": [{
+                                "id": block_tc.id,
+                                "type": "function",
+                                "function": {
+                                    "name": block_name,
+                                    "arguments": block_tc.function.arguments,
+                                },
+                            }],
+                        })
+                        messages_to_save.append(messages[-1])
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": block_tc.id,
+                            "content": json.dumps(block_result, ensure_ascii=False, default=str),
+                        })
+                        messages_to_save.append(messages[-1])
+                        tool_results.append({"tool": block_name, "args": block_args, "result": block_result})
+                        # 検索結果を踏まえた最終応答を生成
+                        try:
+                            final_resp = client.chat.completions.create(
+                                model=MODEL,
+                                messages=messages,
+                            )
+                            block_content = final_resp.choices[0].message.content or ""
+                        except Exception as e:
+                            logger.error(f"ブロック後最終応答エラー: {e}")
+                return {
+                    "response": block_content,
                     "tool_results": tool_results,
                     "messages_to_save": messages_to_save,
                 }
