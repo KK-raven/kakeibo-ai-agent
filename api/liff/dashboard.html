@@ -906,15 +906,29 @@
 
             canvas.style.display = "block";
 
+            // 支払方法チャートはrollup行（is_rollup=true）を
+            // 個別行と色分けして表示する。
+            const isPayment = chartType === "payment";
+
             const labels = summary.map(s => s[labelKey] || "不明");
             const values = summary.map(s => s.total);
 
             // 横棒グラフ。ラベルが多くなる店別・品目別でも
             // 縦に並ぶため視認性を保てる。
-            const barColor = type === "income"
+            const baseColor = type === "income"
                 ? "rgba(39,174,96,0.75)" : "rgba(226,75,74,0.75)";
-            const borderColor = type === "income"
+            const baseBorder = type === "income"
                 ? "rgba(39,174,96,1)" : "rgba(226,75,74,1)";
+            // 合算行は紫系で区別する
+            const rollupColor  = "rgba(142,68,173,0.75)";
+            const rollupBorder = "rgba(142,68,173,1)";
+
+            const bgColors = isPayment
+                ? summary.map(s => s.is_rollup ? rollupColor  : baseColor)
+                : labels.map(() => baseColor);
+            const bdColors = isPayment
+                ? summary.map(s => s.is_rollup ? rollupBorder : baseBorder)
+                : labels.map(() => baseBorder);
 
             // 件数に応じてcanvasの高さを動的に調整する。
             // 1件あたり36px + 上下の余白80pxを確保する。
@@ -928,8 +942,8 @@
                     labels,
                     datasets: [{
                         data: values,
-                        backgroundColor: barColor,
-                        borderColor: borderColor,
+                        backgroundColor: bgColors,
+                        borderColor: bdColors,
                         borderWidth: 1,
                     }],
                 },
@@ -941,8 +955,14 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: ctx =>
-                                    ctx.parsed.x.toLocaleString() + "円",
+                                label: (ctx) => {
+                                    const s = summary[ctx.dataIndex];
+                                    let text = ctx.parsed.x.toLocaleString() + "円";
+                                    if (isPayment && s.is_rollup && s.includes && s.includes.length) {
+                                        text += "（" + s.includes.join("・") + "含む）";
+                                    }
+                                    return text;
+                                },
                             },
                         },
                     },

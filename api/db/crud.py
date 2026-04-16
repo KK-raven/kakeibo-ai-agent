@@ -673,7 +673,7 @@ def get_payment_methods(
 
     payment_methodsテーブルの全件に加え、
     credit_cardsテーブルの登録カードも返す。
-    linked_cardがある支払方法はどのカードに紐付いているかを示す。
+    group_name / is_group_default / linked_card を含む。
 
     Args:
         user_id: ユーザーID。
@@ -681,7 +681,14 @@ def get_payment_methods(
 
     Returns:
         {
-            "payment_methods": [...],
+            "payment_methods": [
+                {
+                    "id": ..., "name": ..., "category": ...,
+                    "linked_card": ..., "group_name": ...,
+                    "is_group_default": ...,
+                },
+                ...
+            ],
             "credit_cards": [...],
         }
     """
@@ -692,14 +699,23 @@ def get_payment_methods(
         if category:
             cur.execute(
                 """
-                SELECT * FROM payment_methods
+                SELECT id, name, category, linked_card,
+                       group_name, is_group_default
+                FROM payment_methods
                 WHERE user_id = %s AND category = %s
+                ORDER BY group_name, is_group_default DESC, name
                 """,
                 (user_id, category),
             )
         else:
             cur.execute(
-                "SELECT * FROM payment_methods WHERE user_id = %s",
+                """
+                SELECT id, name, category, linked_card,
+                       group_name, is_group_default
+                FROM payment_methods
+                WHERE user_id = %s
+                ORDER BY group_name, is_group_default DESC, name
+                """,
                 (user_id,),
             )
         methods = [dict(row) for row in cur.fetchall()]
@@ -731,32 +747,59 @@ def add_payment_method(
     name: str,
     category: str = "非現金",
     linked_card: str | None = None,
+    group_name: str | None = None,
+    is_group_default: bool = False,
 ) -> dict:
     """新しい支払方法を追加する。
 
     Agent がユーザーに二重確認を取った上で呼ぶ想定。
     例: 「楽天ペイを新しい支払方法として登録しますか？」→「はい」
 
+    group_name が省略された場合は name の末尾の「（...）」を除いた
+    ベース名を group_name として自動設定する。
+    is_group_default=True のとき、同グループの他エントリの
+    is_group_default を False にしてから新エントリを挿入する。
+
     Args:
         user_id: ユーザーID。
-        name: 支払方法名（"楽天ペイ" 等）。
+        name: 支払方法名（"PayPay（JCB）" 等）。
         category: "現金" or "非現金"（ほぼ全て非現金）。
         linked_card: 決済元カード名（任意）。
+        group_name: グループ名（省略時はnameから自動導出）。
+        is_group_default: このエントリをグループのデフォルトにするか。
 
     Returns:
         追加されたレコードの辞書。
     """
+    import re as _re
+    if group_name is None:
+        group_name = _re.sub(r'（[^）]*）$', '', name)
+
     conn = get_connection()
     try:
         cur = conn.cursor()
+
+        if is_group_default:
+            # 既存の同グループエントリのデフォルトフラグを解除
+            cur.execute(
+                """
+                UPDATE payment_methods
+                SET is_group_default = FALSE
+                WHERE user_id = %s AND group_name = %s
+                """,
+                (user_id, group_name),
+            )
+
         cur.execute(
             """
             INSERT INTO payment_methods
-                (user_id, name, category, linked_card)
-            VALUES (%s, %s, %s, %s)
+                (user_id, name, category, linked_card,
+                 group_name, is_group_default)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
-            (user_id, name, category, linked_card),
+            (user_id, name, category, linked_card,
+             group_name, is_group_default),
         )
         row = cur.fetchone()
         conn.commit()
@@ -776,9 +819,14 @@ def update_payment_method_linked_card(
 ) -> bool:
     """支払方法の決済元（linked_card）を設定・変更する。
 
-    用途: QUICPayの決済元をJCBに設定する等。
-    Agent が初回使用時に「QUICPayの決済元はどのカードですか？」と
-    確認し、回答を受けてこの関数を呼ぶ想定。
+    linked_card 設定時に name を "ベース名（linked_card）" 形式に
+    リネームし、トランザクション履歴の payment_method も同時に更新する。
+    group_name はベース名（「（...）」を除いた部分）を自動設定する。
+
+    例: name="QUICPay", linked_card="JCB"
+        → payment_methods.name = "QUICPay（JCB）"
+        → transactions.payment_method = "QUICPay（JCB）"（旧名のもの）
+        → group_name = "QUICPay"
 
     Args:
         user_id: ユーザーID。
@@ -789,25 +837,126 @@ def update_payment_method_linked_card(
         True: 更新成功。
         False: 該当する支払方法が存在しなかった。
     """
+    import re as _re
+    base_name = _re.sub(r'（[^）]*）$', '', name)
+    new_name = f"{base_name}（{linked_card}）"
+
     conn = get_connection()
     try:
         cur = conn.cursor()
+
+        # 既存エントリの存在確認
+        cur.execute(
+            "SELECT id FROM payment_methods WHERE user_id = %s AND name = %s",
+            (user_id, name),
+        )
+        if not cur.fetchone():
+            logger.warning(f"決済元設定失敗: {name} が存在しません")
+            return False
+
+        # トランザクション履歴の payment_method を更新（旧名のもの）
+        if name != new_name:
+            cur.execute(
+                """
+                UPDATE transactions
+                SET payment_method = %s
+                WHERE user_id = %s AND payment_method = %s
+                """,
+                (new_name, user_id, name),
+            )
+            updated_tx = cur.rowcount
+            logger.info(f"取引履歴のpayment_method更新: {name} → {new_name} ({updated_tx}件)")
+
+        # payment_methods エントリを更新
         cur.execute(
             """
             UPDATE payment_methods
-            SET linked_card = %s
+            SET linked_card = %s,
+                name = %s,
+                group_name = COALESCE(group_name, %s)
             WHERE user_id = %s AND name = %s
             """,
-            (linked_card, user_id, name),
+            (linked_card, new_name, base_name, user_id, name),
         )
         conn.commit()
 
-        if cur.rowcount > 0:
-            logger.info(f"決済元設定: {name} → {linked_card}")
-            return True
-        else:
-            logger.warning(f"決済元設定失敗: {name} が存在しません")
+        logger.info(f"決済元設定: {name} → {new_name} (linked_card={linked_card})")
+        return True
+
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        release_connection(conn)
+
+
+def set_payment_method_group_default(
+    user_id: int,
+    group_name: str,
+    payment_method_name: str,
+) -> bool:
+    """同一グループ内のデフォルト支払方法を変更する。
+
+    対象グループの全エントリの is_group_default を False にしてから、
+    指定した支払方法名のエントリのみ True にする。
+
+    例: group_name="PayPay", payment_method_name="PayPay（JCB）"
+        → PayPay（口座）の is_group_default = False
+        → PayPay（JCB）の is_group_default = True
+
+    Args:
+        user_id: ユーザーID。
+        group_name: グループ名（"PayPay", "QUICPay" 等）。
+        payment_method_name: デフォルトにする支払方法の正確な名前。
+
+    Returns:
+        True: 更新成功。
+        False: 指定した支払方法名が存在しない、またはグループが一致しない。
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+
+        # 対象エントリの存在確認
+        cur.execute(
+            """
+            SELECT id FROM payment_methods
+            WHERE user_id = %s AND name = %s AND group_name = %s
+            """,
+            (user_id, payment_method_name, group_name),
+        )
+        if not cur.fetchone():
+            logger.warning(
+                f"グループデフォルト設定失敗: {payment_method_name}"
+                f" (group={group_name}) が存在しません"
+            )
             return False
+
+        # グループ内の全エントリを False に
+        cur.execute(
+            """
+            UPDATE payment_methods
+            SET is_group_default = FALSE
+            WHERE user_id = %s AND group_name = %s
+            """,
+            (user_id, group_name),
+        )
+        # 対象エントリのみ True に
+        cur.execute(
+            """
+            UPDATE payment_methods
+            SET is_group_default = TRUE
+            WHERE user_id = %s AND name = %s
+            """,
+            (user_id, payment_method_name),
+        )
+        conn.commit()
+
+        logger.info(
+            f"グループデフォルト設定: group={group_name}"
+            f" → {payment_method_name}"
+        )
+        return True
 
     except Exception:
         conn.rollback()
@@ -1737,7 +1886,7 @@ def get_payment_method_summary(
     end_month: str | None = None,
     fixed_mode: str = "show",
 ) -> list[dict]:
-    """支払方法別の集計を返す。金額が大きい順。
+    """支払方法別の集計を返す。個別行 + カード合算行を含む。
 
     year_month と start_month/end_month はどちらか一方を指定する。
     両方指定された場合は start_month/end_month を優先する。
@@ -1747,6 +1896,23 @@ def get_payment_method_summary(
     show:  固定費を通常通り集計する（デフォルト）。
     group: 固定費の支払方法を「固定費」に統合して集計する。
     hide:  固定費を集計から除外する。
+
+    表示ロジック:
+    - payment_method='クレジットカード' かつ card_name がある
+      → card_name で個別集計
+    - payment_methods.linked_card が設定されている支払方法
+      → 個別行に加え、linked_card のカードへ合算行を生成
+    - 合算行は is_rollup=True で返す
+
+    例 (JCBに QUICPay（JCB） と PayPay（JCB） が紐付く場合):
+    [
+      {"payment_method": "JCB",              "total": 10000, "is_rollup": False},
+      {"payment_method": "QUICPay（JCB）",   "total":  5000, "is_rollup": False, "linked_card": "JCB"},
+      {"payment_method": "PayPay（JCB）",    "total":  3000, "is_rollup": False, "linked_card": "JCB"},
+      {"payment_method": "JCB（QUICPay（JCB）・PayPay（JCB）含む）",
+                                             "total": 18000, "is_rollup": True,
+                                             "includes": ["QUICPay（JCB）", "PayPay（JCB）"]},
+    ]
 
     Args:
         user_id: ユーザーID。
@@ -1758,55 +1924,151 @@ def get_payment_method_summary(
         fixed_mode: "show" / "group" / "hide"。
 
     Returns:
-        [{"payment_method": "現金", "total": 15000, "count": 8}, ...]
+        [
+            {
+                "payment_method": str,
+                "total": int,
+                "count": int,
+                "linked_card": str | None,   # 個別行のみ
+                "is_rollup": bool,
+                "includes": list[str],        # 合算行のみ
+            },
+            ...
+        ]
     """
     conn = get_connection()
     try:
         cur = conn.cursor()
         conditions = [
-            "user_id = %s",
-            "type = %s",
-            "person = %s",
+            "t.user_id = %s",
+            "t.type = %s",
+            "t.person = %s",
         ]
         params = [user_id, type, person]
 
         if start_month and end_month:
-            conditions.append("to_char(date, 'YYYY-MM') >= %s")
-            conditions.append("to_char(date, 'YYYY-MM') <= %s")
+            conditions.append("to_char(t.date, 'YYYY-MM') >= %s")
+            conditions.append("to_char(t.date, 'YYYY-MM') <= %s")
             params.extend([start_month, end_month])
         elif year_month:
-            conditions.append("to_char(date, 'YYYY-MM') = %s")
+            conditions.append("to_char(t.date, 'YYYY-MM') = %s")
             params.append(year_month)
 
         if fixed_mode == "hide":
-            conditions.append("(memo IS NULL OR memo NOT LIKE '[固定]%%')")
+            conditions.append("(t.memo IS NULL OR t.memo NOT LIKE '[固定]%%')")
 
         where_clause = "WHERE " + " AND ".join(conditions)
 
-        payment_expr = (
-            "CASE WHEN memo LIKE '[固定]%%' THEN '固定費' ELSE payment_method END"
-            if fixed_mode == "group"
-            else "payment_method"
-        )
+        # fixed_mode == "group" のとき固定費を一括ラベルにまとめる
+        # それ以外: payment_method='クレジットカード' なら card_name を使う
+        if fixed_mode == "group":
+            label_expr = """
+                CASE
+                    WHEN t.memo LIKE '[固定]%%' THEN '固定費'
+                    WHEN t.payment_method = 'クレジットカード'
+                         AND t.card_name IS NOT NULL THEN t.card_name
+                    ELSE t.payment_method
+                END
+            """
+            direct_card_expr = """
+                CASE
+                    WHEN t.memo LIKE '[固定]%%' THEN NULL
+                    WHEN t.payment_method = 'クレジットカード'
+                         AND t.card_name IS NOT NULL THEN t.card_name
+                    ELSE NULL
+                END
+            """
+        else:
+            label_expr = """
+                CASE
+                    WHEN t.payment_method = 'クレジットカード'
+                         AND t.card_name IS NOT NULL THEN t.card_name
+                    ELSE t.payment_method
+                END
+            """
+            direct_card_expr = """
+                CASE
+                    WHEN t.payment_method = 'クレジットカード'
+                         AND t.card_name IS NOT NULL THEN t.card_name
+                    ELSE NULL
+                END
+            """
 
         cur.execute(
             f"""
             SELECT
-                {payment_expr} as payment_method,
-                SUM(amount) as total,
-                COUNT(*) as count
-            FROM transactions
+                ({label_expr})       AS label,
+                ({direct_card_expr}) AS direct_card,
+                pm.linked_card       AS linked_card,
+                SUM(t.amount)        AS total,
+                COUNT(*)             AS cnt
+            FROM transactions t
+            LEFT JOIN payment_methods pm
+                ON pm.user_id = t.user_id
+               AND pm.name    = t.payment_method
             {where_clause}
-            GROUP BY {payment_expr}
+            GROUP BY label, direct_card, pm.linked_card
             ORDER BY total DESC
             """,
             params,
         )
-        result = [dict(row) for row in cur.fetchall()]
+        rows = cur.fetchall()
+
+        # --- 個別行の構築 ---
+        individual: list[dict] = []
+        # card → {total, count, includes}
+        rollup: dict[str, dict] = {}
+
+        for row in rows:
+            label = row["label"]
+            direct_card = row["direct_card"]
+            linked_card = row["linked_card"]
+            total = int(row["total"])
+            count = int(row["cnt"])
+
+            individual.append({
+                "payment_method": label,
+                "total": total,
+                "count": count,
+                "linked_card": linked_card,
+                "is_rollup": False,
+                "includes": [],
+            })
+
+            # 合算対象カードを決定
+            card_key = direct_card or linked_card
+            if card_key:
+                if card_key not in rollup:
+                    rollup[card_key] = {"total": 0, "count": 0, "includes": []}
+                rollup[card_key]["total"] += total
+                rollup[card_key]["count"] += count
+                # 紐付け支払方法のみ includes に追加（直接カード払いは含めない）
+                if linked_card:
+                    rollup[card_key]["includes"].append(label)
+
+        # --- 合算行の構築（linked_card が存在する場合のみ） ---
+        rollup_rows: list[dict] = []
+        for card, data in rollup.items():
+            if not data["includes"]:
+                continue  # 紐付け方法がなければ合算行は不要
+            includes_str = "・".join(data["includes"])
+            rollup_rows.append({
+                "payment_method": f"{card}（{includes_str}含む）",
+                "total": data["total"],
+                "count": data["count"],
+                "linked_card": None,
+                "is_rollup": True,
+                "includes": data["includes"],
+            })
+
+        rollup_rows.sort(key=lambda x: x["total"], reverse=True)
+        result = individual + rollup_rows
+
         logger.info(
             f"支払方法別集計: "
             f"{year_month or f'{start_month}〜{end_month}'}"
-            f" {type} {person} fixed={fixed_mode} {len(result)}種類"
+            f" {type} {person} fixed={fixed_mode}"
+            f" 個別={len(individual)} 合算={len(rollup_rows)}"
         )
         return result
     except Exception:

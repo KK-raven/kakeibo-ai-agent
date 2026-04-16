@@ -24,6 +24,7 @@ from openai import OpenAI
 
 from api.agent.tools import TOOLS
 from api.db import crud
+from api.db.crud import set_payment_method_group_default as _set_group_default
 from api.utils.file_export import export_file as export_file_util
 from api.agent.help import get_help as get_help_func
 from api.agent.character import set_character, get_character
@@ -89,6 +90,7 @@ def _build_system_prompt(user_id: int) -> str:
 - 収入カテゴリ: 給与/賞与/副業・フリーランス/金融資産/ギャンブル/臨時収入/その他
 - 支払方法が明示されなければ省略してください（システムがデフォルト値を適用します）
 - 取引の削除・更新は必ず2ステップで行うこと。①対象候補を特定する（get_transactionsで検索するか、直前のregister_transactionの結果を使う）。②対象の取引内容（日付・金額・店名等）を具体的に示してユーザーに最終確認を求め、「はい」「削除して」「OK」等の明示的な肯定応答が来て初めてToolを実行する。ユーザーが対象を指定した直後（「ファミマのやつ」「それ消して」等）であっても、必ず対象の取引内容を示して最終確認すること。承認なしに削除・更新のToolを実行することは絶対に禁止
+- 取引登録後の確認メッセージは、register_transactionのToolの実行結果の値を必ず使うこと。特に店名(store_name)・品目(item)・支払方法(payment_method)・カード名(card_name)はToolのresultに含まれる実際の登録値を表示すること。ユーザーの入力テキストから推測した値を使わないこと
 - 削除・更新の対象は、直前のget_transactionsで取得した結果、または直前のregister_transactionで登録した取引からのみ選ぶこと。過去の会話で取得した取引IDを再利用してはならない
 - get_transactionsの検索結果に複数件ヒットした場合は、全件を表示してどれを対象とするかユーザーに選ばせること。特に短い検索語（1〜2文字）では意図しない部分一致が起きやすいため注意
 - 品目名だけでカテゴリが曖昧な場合（「水」「チョコ」等の短い語）は、ユーザーにカテゴリを確認すること。店名等の文脈から明らかな場合は確認不要
@@ -106,6 +108,12 @@ def _build_system_prompt(user_id: int) -> str:
 - ユーザーがカード名を指定したが登録済みカードと完全一致しない場合（例: 「JCB」と言ったがJCBを含むカードが複数ある場合）は、候補を提示して確認する。デフォルトカードの名前に含まれる場合はデフォルトカードを使う
 - クレジットカードが1枚も登録されていない状態でカード払いを指示された場合は、「カードが未登録です。カード名を教えてください（例: ドコモカード（JCB）、楽天カード（VISA）等）」と案内し、登録を促す
 - 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
+- グループ型支払方法（QUICPay・PayPay等）の取引登録フロー:
+  1. ユーザーが「QUICPay」「PayPay」等のグループ名で支払いを言った場合、get_payment_methodsでそのgroup_nameに属するエントリを確認する
+  2. グループ内にis_group_default=TrueのエントリがあればそのnameをPayment_methodとして使用する
+  3. グループ内に複数エントリがあるがis_group_defaultが設定されていない場合は、どちらを使うか聞き、デフォルト設定を提案する（set_payment_method_group_defaultで設定）
+  4. QUICPayやPayPay等でlinked_cardが未設定のエントリが1件だけある場合（初回使用）は「QUICPayはどのカードと紐付けますか？」と確認し、回答後にupdate_payment_method_linked_cardを実行してからトランザクション登録を行う
+- グループデフォルト変更は必ず「○○のデフォルトを△△に変更しますか？」と2ステップ確認してからset_payment_method_group_defaultを実行すること
 
 ---
 
@@ -268,6 +276,7 @@ TOOL_FUNCTIONS = {
     "get_credit_cards": crud.get_credit_cards,
     "get_setting": crud.get_setting,
     "set_setting": crud.set_setting,
+    "set_payment_method_group_default": _set_group_default,
     "export_file": export_file_util,
     "get_store_summary": crud.get_store_summary,
     "get_item_summary": crud.get_item_summary,

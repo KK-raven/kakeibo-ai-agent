@@ -232,6 +232,10 @@ def init_db() -> None:
         # --- payment_methods テーブル ---
         # linked_cardがユーザーごとに異なるため（例: QUICPayの紐付け先）、
         # user_idで分離する。デフォルトの12種はユーザー登録時にコピーする。
+        # group_name: "PayPay" など、同一グループの識別子。
+        #   ユーザーが「PayPayで払った」と言ったとき、group_nameで
+        #   デフォルトエントリを解決するために使う。
+        # is_group_default: 同グループ内でデフォルトとして使うエントリか。
         cur.execute("""
             CREATE TABLE IF NOT EXISTS payment_methods (
                 id SERIAL PRIMARY KEY,
@@ -240,8 +244,58 @@ def init_db() -> None:
                 category TEXT NOT NULL
                     CHECK (category IN ('現金', '非現金')),
                 linked_card TEXT,
+                group_name TEXT,
+                is_group_default BOOLEAN NOT NULL DEFAULT TRUE,
                 UNIQUE (user_id, name)
             )
+        """)
+
+        # payment_methods マイグレーション: group_name / is_group_default 追加
+        for col, col_type in [
+            ("group_name", "TEXT"),
+            ("is_group_default", "BOOLEAN NOT NULL DEFAULT TRUE"),
+        ]:
+            cur.execute(f"""
+                ALTER TABLE payment_methods
+                ADD COLUMN IF NOT EXISTS {col} {col_type}
+            """)
+
+        # 既存エントリの group_name をベース名から設定（未設定のみ）
+        # 例: "QUICPay（JCB）" → group_name = "QUICPay"
+        #     "PayPay" → group_name = "PayPay"
+        cur.execute("""
+            UPDATE payment_methods
+            SET group_name = REGEXP_REPLACE(name, '（[^）]*）$', '')
+            WHERE group_name IS NULL
+        """)
+
+        # linked_card が設定されている既存エントリを "name（linked_card）" 形式にリネームし、
+        # 対応するトランザクション履歴も更新する（べき等: name に「（」が含まれなければ処理）
+        cur.execute("""
+            UPDATE transactions t
+            SET payment_method = pm.name || '（' || pm.linked_card || '）'
+            FROM payment_methods pm
+            WHERE t.user_id = pm.user_id
+              AND t.payment_method = pm.name
+              AND pm.linked_card IS NOT NULL
+              AND pm.name NOT LIKE '%%（%%）'
+              AND NOT EXISTS (
+                  SELECT 1 FROM payment_methods pm2
+                  WHERE pm2.user_id = pm.user_id
+                    AND pm2.name = pm.name || '（' || pm.linked_card || '）'
+              )
+        """)
+        cur.execute("""
+            UPDATE payment_methods
+            SET name = name || '（' || linked_card || '）'
+            WHERE linked_card IS NOT NULL
+              AND name NOT LIKE '%%（%%）'
+              AND NOT EXISTS (
+                  SELECT 1 FROM payment_methods pm2
+                  WHERE pm2.user_id = payment_methods.user_id
+                    AND pm2.name = payment_methods.name
+                          || '（' || payment_methods.linked_card || '）'
+              )
         """)
 
         # --- credit_cards テーブル ---
@@ -301,28 +355,30 @@ def _insert_default_payment_methods(cur, user_id: int) -> None:
         cur: カーソル（呼び出し元がcommitを管理する）。
         user_id: 対象ユーザーのID。
     """
+    # (name, category, group_name)
     default_methods = [
-        ("現金", "現金"),
-        ("口座振替", "非現金"),
-        ("クレジットカード", "非現金"),
-        ("QUICPay", "非現金"),
-        ("PayPay", "非現金"),
-        ("Suica", "非現金"),
-        ("PASMO", "非現金"),
-        ("Amazon Pay", "非現金"),
-        ("楽天ペイ", "非現金"),
-        ("メルペイ", "非現金"),
-        ("PayPal", "非現金"),
-        ("その他", "非現金"),
+        ("現金", "現金", "現金"),
+        ("口座振替", "非現金", "口座振替"),
+        ("クレジットカード", "非現金", "クレジットカード"),
+        ("QUICPay", "非現金", "QUICPay"),
+        ("PayPay", "非現金", "PayPay"),
+        ("Suica", "非現金", "Suica"),
+        ("PASMO", "非現金", "PASMO"),
+        ("Amazon Pay", "非現金", "Amazon Pay"),
+        ("楽天ペイ", "非現金", "楽天ペイ"),
+        ("メルペイ", "非現金", "メルペイ"),
+        ("PayPal", "非現金", "PayPal"),
+        ("その他", "非現金", "その他"),
     ]
-    for name, cat in default_methods:
+    for name, cat, group in default_methods:
         cur.execute(
             """
-            INSERT INTO payment_methods (user_id, name, category)
-            VALUES (%s, %s, %s)
+            INSERT INTO payment_methods
+                (user_id, name, category, group_name, is_group_default)
+            VALUES (%s, %s, %s, %s, TRUE)
             ON CONFLICT (user_id, name) DO NOTHING
             """,
-            (user_id, name, cat),
+            (user_id, name, cat, group),
         )
 
 

@@ -654,13 +654,23 @@ TOOLS = [
                 "確認を取った上で使う。"
                 "必ずユーザーに「○○を新しい支払方法として追加しますか？」"
                 "と確認してから実行すること。"
+                "PayPay（JCB）のようにカード紐付きで追加する場合は"
+                "linked_cardにカード名を指定すること。"
+                "PayPay（口座）のように口座引き落とし版を追加する場合は"
+                "linked_cardを省略する。"
+                "is_group_defaultをTrueにすると、同グループ（例: PayPay）の"
+                "デフォルトに設定される。"
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "name": {
                         "type": "string",
-                        "description": "支払方法名。",
+                        "description": (
+                            "支払方法名。カード紐付きの場合は"
+                            "「PayPay（JCB）」「QUICPay（楽天）」のように"
+                            "カード名を括弧内に含めること。"
+                        ),
                     },
                     "category": {
                         "type": "string",
@@ -669,7 +679,21 @@ TOOLS = [
                     },
                     "linked_card": {
                         "type": "string",
-                        "description": "決済元カード名。わかる場合のみ。",
+                        "description": "決済元カード名。カード紐付きの場合のみ指定する。",
+                    },
+                    "group_name": {
+                        "type": "string",
+                        "description": (
+                            "グループ名。省略するとnameからカッコを除いた名前が使われる。"
+                            "例: name='PayPay（JCB）' → group_name='PayPay'"
+                        ),
+                    },
+                    "is_group_default": {
+                        "type": "boolean",
+                        "description": (
+                            "このエントリをグループのデフォルトにするか。"
+                            "ユーザーがデフォルトとして使うと言った場合はTrue。"
+                        ),
                     },
                 },
                 "required": ["name"],
@@ -683,14 +707,17 @@ TOOLS = [
             "description": (
                 "支払方法の決済元カードを設定する。"
                 "「QUICPayの決済元はJCBにして」のように言われたとき、"
-                "または初めて使う支払方法の決済元を確認するときに使う。"
+                "または初めてQUICPay等を使う際に決済元を確認するときに使う。"
+                "実行すると支払方法名が自動的に"
+                "「QUICPay（JCB）」形式にリネームされる。"
+                "過去の取引履歴も新しい名前に更新される。"
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "name": {
                         "type": "string",
-                        "description": "支払方法名（QUICPay等）。",
+                        "description": "現在の支払方法名（QUICPay等）。",
                     },
                     "linked_card": {
                         "type": "string",
@@ -698,6 +725,35 @@ TOOLS = [
                     },
                 },
                 "required": ["name", "linked_card"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "set_payment_method_group_default",
+            "description": (
+                "同一グループ内のデフォルト支払方法を変更する。"
+                "「PayPayのデフォルトをPayPay（JCB）にして」等と言われたとき。"
+                "実行前に必ず「PayPayのデフォルトをPayPay（JCB）に変更しますか？」"
+                "と確認してから実行すること。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "group_name": {
+                        "type": "string",
+                        "description": "グループ名（PayPay、QUICPay等）。",
+                    },
+                    "payment_method_name": {
+                        "type": "string",
+                        "description": (
+                            "新しいデフォルトにする支払方法の正確な名前"
+                            "（PayPay（JCB）等）。"
+                        ),
+                    },
+                },
+                "required": ["group_name", "payment_method_name"],
             },
         },
     },
