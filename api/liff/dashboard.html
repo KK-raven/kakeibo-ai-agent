@@ -1023,7 +1023,7 @@
                 const s = summary[nearest];
                 let text = values[nearest].toLocaleString() + "円";
                 if (isPayment && s.is_rollup && s.includes && s.includes.length) {
-                    text += "（" + s.includes.join("・") + "含む）";
+                    text += "（カード紐付けも含む）";
                 }
                 labelTooltip.textContent = text;
                 labelTooltip.style.left = (chartInstance.chartArea.left + 4) + "px";
