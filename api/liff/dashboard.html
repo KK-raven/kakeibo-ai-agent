@@ -935,6 +935,28 @@
             const wrapperHeight = Math.max(200, labels.length * 36 + 80);
             canvas.parentElement.style.height = wrapperHeight + "px";
 
+            // ラベルタップ用HTMLオーバーレイトoltip。
+            // chart-container は position:relative なので absolute 配置できる。
+            // 前回のオーバーレイが残っていれば削除する。
+            const oldOverlay = canvas.parentElement.querySelector(".label-tooltip");
+            if (oldOverlay) oldOverlay.remove();
+            const labelTooltip = document.createElement("div");
+            labelTooltip.className = "label-tooltip";
+            Object.assign(labelTooltip.style, {
+                position: "absolute",
+                background: "rgba(0,0,0,0.72)",
+                color: "#fff",
+                padding: "3px 8px",
+                borderRadius: "4px",
+                fontSize: "11px",
+                lineHeight: "1.4",
+                pointerEvents: "none",
+                display: "none",
+                whiteSpace: "nowrap",
+                zIndex: "10",
+            });
+            canvas.parentElement.appendChild(labelTooltip);
+
             const ctx = canvas.getContext("2d");
             chartInstance = new Chart(ctx, {
                 type: "bar",
@@ -952,9 +974,14 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     onClick: (event, elements, chart) => {
-                        // ラベルエリア（y軸左側）のタップでバーと同じツールチップを表示する。
+                        // 表示中なら次のタップで消す。
+                        if (labelTooltip.style.display !== "none") {
+                            labelTooltip.style.display = "none";
+                            return;
+                        }
+                        // ラベルエリア（y軸左側）のタップのみ処理する。
+                        if (event.x > chart.chartArea.left) return;
                         const yScale = chart.scales.y;
-                        if (event.x > yScale.right) return;
                         const ticks = yScale.ticks;
                         let nearest = -1, minDist = Infinity;
                         ticks.forEach((_, i) => {
@@ -962,31 +989,22 @@
                             const dist = Math.abs(tickY - event.y);
                             if (dist < minDist) { minDist = dist; nearest = i; }
                         });
-                        if (nearest >= 0 && minDist < 18) {
-                            chart.tooltip.setActiveElements(
-                                [{ datasetIndex: 0, index: nearest }],
-                                {
-                                    x: (chart.chartArea.left + chart.chartArea.right) / 2,
-                                    y: yScale.getPixelForTick(nearest),
-                                }
-                            );
-                            chart.update();
+                        if (nearest < 0 || minDist >= 18) return;
+                        const s = summary[nearest];
+                        let text = values[nearest].toLocaleString() + "円";
+                        if (isPayment && s.is_rollup && s.includes && s.includes.length) {
+                            text += "（" + s.includes.join("・") + "含む）";
                         }
+                        labelTooltip.textContent = text;
+                        // バー開始位置（ラベル右隣）に配置する。
+                        labelTooltip.style.left = (chart.chartArea.left + 4) + "px";
+                        labelTooltip.style.top =
+                            (yScale.getPixelForTick(nearest) - 11) + "px";
+                        labelTooltip.style.display = "block";
                     },
                     plugins: {
                         legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => {
-                                    const s = summary[ctx.dataIndex];
-                                    let text = ctx.parsed.x.toLocaleString() + "円";
-                                    if (isPayment && s.is_rollup && s.includes && s.includes.length) {
-                                        text += "（" + s.includes.join("・") + "含む）";
-                                    }
-                                    return text;
-                                },
-                            },
-                        },
+                        tooltip: { enabled: false },
                     },
                     scales: {
                         x: {
