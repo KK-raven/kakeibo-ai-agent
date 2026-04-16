@@ -500,6 +500,10 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
             tool_calls = msg.get("tool_calls", [])
             for tc in tool_calls:
                 name = tc.get("function", {}).get("name", "")
+                # delete/update 自体はガードを無効化しない。
+                # 同一検索結果から複数件を連続削除・更新するフローを許容する。
+                if name in _CONFIRMATION_REQUIRED_TOOLS:
+                    continue
                 if not name.startswith(("get_", "check_")):
                     return False
 
