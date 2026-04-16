@@ -476,14 +476,17 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
     CONFIRMABLE_TOOLS = {"get_transactions", "register_transaction"}
 
     last_idx = None
+    last_tool = None
     for i in range(len(messages) - 1, -1, -1):
         msg = messages[i]
         if msg.get("role") != "assistant":
             continue
         tool_calls = msg.get("tool_calls", [])
         for tc in tool_calls:
-            if tc.get("function", {}).get("name") in CONFIRMABLE_TOOLS:
+            name = tc.get("function", {}).get("name")
+            if name in CONFIRMABLE_TOOLS:
                 last_idx = i
+                last_tool = name
                 break
         if last_idx is not None:
             break
@@ -507,7 +510,14 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
                 if not name.startswith(("get_", "check_")):
                     return False
 
-    return user_msg_count >= 1
+    # get_transactions: LLMが検索結果と確認を同じターンで提示するため
+    #   ユーザーの承認1回（>= 1）で十分。
+    # register_transaction: 登録成功メッセージの後にユーザーが「キャンセル」→
+    #   LLMが取引内容を提示して確認→ユーザーが承認、の2メッセージ（>= 2）必要。
+    if last_tool == "get_transactions":
+        return user_msg_count >= 1
+    else:
+        return user_msg_count >= 2
 
 
 def chat(
