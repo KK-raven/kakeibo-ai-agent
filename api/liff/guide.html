@@ -279,7 +279,6 @@
         <div class="category-list">
             <span class="category-tag">現金</span>
             <span class="category-tag">口座振替</span>
-            <span class="category-tag">クレジットカード</span>
             <span class="category-tag">QUICPay</span>
             <span class="category-tag">PayPay</span>
             <span class="category-tag">Suica</span>
@@ -289,6 +288,30 @@
             <span class="category-tag">メルペイ</span>
             <span class="category-tag">PayPal</span>
             <span class="category-tag">その他</span>
+        </div>
+
+        <h3>クレジットカードの登録</h3>
+        <p>カードを登録すると、カード払い・QUICPay・Apple Payなどの
+           決済元として紐付けられます。</p>
+        <div class="example">
+            <span>「JCBカードを登録して」</span>
+            <span>「楽天カードをデフォルトカードに設定して」</span>
+        </div>
+
+        <h3>QUICPay・PayPayのカード紐付け（グループ支払方法）</h3>
+        <p>QUICPayやPayPayは複数のカードを決済元として登録できます。
+           「QUICPayで払った」と言うと、デフォルトに設定したカード紐付けが
+           自動で適用されます。</p>
+        <div class="example">
+            <span>「QUICPayの決済元をJCBカードに設定して」
+                → QUICPay（JCB）として登録</span>
+            <span>「PayPayに三井住友カードを追加して」
+                → PayPay（三井住友）として登録</span>
+            <span>「QUICPayのデフォルトをJCBに変えて」</span>
+        </div>
+        <div class="note">
+            グループ支払方法を初めて設定する際は確認メッセージが表示されます。
+            デフォルトのカード紐付けは後から変更できます。
         </div>
     </div>
 
@@ -372,6 +395,11 @@
             <li>カテゴリ別・店別・品目別・支払方法別：横棒グラフ</li>
             <li>月別推移：カテゴリ別積み上げ棒グラフ（最大12ヶ月）</li>
         </ul>
+        <div class="note">
+            支払方法別グラフでは、QUICPay（JCB）などカード紐付きの支払方法は
+            個別行に加えてカード別の合算行（紫色）も表示されます。
+            ラベルをタップすると金額を確認できます。
+        </div>
 
         <h3>グラフ・固定費の表示切替</h3>
         <ul>
@@ -390,7 +418,9 @@
                 タップするとソートできます（タップするたびに昇順→降順→解除）</li>
             <li>品目名が長い場合は省略表示されます。
                 省略されたセルをタップすると全文が表示されます</li>
-            <li>「品目名: 省略/全表示」ボタンで表示モードを切り替えられます</li>
+            <li>「品目名: 省略/全表示」ボタンで表示モードを切り替えられます。
+                全表示モードでは長い品目名が折り返して表示されます</li>
+            <li>カード払いは支払方法欄にカード名が表示されます</li>
         </ul>
     </div>
 

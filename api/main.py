@@ -475,6 +475,9 @@ def download_csv(
         "店名", "品目", "メモ", "支払方法", "名義",
     ])
     for tx in transactions:
+        pm = tx.get("payment_method", "")
+        if pm == "クレジットカード" and tx.get("card_name"):
+            pm = tx["card_name"]
         writer.writerow([
             tx["date"],
             "収入" if tx["type"] == "income" else "支出",
@@ -483,7 +486,7 @@ def download_csv(
             tx.get("store_name", ""),
             tx.get("item", ""),
             tx.get("memo", ""),
-            tx.get("payment_method", ""),
+            pm,
             tx.get("person", ""),
         ])
     output.seek(0)
@@ -528,8 +531,16 @@ def download_txt(
         ファイル名は「家計簿_{period}.txt」形式。
     """
     from fastapi.responses import StreamingResponse
-    from api.db.crud import get_category_summary, get_transactions
+    from api.db.crud import get_category_summary, get_transactions, get_payment_method_summary
     summary = get_category_summary(
+        user_id=user_id,
+        year_month=year_month,
+        start_month=start_month,
+        end_month=end_month,
+        type=type,
+        person=person,
+    )
+    pm_summary = get_payment_method_summary(
         user_id=user_id,
         year_month=year_month,
         start_month=start_month,
@@ -557,6 +568,12 @@ def download_txt(
             total += s["total"]
         text += "-" * 30 + "\n"
         text += f"合計: ¥{total:,}\n\n"
+    if pm_summary:
+        text += f"【支払方法別{type_label}】\n"
+        text += "-" * 30 + "\n"
+        for s in pm_summary:
+            text += f"{s['payment_method']}: ¥{s['total']:,}（{s['count']}件）\n"
+        text += "-" * 30 + "\n\n"
     if transactions:
         text += "【取引明細】\n"
         text += "-" * 30 + "\n"

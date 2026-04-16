@@ -951,6 +951,28 @@
                     indexAxis: "y",
                     responsive: true,
                     maintainAspectRatio: false,
+                    onClick: (event, elements, chart) => {
+                        // ラベルエリア（y軸左側）のタップで値をアラート表示する。
+                        const yScale = chart.scales.y;
+                        if (event.x > yScale.right) return;
+                        const ticks = yScale.ticks;
+                        let nearest = -1, minDist = Infinity;
+                        ticks.forEach((_, i) => {
+                            const tickY = yScale.getPixelForTick(i);
+                            const dist = Math.abs(tickY - event.y);
+                            if (dist < minDist) { minDist = dist; nearest = i; }
+                        });
+                        if (nearest >= 0 && minDist < 18) {
+                            const s = summary[nearest];
+                            let text = labels[nearest] + "\n"
+                                + values[nearest].toLocaleString() + "円";
+                            if (isPayment && s.is_rollup
+                                    && s.includes && s.includes.length) {
+                                text += "\n（" + s.includes.join("・") + "含む）";
+                            }
+                            alert(text);
+                        }
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -1181,9 +1203,11 @@
                     <td class="${amountClass}">
                         ${sign}${tx.amount.toLocaleString()}円
                     </td>
-                    <td ${tx.item && !itemFullLength && tx.item.length > 17
-                        ? `onclick="alert('${tx.item.replace(/'/g, "\\'")}')" style="cursor:pointer;"`
-                        : ""
+                    <td ${itemFullLength
+                        ? 'style="white-space: normal; word-break: break-all;"'
+                        : (tx.item && tx.item.length > 17
+                            ? `onclick="alert('${tx.item.replace(/'/g, "\\'")}')" style="cursor:pointer;"`
+                            : "")
                     } title="${tx.item || ""}">${
                         tx.item
                             ? (itemFullLength
