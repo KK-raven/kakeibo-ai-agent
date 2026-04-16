@@ -671,8 +671,8 @@ def get_payment_methods(
 ) -> dict:
     """支払方法の一覧をクレジットカード情報とあわせて取得する。
 
-    payment_methodsテーブルの全件に加え、
-    credit_cardsテーブルの登録カードも返す。
+    「クレジットカード」汎用エントリは返さず、代わりに
+    credit_cardsテーブルの登録カードを payment_methods の一覧に含めて返す。
     group_name / is_group_default / linked_card を含む。
 
     Args:
@@ -687,7 +687,7 @@ def get_payment_methods(
                     "linked_card": ..., "group_name": ...,
                     "is_group_default": ...,
                 },
-                ...
+                ...  # 「クレジットカード」は除外、実カード名が含まれる
             ],
             "credit_cards": [...],
         }
@@ -696,29 +696,44 @@ def get_payment_methods(
     try:
         cur = conn.cursor()
 
-        if category:
+        cat_filter = "AND category = %s" if category else ""
+        params_methods = (user_id, category) if category else (user_id,)
+
+        cur.execute(
+            f"""
+            SELECT id, name, category, linked_card,
+                   group_name, is_group_default
+            FROM payment_methods
+            WHERE user_id = %s
+              AND name != 'クレジットカード'
+              {cat_filter}
+            ORDER BY group_name, is_group_default DESC, name
+            """,
+            params_methods,
+        )
+        methods = [dict(row) for row in cur.fetchall()]
+
+        # 登録済みクレジットカードを payment_methods の一覧に加える
+        # （「クレジットカード」汎用エントリの代替）
+        if not category or category == "非現金":
             cur.execute(
                 """
-                SELECT id, name, category, linked_card,
-                       group_name, is_group_default
-                FROM payment_methods
-                WHERE user_id = %s AND category = %s
-                ORDER BY group_name, is_group_default DESC, name
-                """,
-                (user_id, category),
-            )
-        else:
-            cur.execute(
-                """
-                SELECT id, name, category, linked_card,
-                       group_name, is_group_default
-                FROM payment_methods
+                SELECT name, is_default FROM credit_cards
                 WHERE user_id = %s
-                ORDER BY group_name, is_group_default DESC, name
+                ORDER BY is_default DESC, name ASC
                 """,
                 (user_id,),
             )
-        methods = [dict(row) for row in cur.fetchall()]
+            for card in cur.fetchall():
+                methods.append({
+                    "id": None,
+                    "name": card["name"],
+                    "category": "非現金",
+                    "linked_card": None,
+                    "group_name": card["name"],
+                    "is_group_default": bool(card["is_default"]),
+                    "is_credit_card": True,
+                })
 
         cur.execute(
             """
