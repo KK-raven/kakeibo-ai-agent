@@ -296,12 +296,15 @@ def _complement_defaults(
     tool_name: str,
     args: dict,
 ) -> dict:
-    """LLM が省略した引数にデフォルト値を補完する。
+    """LLM が省略・誤設定した引数にデフォルト値を補完する。
 
     補完対象:
     1. date: 省略時は今日の日付
     2. payment_method: 省略時は settings("default_payment_method") or "現金"
-    3. card_name: クレカ払いで未指定の場合、デフォルトカードを適用
+    3. payment_method がグループ名（例: "QUICPay"）の場合、
+       同 group_name の is_group_default=True エントリ名に解決する
+       （例: "QUICPay" → "QUICPay（JCB）"）
+    4. card_name: クレカ払いで未指定の場合、デフォルトカードを適用
 
     Args:
         user_id: ユーザーID。crud関数呼び出しに必要。
@@ -326,6 +329,16 @@ def _complement_defaults(
             args["payment_method"] = default_pm or "現金"
             logger.debug(f"支払方法補完: {args['payment_method']}")
 
+        # グループ名のまま渡された場合（例: "QUICPay"）、
+        # is_group_default=True のエントリ名に解決する。
+        # "クレジットカード" は別ルートで処理するため対象外。
+        pm = args.get("payment_method", "")
+        if pm and pm != "クレジットカード":
+            resolved = _resolve_group_payment_method(user_id, pm)
+            if resolved and resolved != pm:
+                logger.debug(f"グループ支払方法解決: {pm} → {resolved}")
+                args["payment_method"] = resolved
+
         if (
             args.get("payment_method") == "クレジットカード"
             and not args.get("card_name")
@@ -340,6 +353,46 @@ def _complement_defaults(
                 logger.debug(f"カード補完: {args['card_name']}")
 
     return args
+
+
+def _resolve_group_payment_method(user_id: int, payment_method: str) -> str | None:
+    """支払方法名がグループ名と一致する場合、デフォルトエントリ名に解決する。
+
+    例: payment_methods テーブルに
+        name="QUICPay（JCB）", group_name="QUICPay", is_group_default=True
+    がある場合、"QUICPay" → "QUICPay（JCB）" を返す。
+
+    一致するグループがない、またはそのまま使えるエントリがある場合は None を返す。
+
+    Args:
+        user_id: ユーザーID。
+        payment_method: LLMが渡した支払方法名。
+
+    Returns:
+        解決後の支払方法名。解決不要なら None。
+    """
+    try:
+        result = crud.get_payment_methods(user_id)
+        methods = result.get("payment_methods", [])
+
+        # 完全一致するエントリがあればそのまま使える（解決不要）
+        exact = [m for m in methods if m["name"] == payment_method]
+        if exact:
+            return None
+
+        # group_name が一致する is_group_default=True のエントリを探す
+        defaults = [
+            m for m in methods
+            if m.get("group_name") == payment_method
+            and m.get("is_group_default")
+        ]
+        if defaults:
+            return defaults[0]["name"]
+
+    except Exception as e:
+        logger.warning(f"グループ支払方法解決エラー: {e}")
+
+    return None
 
 
 def _post_process(
