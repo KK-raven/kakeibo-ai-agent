@@ -299,8 +299,8 @@
         </div>
 
         <h3>QUICPay・PayPayのカード紐付け（グループ支払方法）</h3>
-        <p>QUICPayやPayPayは複数のカードを決済元として登録できます。
-           「QUICPayで払った」と言うと、デフォルトに設定したカード紐付けが
+        <p>QUICPayやPayPayは複数の決済元を登録できます。
+           「QUICPayで払った」と言うと、デフォルトに設定した紐付けが
            自動で適用されます。</p>
         <div class="example">
             <span>「QUICPayの決済元をJCBカードに設定して」
@@ -309,9 +309,18 @@
                 → PayPay（三井住友）として登録</span>
             <span>「QUICPayのデフォルトをJCBに変えて」</span>
         </div>
+
+        <h3>PayPay（口座）：口座引き落としでの支払い</h3>
+        <p>PayPayは銀行口座からの引き落とし（PayPay残高チャージ経由）と
+           クレジットカード紐付けの2種類があります。
+           口座引き落とし払いは <strong>PayPay（口座）</strong> として登録します。</p>
+        <div class="example">
+            <span>「PayPayで払った」→ デフォルトがPayPay（口座）なら自動適用</span>
+            <span>「PayPayのデフォルトを口座に変えて」</span>
+        </div>
         <div class="note">
             グループ支払方法を初めて設定する際は確認メッセージが表示されます。
-            デフォルトのカード紐付けは後から変更できます。
+            デフォルトの決済元は後から変更できます。
         </div>
     </div>
 

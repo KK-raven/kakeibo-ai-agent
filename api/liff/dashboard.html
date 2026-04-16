@@ -952,7 +952,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     onClick: (event, elements, chart) => {
-                        // ラベルエリア（y軸左側）のタップで値をアラート表示する。
+                        // ラベルエリア（y軸左側）のタップでバーと同じツールチップを表示する。
                         const yScale = chart.scales.y;
                         if (event.x > yScale.right) return;
                         const ticks = yScale.ticks;
@@ -963,14 +963,14 @@
                             if (dist < minDist) { minDist = dist; nearest = i; }
                         });
                         if (nearest >= 0 && minDist < 18) {
-                            const s = summary[nearest];
-                            let text = labels[nearest] + "\n"
-                                + values[nearest].toLocaleString() + "円";
-                            if (isPayment && s.is_rollup
-                                    && s.includes && s.includes.length) {
-                                text += "\n（" + s.includes.join("・") + "含む）";
-                            }
-                            alert(text);
+                            chart.tooltip.setActiveElements(
+                                [{ datasetIndex: 0, index: nearest }],
+                                {
+                                    x: (chart.chartArea.left + chart.chartArea.right) / 2,
+                                    y: yScale.getPixelForTick(nearest),
+                                }
+                            );
+                            chart.update();
                         }
                     },
                     plugins: {
@@ -1177,6 +1177,21 @@
             }
         }
 
+        // 品目名を maxLen 文字ごとに <br> で折り返す（全表示モード用）。
+        // innerHTML に挿入するため HTML 特殊文字をエスケープする。
+        function breakItem(text, maxLen) {
+            const esc = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+            let out = "";
+            for (let i = 0; i < esc.length; i += maxLen) {
+                if (i > 0) out += "<br>";
+                out += esc.slice(i, i + maxLen);
+            }
+            return out;
+        }
+
         function renderTable(transactions) {
             const table = document.getElementById("transactionTable");
             const tableEmpty = document.getElementById("tableEmpty");
@@ -1203,15 +1218,13 @@
                     <td class="${amountClass}">
                         ${sign}${tx.amount.toLocaleString()}円
                     </td>
-                    <td ${itemFullLength
-                        ? 'style="white-space: normal; word-break: break-all;"'
-                        : (tx.item && tx.item.length > 17
-                            ? `onclick="alert('${tx.item.replace(/'/g, "\\'")}')" style="cursor:pointer;"`
-                            : "")
+                    <td ${!itemFullLength && tx.item && tx.item.length > 17
+                        ? `onclick="alert('${tx.item.replace(/'/g, "\\'")}')" style="cursor:pointer;"`
+                        : ""
                     } title="${tx.item || ""}">${
                         tx.item
                             ? (itemFullLength
-                                ? tx.item
+                                ? breakItem(tx.item, 17)
                                 : tx.item.length > 17
                                     ? tx.item.slice(0, 17) + "…"
                                     : tx.item)
