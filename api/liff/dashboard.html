@@ -973,35 +973,6 @@
                     indexAxis: "y",
                     responsive: true,
                     maintainAspectRatio: false,
-                    onClick: (event, elements, chart) => {
-                        // 表示中なら次のタップで消す。
-                        if (labelTooltip.style.display !== "none") {
-                            labelTooltip.style.display = "none";
-                            return;
-                        }
-                        // ラベルエリア（y軸左側）のタップのみ処理する。
-                        if (event.x > chart.chartArea.left) return;
-                        const yScale = chart.scales.y;
-                        const ticks = yScale.ticks;
-                        let nearest = -1, minDist = Infinity;
-                        ticks.forEach((_, i) => {
-                            const tickY = yScale.getPixelForTick(i);
-                            const dist = Math.abs(tickY - event.y);
-                            if (dist < minDist) { minDist = dist; nearest = i; }
-                        });
-                        if (nearest < 0 || minDist >= 18) return;
-                        const s = summary[nearest];
-                        let text = values[nearest].toLocaleString() + "円";
-                        if (isPayment && s.is_rollup && s.includes && s.includes.length) {
-                            text += "（" + s.includes.join("・") + "含む）";
-                        }
-                        labelTooltip.textContent = text;
-                        // バー開始位置（ラベル右隣）に配置する。
-                        labelTooltip.style.left = (chart.chartArea.left + 4) + "px";
-                        labelTooltip.style.top =
-                            (yScale.getPixelForTick(nearest) - 11) + "px";
-                        labelTooltip.style.display = "block";
-                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: { enabled: false },
@@ -1019,6 +990,47 @@
                     },
                 },
             });
+
+            // ラベルタップの検出はChart.jsのonClickではなく
+            // getBoundingClientRect()を使うネイティブclickリスナーで行う。
+            // loadSummaryChartが再呼び出しされても重複しないよう古いリスナーを削除する。
+            if (canvas._labelTapHandler) {
+                canvas.removeEventListener("click", canvas._labelTapHandler);
+            }
+            canvas._labelTapHandler = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // 表示中なら次のタップで消す。
+                if (labelTooltip.style.display !== "none") {
+                    labelTooltip.style.display = "none";
+                    return;
+                }
+
+                // ラベルエリア（chartArea左端より左）のタップのみ処理する。
+                if (!chartInstance || x > chartInstance.chartArea.left) return;
+
+                const yScale = chartInstance.scales.y;
+                let nearest = -1, minDist = Infinity;
+                yScale.ticks.forEach((_, i) => {
+                    const tickY = yScale.getPixelForTick(i);
+                    const dist = Math.abs(tickY - y);
+                    if (dist < minDist) { minDist = dist; nearest = i; }
+                });
+                if (nearest < 0 || minDist >= 20) return;
+
+                const s = summary[nearest];
+                let text = values[nearest].toLocaleString() + "円";
+                if (isPayment && s.is_rollup && s.includes && s.includes.length) {
+                    text += "（" + s.includes.join("・") + "含む）";
+                }
+                labelTooltip.textContent = text;
+                labelTooltip.style.left = (chartInstance.chartArea.left + 4) + "px";
+                labelTooltip.style.top = (yScale.getPixelForTick(nearest) - 11) + "px";
+                labelTooltip.style.display = "block";
+            };
+            canvas.addEventListener("click", canvas._labelTapHandler);
         }
 
         async function loadTrendChart(type, person, startMonth, endMonth) {
