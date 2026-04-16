@@ -68,11 +68,16 @@ TOOLS = [
                     },
                     "store_name": {
                         "type": "string",
-                        "description": "店名・支払先。わかる場合のみ。",
+                        "description": (
+                            "店名・支払先。ユーザーが店名を言った場合は必ず設定すること。"
+                        ),
                     },
                     "item": {
                         "type": "string",
-                        "description": "品目。わかる場合のみ。",
+                        "description": (
+                            "品目。ユーザーが具体的な商品名や品目を"
+                            "言った場合（「あんぱん」「ガソリン」等）は必ず設定すること。"
+                        ),
                     },
                     "memo": {
                         "type": "string",
