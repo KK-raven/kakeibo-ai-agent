@@ -389,6 +389,22 @@ def _resolve_group_payment_method(user_id: int, payment_method: str) -> str | No
         if defaults:
             return defaults[0]["name"]
 
+        # OCRや外部入力で「QUICPay（Airペイ）」のように
+        # カッコ付きで渡された場合、ベース名を抽出して再試行する。
+        # 例: "QUICPay（Airペイ）" → "QUICPay"
+        if "（" in payment_method:
+            base = payment_method.split("（")[0].strip()
+            base_defaults = [
+                m for m in methods
+                if m.get("group_name") == base
+                and m.get("is_group_default")
+            ]
+            if base_defaults:
+                logger.debug(
+                    f"ベース名でグループ解決: {payment_method} → {base_defaults[0]['name']}"
+                )
+                return base_defaults[0]["name"]
+
     except Exception as e:
         logger.warning(f"グループ支払方法解決エラー: {e}")
 
