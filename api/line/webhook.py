@@ -116,7 +116,7 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
     try:
         response = openai_client.chat.completions.create(
             model=VISION_MODEL,
-            max_tokens=1000,
+            max_completion_tokens=1000,
             messages=[
                 {
                     "role": "user",
