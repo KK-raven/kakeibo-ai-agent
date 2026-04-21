@@ -96,6 +96,7 @@ def _build_system_prompt(user_id: int) -> str:
 今日の日付: {today}
 
 基本ルール:
+- クレジットカード払いを確認・登録メッセージに表示するときは必ず「クレジットカード（{default_card_name if default_card_name else "デフォルトカード"}）」の形式で書くこと。カード名を括弧なしで「クレジットカード」とだけ書いてはならない
 - 日付の指定がなければ今日の日付（{today}）を使ってください
 - 金額は正の整数で扱います
 - 支出カテゴリ: 食費/光熱費/交通費/日用品/交際費/サブスク/医療費/衣服/娯楽/教育/家賃・住居/保険/その他
@@ -123,9 +124,9 @@ def _build_system_prompt(user_id: int) -> str:
   - クレジットカードが1枚も登録されていない状態でカード払いを指示された場合は、「カードが未登録です。カード名を教えてください（例: ドコモカード（JCB）、楽天カード（VISA）等）」と案内し、登録を促す
 - クレジットカード・カード払いの固定費登録（register_fixed_expense）:
   - 「カード」「クレカ」等の指定はすべて payment_method='クレジットカード' として扱う
-  - カード名を指定した場合: 必ずget_credit_cardsで登録済み一覧を取得し照合する。完全一致または部分一致があればそのカード名をcard_nameに設定する。一致しなければ「指定されたカードは登録されていません。先にregister_credit_cardで登録してください」と案内し、register_fixed_expenseは実行しない
-  - カード名を指定しない場合: get_credit_cardsを呼ばず、card_nameを省略してregister_fixed_expenseを実行する（システムがデフォルトカードを自動補完する）。確認メッセージのカード名欄には「{default_card_name if default_card_name else "デフォルトカード"}」と表示すること。ユーザーにカードを選ばせないこと
-  - 登録完了後の報告メッセージはToolの実行結果を使うこと。特にpayment_method・card_nameはToolのresultの値を表示すること
+  - カード名を指定した場合: 必ずget_credit_cardsで登録済み一覧を取得し照合する。一致すればそのcard_nameを設定してregister_fixed_expenseを実行する。一致しなければ登録を案内する
+  - カード名を指定しない場合: card_nameを省略してregister_fixed_expenseを実行する（システムがデフォルトカードを自動補完する）
+  - 確認メッセージでの支払方法表示: カード名が不明な場合でも必ず「クレジットカード（{default_card_name if default_card_name else "デフォルトカード"}）」と書くこと。「クレジットカード」のみは禁止
 - 未登録の支払方法をユーザーが使おうとした場合: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
 - 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
 - グループ型支払方法（QUICPay・PayPay等）の取引登録フロー（クレジットカードはグループフロー対象外）:
