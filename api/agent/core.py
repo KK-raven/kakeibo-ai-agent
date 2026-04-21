@@ -123,10 +123,9 @@ def _build_system_prompt(user_id: int) -> str:
   - クレジットカードが1枚も登録されていない状態でカード払いを指示された場合は、「カードが未登録です。カード名を教えてください（例: ドコモカード（JCB）、楽天カード（VISA）等）」と案内し、登録を促す
 - クレジットカード・カード払いの固定費登録（register_fixed_expense）:
   - 「カード」「クレカ」等の指定はすべて payment_method='クレジットカード' として扱う
-  - クレジットカード払いが指定された場合: まず必ずget_credit_cardsを呼んで登録済みカード一覧を取得すること（カード名を指定した場合も指定しない場合も同様）
-  - カード名を指定した場合: 取得した一覧と照合し、一致するカードをcard_nameに設定する。一致しなければ「指定されたカードは登録されていません。先にregister_credit_cardで登録してください」と案内し、register_fixed_expenseは実行しない
-  - カード名を指定しない場合: card_nameを省略してregister_fixed_expenseを実行する（システムがデフォルトカードを自動補完する）。確認メッセージには取得した一覧のデフォルトカード名（is_default=Trueのカード名）を表示すること
-  - 登録完了後の報告メッセージは、register_fixed_expenseのToolの実行結果の値を必ず使うこと。特にpayment_method・card_nameはToolのresultに含まれる実際の登録値を表示すること
+  - カード名を指定した場合: 必ずget_credit_cardsで登録済み一覧を取得し照合する。完全一致または部分一致があればそのカード名をcard_nameに設定する。一致しなければ「指定されたカードは登録されていません。先にregister_credit_cardで登録してください」と案内し、register_fixed_expenseは実行しない
+  - カード名を指定しない場合: get_credit_cardsを呼ばず、card_nameを省略してregister_fixed_expenseを実行する（システムがデフォルトカードを自動補完する）。確認メッセージのカード名欄には「{default_card_name if default_card_name else "デフォルトカード"}」と表示すること。ユーザーにカードを選ばせないこと
+  - 登録完了後の報告メッセージはToolの実行結果を使うこと。特にpayment_method・card_nameはToolのresultの値を表示すること
 - 未登録の支払方法をユーザーが使おうとした場合: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
 - 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
 - グループ型支払方法（QUICPay・PayPay等）の取引登録フロー（クレジットカードはグループフロー対象外）:
@@ -344,6 +343,12 @@ def _complement_defaults(
             if args.get("type") == "income":
                 return args
 
+        # card_nameが設定されている場合は必ずクレジットカード払いとして扱う。
+        # LLMがpayment_methodを誤って口座振替等で渡した場合の補正。
+        if args.get("card_name") and args.get("payment_method") != "クレジットカード":
+            args["payment_method"] = "クレジットカード"
+            logger.debug(f"card_nameあり: payment_methodをクレジットカードに補正")
+
         if "payment_method" not in args or not args["payment_method"]:
             default_pm = crud.get_setting(user_id, "default_payment_method")
             args["payment_method"] = default_pm or "現金"
@@ -360,18 +365,31 @@ def _complement_defaults(
                 logger.debug(f"グループ支払方法解決: {pm} → {resolved}")
                 args["payment_method"] = resolved
 
-        if (
-            args.get("payment_method") == "クレジットカード"
-            and not args.get("card_name")
-        ):
-            cards = crud.get_credit_cards(user_id)
-            default_card = next(
-                (c for c in cards if c["is_default"]),
-                None,
-            )
+        cards = crud.get_credit_cards(user_id)
+
+        if args.get("payment_method") == "クレジットカード" and not args.get("card_name"):
+            # カード名未指定 → デフォルトカードを補完
+            default_card = next((c for c in cards if c["is_default"]), None)
             if default_card:
                 args["card_name"] = default_card["name"]
                 logger.debug(f"カード補完: {args['card_name']}")
+        elif args.get("card_name"):
+            # カード名指定あり → 登録済みカードと照合して検証
+            specified = args["card_name"]
+            card_names = [c["name"] for c in cards]
+            if specified not in card_names:
+                # 部分一致を試みる
+                matches = [n for n in card_names if specified in n or n in specified]
+                if matches:
+                    logger.debug(f"カード名部分一致補完: {specified} → {matches[0]}")
+                    args["card_name"] = matches[0]
+                else:
+                    registered = "、".join(card_names) if card_names else "なし"
+                    raise ValueError(
+                        f"カード「{specified}」は登録されていません。"
+                        f"先にregister_credit_cardで登録してください。"
+                        f"（登録済み: {registered}）"
+                    )
 
     return args
 
@@ -755,7 +773,20 @@ def chat(
                     "messages_to_save": messages_to_save,
                 }
 
-            tool_args = _complement_defaults(user_id, tool_name, tool_args)
+            try:
+                tool_args = _complement_defaults(user_id, tool_name, tool_args)
+            except ValueError as e:
+                # カード未登録など、引数バリデーションエラー
+                error_msg = str(e)
+                logger.warning(f"引数バリデーションエラー: {tool_name}: {error_msg}")
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": json.dumps({"error": error_msg}, ensure_ascii=False),
+                })
+                messages_to_save.append(messages[-1])
+                tool_results.append({"tool": tool_name, "args": tool_args, "error": error_msg})
+                continue
 
             try:
                 # crud関数にはuser_idを第一引数として渡す。
