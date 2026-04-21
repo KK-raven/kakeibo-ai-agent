@@ -113,10 +113,17 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
     """
     image_b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
 
+    # 画像フォーマットの判定（PNG/JPEGどちらにも対応）
+    if image_bytes[:4] == b'\x89PNG':
+        mime_type = "image/png"
+    else:
+        mime_type = "image/jpeg"
+
     try:
         response = openai_client.chat.completions.create(
             model=VISION_MODEL,
             max_completion_tokens=1000,
+            response_format={"type": "json_object"},
             messages=[
                 {
                     "role": "user",
@@ -124,7 +131,7 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_b64}",
+                                "url": f"data:{mime_type};base64,{image_b64}",
                             },
                         },
                         {
@@ -137,21 +144,13 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
         )
         raw = response.choices[0].message.content or ""
         logger.info(f"Vision APIレスポンス: {repr(raw[:300])}")
-
-        # markdownコードブロックを除去（```json ... ``` 形式への対応）
-        cleaned = raw.strip()
-        if cleaned.startswith("```"):
-            lines = cleaned.splitlines()
-            inner = [l for l in lines if not l.startswith("```")]
-            cleaned = "\n".join(inner).strip()
-
-        return json.loads(cleaned)
+        return json.loads(raw)
 
     except json.JSONDecodeError as e:
         logger.error(f"Vision APIのJSON解析失敗: {e} / raw={raw!r}")
         return {}
     except Exception as e:
-        logger.error(f"Vision API呼び出し失敗: {e}")
+        logger.error(f"Vision API呼び出し失敗: {type(e).__name__}: {e}")
         return {}
 
 
