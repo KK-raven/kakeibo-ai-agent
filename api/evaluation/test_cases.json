@@ -43,15 +43,10 @@
     "id": 4,
     "group": "入出金登録",
     "input": "タクシー1500円、PayPayで払った",
-    "expected_tool": "register_transaction",
-    "expected_args": {
-      "type": "expense",
-      "amount": 1500,
-      "category": "交通費",
-      "payment_method": "PayPay"
-    },
+    "expected_tool": "get_payment_methods",
+    "expected_args": {},
     "difficulty": "medium",
-    "note": "支払方法の抽出"
+    "note": "PayPayはグループ型支払方法。システムプロンプトに従いget_payment_methodsを先に呼んでPayPay（楽天カード）を確認し、その後register_transactionを実行する"
   },
   {
     "id": 5,
@@ -375,10 +370,10 @@
     "id": 31,
     "group": "固定出金",
     "input": "Spotify解約したから固定費から消して",
-    "expected_tool": "_missing:deactivate_fixed_expense",
+    "expected_tool": "get_fixed_expenses",
     "expected_args": {},
-    "difficulty": "hard",
-    "note": "固定出金の削除/無効化。現在ツールが存在しない。v1結合テストで追加予定"
+    "difficulty": "medium",
+    "note": "deactivate_fixed_expenseはIDが必要なため、まずget_fixed_expensesで一覧を取得してSpotifyのIDを確認する"
   },
   {
     "id": 32,
@@ -414,14 +409,12 @@
   },
   {
     "id": 35,
-    "group": "支払方法・カード・設定",
+    "group": "入出金登録",
     "input": "さっきの取引間違えたから消して",
-    "expected_tool": "delete_transaction",
-    "expected_args": {
-      "_note": "IDが不明。先にget_transactionsで候補を表示すべき"
-    },
+    "expected_tool": "get_transactions",
+    "expected_args": {},
     "difficulty": "hard",
-    "note": "削除フロー。ID不明時の挙動"
+    "note": "_has_confirmable_resultガードが発動。会話履歴がない状態でdelete_transactionを試みると、ガードがブロックしてget_transactionsで対象を検索するよう誘導する"
   },
   {
     "id": 36,
@@ -593,10 +586,12 @@
     "id": 51,
     "group": "入出金登録",
     "input": "さっき登録した食費、金額間違えた。2500円じゃなくて3500円にして",
-    "expected_tool": "_missing:update_transaction",
-    "expected_args": {},
+    "expected_tool": "get_transactions",
+    "expected_args": {
+      "category": "食費"
+    },
     "difficulty": "hard",
-    "note": "取引修正。update_transactionツールが存在しない。削除→再登録の2段階で対応するか、対応不可と伝えるか。v1結合テストで検討"
+    "note": "update_transactionはIDが必要。会話履歴がない状態では直近の食費取引をget_transactionsで検索してから修正を試みる"
   },
   {
     "id": 52,
@@ -610,5 +605,238 @@
     },
     "difficulty": "easy",
     "note": "custom_summaryのgroup_by=payment_methodパターン。フィルタなしの基本的な使い方"
+  },
+  {
+    "id": 53,
+    "group": "集計",
+    "input": "家計診断して",
+    "expected_tool": "get_health_indicators",
+    "expected_args": {},
+    "difficulty": "easy",
+    "note": "家計健全性指標（エンゲル係数・貯蓄率等）の取得"
+  },
+  {
+    "id": 54,
+    "group": "集計",
+    "input": "カテゴリの一覧を教えて",
+    "expected_tool": "get_categories",
+    "expected_args": {},
+    "difficulty": "easy",
+    "note": "使用済みカテゴリ一覧の取得"
+  },
+  {
+    "id": 55,
+    "group": "キャラ設定",
+    "input": "キャラをぴよちゃんにして",
+    "expected_tool": "set_character",
+    "expected_args": {
+      "preset": "ぴよちゃん"
+    },
+    "difficulty": "easy",
+    "note": "キャラクタープリセットの変更"
+  },
+  {
+    "id": 56,
+    "group": "キャラ設定",
+    "input": "今のキャラ設定を教えて",
+    "expected_tool": "get_character",
+    "expected_args": {},
+    "difficulty": "easy",
+    "note": "現在のキャラクター設定の確認"
+  },
+  {
+    "id": 57,
+    "group": "支払方法・カード・設定",
+    "input": "使い方を教えて",
+    "expected_tool": "get_help",
+    "expected_args": {},
+    "difficulty": "easy",
+    "note": "機能案内。get_helpを使う"
+  },
+  {
+    "id": 58,
+    "group": "入出金登録",
+    "input": "QUICPayで映画3000円払った",
+    "expected_tool": "get_payment_methods",
+    "expected_args": {},
+    "difficulty": "medium",
+    "note": "QUICPayはグループ型支払方法。get_payment_methodsを先に呼んでQUICPay（JCB）を確認してからregister_transactionを実行する。ID 4のPayPayと同パターン"
+  },
+  {
+    "id": 59,
+    "group": "支払方法・カード・設定",
+    "input": "三井住友VISAカードを追加したい",
+    "expected_tool": "register_credit_card",
+    "expected_args": {
+      "name": ["三井住友VISAカード", "三井住友VISA"]
+    },
+    "difficulty": "easy",
+    "note": "クレジットカードの新規登録。カード名の表記揺れを許容"
+  },
+  {
+    "id": 60,
+    "group": "支払方法・カード・設定",
+    "input": "QUICPayの決済カードをJCBからSuicaに変えて",
+    "expected_tool": "update_payment_method_linked_card",
+    "expected_args": {
+      "name": ["QUICPay", "QUICPay（JCB）"],
+      "linked_card": "Suica"
+    },
+    "difficulty": "medium",
+    "note": "linked_card変更。DBには「QUICPay（JCB）」で登録されているが、LLMがQUICPayと渡してもどちらも許容する"
+  },
+  {
+    "id": 61,
+    "group": "固定費",
+    "input": "はい",
+    "expected_tool": "deactivate_fixed_expense",
+    "expected_args": {
+      "fixed_expense_id": 3
+    },
+    "difficulty": "hard",
+    "note": "会話履歴ベースの固定費解除確認。get_fixed_expenses結果（id=3のSpotify）を見せた後にユーザーが「はい」と回答した状態で呼ばれるべきツールを確認",
+    "conversation_history": [
+      {
+        "role": "user",
+        "content": "Spotifyの固定費を解除して"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_fe_001",
+            "type": "function",
+            "function": {
+              "name": "get_fixed_expenses",
+              "arguments": "{}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_fe_001",
+        "content": "{\"fixed_expenses\": [{\"id\": 3, \"name\": \"Spotify\", \"amount\": 980, \"category\": \"サブスク\", \"day_of_month\": 1, \"payment_method\": \"口座振替\", \"is_active\": true}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Spotify（980円/月）の固定費登録を解除してよろしいですか？"
+      }
+    ]
+  },
+  {
+    "id": 62,
+    "group": "入出金登録",
+    "input": "はい",
+    "expected_tool": "update_transaction",
+    "expected_args": {
+      "amount": 3500
+    },
+    "difficulty": "hard",
+    "note": "会話履歴ベースの取引更新確認。register_transaction後に金額間違いを指摘し、エージェントが確認を求めた後「はい」で承認する。_has_confirmable_resultガードを通過する（register_transaction後にuser_msg≥2）",
+    "conversation_history": [
+      {
+        "role": "user",
+        "content": "マルエツで2500円使った"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_rt_002",
+            "type": "function",
+            "function": {
+              "name": "register_transaction",
+              "arguments": "{\"type\": \"expense\", \"amount\": 2500, \"store_name\": \"マルエツ\", \"date\": \"2026-04-20\", \"category\": \"食費\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_rt_002",
+        "content": "{\"id\": 9999, \"date\": \"2026-04-20\", \"type\": \"expense\", \"amount\": 2500, \"store_name\": \"マルエツ\", \"category\": \"食費\", \"payment_method\": \"現金\", \"card_name\": null}"
+      },
+      {
+        "role": "assistant",
+        "content": "マルエツ 2500円（食費）を登録しました！"
+      },
+      {
+        "role": "user",
+        "content": "金額間違えた、3500円にして"
+      },
+      {
+        "role": "assistant",
+        "content": "マルエツ 2500円の取引（ID: 9999）を3500円に変更してよろしいですか？"
+      }
+    ]
+  },
+  {
+    "id": 63,
+    "group": "入出金登録",
+    "input": "はい",
+    "expected_tool": "delete_transaction",
+    "expected_args": {},
+    "difficulty": "hard",
+    "note": "会話履歴ベースの取引削除確認。register_transaction後にユーザーが「やっぱり消して」→エージェントが確認→「はい」で承認。_has_confirmable_resultガードを通過する（register_transaction後にuser_msg≥2）",
+    "conversation_history": [
+      {
+        "role": "user",
+        "content": "松屋で1000円使った"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_rt_003",
+            "type": "function",
+            "function": {
+              "name": "register_transaction",
+              "arguments": "{\"type\": \"expense\", \"amount\": 1000, \"store_name\": \"松屋\", \"date\": \"2026-04-20\", \"category\": \"食費\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_rt_003",
+        "content": "{\"id\": 9998, \"date\": \"2026-04-20\", \"type\": \"expense\", \"amount\": 1000, \"store_name\": \"松屋\", \"category\": \"食費\", \"payment_method\": \"現金\", \"card_name\": null}"
+      },
+      {
+        "role": "assistant",
+        "content": "松屋 1000円（食費）を登録しました！"
+      },
+      {
+        "role": "user",
+        "content": "やっぱり消して"
+      },
+      {
+        "role": "assistant",
+        "content": "松屋 1000円の取引を削除してよろしいですか？"
+      }
+    ]
+  },
+  {
+    "id": 64,
+    "group": "支払方法・カード・設定",
+    "input": "PayPayのデフォルトをPayPay（JCB）に変えて",
+    "expected_tool": "_special:confirmation_flow",
+    "expected_args": {},
+    "difficulty": "medium",
+    "note": "ツール説明に「実行前に必ず確認してから実行すること」と明記されているため、単発テストでは確認メッセージを返してToolを呼ばない挙動が期待される。精度計算対象外"
+  },
+  {
+    "id": 65,
+    "group": "ファイル出力",
+    "input": "今月の支出をtxtで出力して",
+    "expected_tool": "export_file",
+    "expected_args": {
+      "file_type": "txt"
+    },
+    "difficulty": "easy",
+    "note": "txtフォーマットのファイル出力。事前に集計ツールが呼ばれ、その後export_fileが呼ばれることを確認する"
   }
 ]

@@ -1,0 +1,460 @@
+{
+  "metadata": {
+    "date": "2026-04-20",
+    "model": "gpt-4o-mini",
+    "n_runs": 5,
+    "n_cases": 65,
+    "total_runs": 295,
+    "elapsed_seconds": 1571.4
+  },
+  "overall": {
+    "tool_selection_accuracy": 0.7288,
+    "ci_method": "wilson",
+    "ci_low": 0.6754,
+    "ci_high": 0.7764,
+    "args_accuracy": 0.861
+  },
+  "by_group": {
+    "キャラ設定": {
+      "accuracy": 1.0,
+      "correct": 10,
+      "total": 10
+    },
+    "ツール不要": {
+      "accuracy": 0.75,
+      "correct": 15,
+      "total": 20
+    },
+    "ファイル出力": {
+      "accuracy": 0.9,
+      "correct": 9,
+      "total": 10
+    },
+    "予算管理": {
+      "accuracy": 0.8,
+      "correct": 20,
+      "total": 25
+    },
+    "入出金登録": {
+      "accuracy": 0.4842,
+      "correct": 46,
+      "total": 95
+    },
+    "固定出金": {
+      "accuracy": 0.75,
+      "correct": 15,
+      "total": 20
+    },
+    "固定費": {
+      "accuracy": 1.0,
+      "correct": 5,
+      "total": 5
+    },
+    "支払方法・カード・設定": {
+      "accuracy": 0.5714,
+      "correct": 20,
+      "total": 35
+    },
+    "集計": {
+      "accuracy": 1.0,
+      "correct": 75,
+      "total": 75
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "accuracy": 0.8387,
+      "correct": 130,
+      "total": 155
+    },
+    "hard": {
+      "accuracy": 0.6,
+      "correct": 27,
+      "total": 45
+    },
+    "medium": {
+      "accuracy": 0.6105,
+      "correct": 58,
+      "total": 95
+    }
+  },
+  "per_tool_metrics": {
+    "NO_TOOL": {
+      "precision": 0.1852,
+      "recall": 1.0,
+      "f1": 0.3125,
+      "tp": 15,
+      "fp": 66,
+      "fn": 0
+    },
+    "add_payment_method": {
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1": 0.75,
+      "tp": 3,
+      "fp": 0,
+      "fn": 2
+    },
+    "apply_fixed_expenses": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "check_budget": {
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1": 0.75,
+      "tp": 6,
+      "fp": 0,
+      "fn": 4
+    },
+    "deactivate_fixed_expense": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "delete_transaction": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "export_file": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 10
+    },
+    "get_budgets": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_categories": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_category_summary": {
+      "precision": 0.4545,
+      "recall": 1.0,
+      "f1": 0.625,
+      "tp": 10,
+      "fp": 12,
+      "fn": 0
+    },
+    "get_character": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_credit_cards": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_custom_summary": {
+      "precision": 0.9091,
+      "recall": 1.0,
+      "f1": 0.9524,
+      "tp": 10,
+      "fp": 1,
+      "fn": 0
+    },
+    "get_fixed_expenses": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 10,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_health_indicators": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_help": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_item_summary": {
+      "precision": 0.8333,
+      "recall": 1.0,
+      "f1": 0.9091,
+      "tp": 5,
+      "fp": 1,
+      "fn": 0
+    },
+    "get_monthly_comparison": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 10,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_monthly_summary": {
+      "precision": 0.3571,
+      "recall": 1.0,
+      "f1": 0.5263,
+      "tp": 5,
+      "fp": 9,
+      "fn": 0
+    },
+    "get_monthly_summary|get_category_summary|check_budget": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "get_payment_methods": {
+      "precision": 0.4444,
+      "recall": 0.4,
+      "f1": 0.4211,
+      "tp": 4,
+      "fp": 5,
+      "fn": 6
+    },
+    "get_setting": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "get_store_summary": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 5,
+      "fn": 0
+    },
+    "get_store_summary|get_custom_summary": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "get_transactions": {
+      "precision": 0.7826,
+      "recall": 0.9,
+      "f1": 0.8372,
+      "tp": 18,
+      "fp": 5,
+      "fn": 2
+    },
+    "get_transactions|get_store_summary": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "register_credit_card": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "register_fixed_expense": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "register_transaction": {
+      "precision": 1.0,
+      "recall": 0.3692,
+      "f1": 0.5393,
+      "tp": 24,
+      "fp": 0,
+      "fn": 41
+    },
+    "set_budget": {
+      "precision": 1.0,
+      "recall": 0.9,
+      "f1": 0.9474,
+      "tp": 9,
+      "fp": 0,
+      "fn": 1
+    },
+    "set_character": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    },
+    "set_setting": {
+      "precision": 1.0,
+      "recall": 0.4,
+      "f1": 0.5714,
+      "tp": 2,
+      "fp": 0,
+      "fn": 3
+    },
+    "special:partial_support_only": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "update_payment_method_linked_card": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5
+    },
+    "update_transaction": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 5,
+      "fp": 0,
+      "fn": 0
+    }
+  },
+  "unstable_cases": [
+    {
+      "case_id": 5,
+      "input": "ユニクロでヒートテック3枚買った。6000円",
+      "accuracy": 0.4,
+      "correct": 2,
+      "total": 5
+    },
+    {
+      "case_id": 7,
+      "input": "セブンでおにぎりとお茶買った、350円。あとシャンプーも別で買って800円",
+      "accuracy": 0.4,
+      "correct": 2,
+      "total": 5
+    },
+    {
+      "case_id": 8,
+      "input": "3月15日にサイゼリヤで900円",
+      "accuracy": 0.2,
+      "correct": 1,
+      "total": 5
+    },
+    {
+      "case_id": 10,
+      "input": "友達に5000円振り込んだ、振込手数料込みで",
+      "accuracy": 0.4,
+      "correct": 2,
+      "total": 5
+    },
+    {
+      "case_id": 23,
+      "input": "食費の予算を3万円に設定して",
+      "accuracy": 0.8,
+      "correct": 4,
+      "total": 5
+    },
+    {
+      "case_id": 27,
+      "input": "今度2万円のコース行きたいんだけど、交際費の予算的に大丈夫？",
+      "accuracy": 0.2,
+      "correct": 1,
+      "total": 5
+    },
+    {
+      "case_id": 34,
+      "input": "デフォルトの支払方法をクレカにして",
+      "accuracy": 0.4,
+      "correct": 2,
+      "total": 5
+    },
+    {
+      "case_id": 35,
+      "input": "さっきの取引間違えたから消して",
+      "accuracy": 0.6,
+      "correct": 3,
+      "total": 5
+    },
+    {
+      "case_id": 36,
+      "input": "d払いを支払方法に追加して",
+      "accuracy": 0.6,
+      "correct": 3,
+      "total": 5
+    },
+    {
+      "case_id": 40,
+      "input": "今月の支出をcsvで出力して",
+      "accuracy": 0.8,
+      "correct": 4,
+      "total": 5
+    },
+    {
+      "case_id": 48,
+      "input": "ウエルシアで湿布買った、800円。セルフメディケーション",
+      "accuracy": 0.4,
+      "correct": 2,
+      "total": 5
+    },
+    {
+      "case_id": 58,
+      "input": "QUICPayで映画3000円払った",
+      "accuracy": 0.8,
+      "correct": 4,
+      "total": 5
+    }
+  ],
+  "alternative_distribution": {
+    "15": {
+      "get_store_summary": 5
+    },
+    "46": {
+      "get_category_summary": 5
+    },
+    "49": {
+      "get_transactions": 5
+    }
+  }
+}

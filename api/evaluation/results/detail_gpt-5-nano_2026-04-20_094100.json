@@ -1,0 +1,6973 @@
+[
+  {
+    "case_id": 1,
+    "group": "入出金登録",
+    "input": "昨日マルエツで2500円使った",
+    "expected_tool": "register_transaction",
+    "difficulty": "easy",
+    "note": "スーパー→食費の推定。日付は「昨日」から算出されるべき",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 2500,
+              "actual": 2500,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "マルエツ",
+              "actual": "マルエツ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 2500,
+              "actual": 2500,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "マルエツ",
+              "actual": "マルエツ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 2500,
+              "actual": 2500,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "マルエツ",
+              "actual": "マルエツ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 2500,
+              "actual": 2500,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "マルエツ",
+              "actual": "マルエツ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 2500,
+              "actual": 2500,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "マルエツ",
+              "actual": "マルエツ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 2,
+    "group": "入出金登録",
+    "input": "コンビニで300円",
+    "expected_tool": "register_transaction",
+    "difficulty": "medium",
+    "note": "未解決課題#2。コンビニは食費/日用品の曖昧性あり。どちらも正解とする",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 3,
+    "group": "入出金登録",
+    "input": "給料28万入った",
+    "expected_tool": "register_transaction",
+    "difficulty": "easy",
+    "note": "収入の判定。「入った」→income",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            },
+            "amount": {
+              "expected": 280000,
+              "actual": 280000,
+              "correct": true
+            },
+            "category": {
+              "expected": "給与",
+              "actual": "給与",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            },
+            "amount": {
+              "expected": 280000,
+              "actual": 280000,
+              "correct": true
+            },
+            "category": {
+              "expected": "給与",
+              "actual": "給与",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            },
+            "amount": {
+              "expected": 280000,
+              "actual": 280000,
+              "correct": true
+            },
+            "category": {
+              "expected": "給与",
+              "actual": "給与",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            },
+            "amount": {
+              "expected": 280000,
+              "actual": 280000,
+              "correct": true
+            },
+            "category": {
+              "expected": "給与",
+              "actual": "給与",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            },
+            "amount": {
+              "expected": 280000,
+              "actual": 280000,
+              "correct": true
+            },
+            "category": {
+              "expected": "給与",
+              "actual": "給与",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 4,
+    "group": "入出金登録",
+    "input": "タクシー1500円、PayPayで払った",
+    "expected_tool": "get_payment_methods",
+    "difficulty": "medium",
+    "note": "PayPayはグループ型支払方法。システムプロンプトに従いget_payment_methodsを先に呼んでPayPay（楽天カード）を確認し、その後register_transactionを実行する",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 5,
+    "group": "入出金登録",
+    "input": "ユニクロでヒートテック3枚買った。6000円",
+    "expected_tool": "register_transaction",
+    "difficulty": "medium",
+    "note": "店名→カテゴリ推定＋品目抽出",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 6000,
+              "actual": 6000,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "ユニクロ",
+              "actual": "ユニクロ",
+              "correct": true
+            },
+            "category": {
+              "expected": "衣服",
+              "actual": "衣服",
+              "correct": true
+            },
+            "item": {
+              "expected": "ヒートテック",
+              "actual": "ヒートテック3枚",
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.8
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 6000,
+              "actual": 6000,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "ユニクロ",
+              "actual": "ユニクロ",
+              "correct": true
+            },
+            "category": {
+              "expected": "衣服",
+              "actual": "衣服",
+              "correct": true
+            },
+            "item": {
+              "expected": "ヒートテック",
+              "actual": "ヒートテック3枚",
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.8
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 6000,
+              "actual": 6000,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "ユニクロ",
+              "actual": "ユニクロ",
+              "correct": true
+            },
+            "category": {
+              "expected": "衣服",
+              "actual": "衣服",
+              "correct": true
+            },
+            "item": {
+              "expected": "ヒートテック",
+              "actual": "ヒートテック3枚",
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.8
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 6000,
+              "actual": 2000,
+              "correct": false
+            },
+            "store_name": {
+              "expected": "ユニクロ",
+              "actual": "ユニクロ",
+              "correct": true
+            },
+            "category": {
+              "expected": "衣服",
+              "actual": "衣服",
+              "correct": true
+            },
+            "item": {
+              "expected": "ヒートテック",
+              "actual": "ヒートテック",
+              "correct": true
+            }
+          },
+          "args_accuracy": 0.8
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 6000,
+              "actual": 6000,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "ユニクロ",
+              "actual": "ユニクロ",
+              "correct": true
+            },
+            "category": {
+              "expected": "衣服",
+              "actual": "衣服",
+              "correct": true
+            },
+            "item": {
+              "expected": "ヒートテック",
+              "actual": "ヒートテック3枚",
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 6,
+    "group": "入出金登録",
+    "input": "妻が薬局で処方薬もらって1200円",
+    "expected_tool": "register_transaction",
+    "difficulty": "medium",
+    "note": "personの抽出。「妻が」→person=妻",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 1200,
+              "actual": 1200,
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "store_name": {
+              "expected": "薬局",
+              "actual": "薬局",
+              "correct": true
+            },
+            "person": {
+              "expected": "妻",
+              "actual": "妻",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 1200,
+              "actual": 1200,
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "store_name": {
+              "expected": "薬局",
+              "actual": "薬局",
+              "correct": true
+            },
+            "person": {
+              "expected": "妻",
+              "actual": "妻",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 1200,
+              "actual": 1200,
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "store_name": {
+              "expected": "薬局",
+              "actual": "薬局",
+              "correct": true
+            },
+            "person": {
+              "expected": "妻",
+              "actual": "妻",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 1200,
+              "actual": 1200,
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "store_name": {
+              "expected": "薬局",
+              "actual": "薬局",
+              "correct": true
+            },
+            "person": {
+              "expected": "妻",
+              "actual": "妻",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 1200,
+              "actual": 1200,
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "store_name": {
+              "expected": "薬局",
+              "actual": "薬局",
+              "correct": true
+            },
+            "person": {
+              "expected": "妻",
+              "actual": "妻",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 7,
+    "group": "入出金登録",
+    "input": "セブンでおにぎりとお茶買った、350円。あとシャンプーも別で買って800円",
+    "expected_tool": "register_transaction",
+    "difficulty": "hard",
+    "note": "1入力で複数取引。LLMが分割登録するか",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 8,
+    "group": "入出金登録",
+    "input": "3月15日にサイゼリヤで900円",
+    "expected_tool": "register_transaction",
+    "difficulty": "easy",
+    "note": "明示的な日付指定",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 900,
+              "actual": 900,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "サイゼリヤ",
+              "actual": "サイゼリヤ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 900,
+              "actual": 900,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "サイゼリヤ",
+              "actual": "サイゼリヤ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 900,
+              "actual": 900,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "サイゼリヤ",
+              "actual": "サイゼリヤ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 900,
+              "actual": 900,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "サイゼリヤ",
+              "actual": "サイゼリヤ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 900,
+              "actual": 900,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "サイゼリヤ",
+              "actual": "サイゼリヤ",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 9,
+    "group": "入出金登録",
+    "input": "セブンでアイス買った、250円",
+    "expected_tool": "register_transaction",
+    "difficulty": "easy",
+    "note": "品目（item）の抽出",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 250,
+              "actual": 250,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "セブンイレブン",
+              "actual": "セブン-イレブン",
+              "correct": false
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "item": {
+              "expected": "アイス",
+              "actual": "アイス",
+              "correct": true
+            }
+          },
+          "args_accuracy": 0.8
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 250,
+              "actual": 250,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "セブンイレブン",
+              "actual": "セブン",
+              "correct": false
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "item": {
+              "expected": "アイス",
+              "actual": "アイス",
+              "correct": true
+            }
+          },
+          "args_accuracy": 0.8
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 250,
+              "actual": 250,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "セブンイレブン",
+              "actual": "セブン",
+              "correct": false
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "item": {
+              "expected": "アイス",
+              "actual": "アイス",
+              "correct": true
+            }
+          },
+          "args_accuracy": 0.8
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 250,
+              "actual": 250,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "セブンイレブン",
+              "actual": "セブン",
+              "correct": false
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "item": {
+              "expected": "アイス",
+              "actual": "アイス",
+              "correct": true
+            }
+          },
+          "args_accuracy": 0.8
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 250,
+              "actual": 250,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "セブンイレブン",
+              "actual": "セブン-イレブン",
+              "correct": false
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "item": {
+              "expected": "アイス",
+              "actual": "アイスクリーム",
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 10,
+    "group": "入出金登録",
+    "input": "友達に5000円振り込んだ、振込手数料込みで",
+    "expected_tool": "register_transaction",
+    "difficulty": "hard",
+    "note": "支払方法が定型に当てはまらないケース",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 5000,
+              "actual": 5000,
+              "correct": true
+            },
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "payment_method": {
+              "expected": [
+                "その他",
+                "口座振替"
+              ],
+              "actual": "口座振替",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 5000,
+              "actual": 5000,
+              "correct": true
+            },
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "payment_method": {
+              "expected": [
+                "その他",
+                "口座振替"
+              ],
+              "actual": "口座振替",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 5000,
+              "actual": 5000,
+              "correct": true
+            },
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "payment_method": {
+              "expected": [
+                "その他",
+                "口座振替"
+              ],
+              "actual": "口座振替",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 5000,
+              "actual": 5000,
+              "correct": true
+            },
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "payment_method": {
+              "expected": [
+                "その他",
+                "口座振替"
+              ],
+              "actual": "口座振替",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 11,
+    "group": "入出金登録",
+    "input": "1000円使った",
+    "expected_tool": "register_transaction",
+    "difficulty": "hard",
+    "note": "情報不足。カテゴリ・店名なし。Agentが確認を求めるか「その他」で登録するか",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 12,
+    "group": "集計",
+    "input": "今月いくら使った？",
+    "expected_tool": "get_monthly_summary",
+    "difficulty": "easy",
+    "note": "月次サマリの基本",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 13,
+    "group": "集計",
+    "input": "今月のカテゴリ別支出を教えて",
+    "expected_tool": "get_category_summary",
+    "difficulty": "easy",
+    "note": "カテゴリ別の基本",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.5
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 14,
+    "group": "集計",
+    "input": "先月と比べてどう？",
+    "expected_tool": "get_monthly_comparison",
+    "difficulty": "easy",
+    "note": "比較の基本。compare_toは省略で前月",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_comparison",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_comparison",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_comparison",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_comparison",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_comparison",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 15,
+    "group": "集計",
+    "input": "セブンで今月いくら使った？",
+    "expected_tool": [
+      "get_store_summary",
+      "get_custom_summary"
+    ],
+    "difficulty": "medium",
+    "note": "store_summary vs custom_summary の選択。どちらも正解。選択分布を記録",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_store_summary",
+          "is_special": false,
+          "selected_alternative": "get_store_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "store_name": {
+              "expected": "セブン",
+              "actual": "セブン",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_store_summary",
+          "is_special": false,
+          "selected_alternative": "get_store_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "store_name": {
+              "expected": "セブン",
+              "actual": "セブン",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_store_summary",
+          "is_special": false,
+          "selected_alternative": "get_store_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "store_name": {
+              "expected": "セブン",
+              "actual": "セブン",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_store_summary",
+          "is_special": false,
+          "selected_alternative": "get_store_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "store_name": {
+              "expected": "セブン",
+              "actual": "セブン",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_store_summary",
+          "is_special": false,
+          "selected_alternative": "get_store_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "store_name": {
+              "expected": "セブン",
+              "actual": "セブン",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 16,
+    "group": "集計",
+    "input": "クレカで何に使ってるか見せて",
+    "expected_tool": "get_custom_summary",
+    "difficulty": "medium",
+    "note": "custom_summaryの柔軟な使い方",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "group_by": {
+              "expected": "category",
+              "actual": "category",
+              "correct": true
+            },
+            "payment_method": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "group_by": {
+              "expected": "category",
+              "actual": "category",
+              "correct": true
+            },
+            "payment_method": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "group_by": {
+              "expected": "category",
+              "actual": "category",
+              "correct": true
+            },
+            "payment_method": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "group_by": {
+              "expected": "category",
+              "actual": "category",
+              "correct": true
+            },
+            "payment_method": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "group_by": {
+              "expected": "category",
+              "actual": "category",
+              "correct": true
+            },
+            "payment_method": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 17,
+    "group": "集計",
+    "input": "今月の食費の明細を見せて",
+    "expected_tool": "get_transactions",
+    "difficulty": "medium",
+    "note": "「明細」→集計ではなく個別取引一覧。transactionsを選ぶべき",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 18,
+    "group": "集計",
+    "input": "弁当にいくら使った？",
+    "expected_tool": "get_item_summary",
+    "difficulty": "easy",
+    "note": "品目別集計",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_item_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "item": {
+              "expected": "弁当",
+              "actual": "弁当",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_item_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "item": {
+              "expected": "弁当",
+              "actual": "弁当",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_item_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "item": {
+              "expected": "弁当",
+              "actual": "弁当",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_item_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "item": {
+              "expected": "弁当",
+              "actual": "弁当",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 19,
+    "group": "集計",
+    "input": "去年の12月と比較して",
+    "expected_tool": "get_monthly_comparison",
+    "difficulty": "medium",
+    "note": "compare_toの明示的な指定",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_comparison",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2025-12",
+              "correct": false
+            },
+            "compare_to": {
+              "expected": "2025-12",
+              "actual": "2024-12",
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_comparison",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "compare_to": {
+              "expected": "2025-12",
+              "actual": "2025-12",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_comparison",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "compare_to": {
+              "expected": "2025-12",
+              "actual": "2025-12",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 20,
+    "group": "集計",
+    "input": "妻の今月の支出一覧を見せて",
+    "expected_tool": "get_transactions",
+    "difficulty": "easy",
+    "note": "person指定での検索",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "person": {
+              "expected": "妻",
+              "actual": "妻",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "person": {
+              "expected": "妻",
+              "actual": "妻",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "person": {
+              "expected": "妻",
+              "actual": "妻",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 21,
+    "group": "集計",
+    "input": "今月の収入の内訳は？",
+    "expected_tool": "get_category_summary",
+    "difficulty": "easy",
+    "note": "type=incomeの集計",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "type": {
+              "expected": "income",
+              "actual": "income",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 22,
+    "group": "集計",
+    "input": "去年1年間でいくら使った？",
+    "expected_tool": "_special:multi_month_or_unsupported",
+    "difficulty": "hard",
+    "note": "期間指定。単月ツールしかないのでAgentの対応が問われる。12回呼び出すか、対応不可と伝えるか",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_monthly_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_monthly_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_monthly_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_monthly_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_monthly_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 23,
+    "group": "予算管理",
+    "input": "食費の予算を3万円に設定して",
+    "expected_tool": "set_budget",
+    "difficulty": "easy",
+    "note": "基本的な予算設定",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "amount": {
+              "expected": 30000,
+              "actual": 30000,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "amount": {
+              "expected": 30000,
+              "actual": 30000,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "amount": {
+              "expected": 30000,
+              "actual": 30000,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "amount": {
+              "expected": 30000,
+              "actual": 30000,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 24,
+    "group": "予算管理",
+    "input": "食費あといくら使える？",
+    "expected_tool": "check_budget",
+    "difficulty": "easy",
+    "note": "残額確認",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 25,
+    "group": "予算管理",
+    "input": "予算の一覧見せて",
+    "expected_tool": "get_budgets",
+    "difficulty": "easy",
+    "note": "一覧表示",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_budgets",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_budgets",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_budgets",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_budgets",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_budgets",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 26,
+    "group": "予算管理",
+    "input": "交際費1万5千円、残り3千円で警告出して",
+    "expected_tool": "set_budget",
+    "difficulty": "medium",
+    "note": "alert_thresholdの抽出",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "amount": {
+              "expected": 15000,
+              "actual": 15000,
+              "correct": true
+            },
+            "alert_threshold": {
+              "expected": 3000,
+              "actual": 3000,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "amount": {
+              "expected": 15000,
+              "actual": 15000,
+              "correct": true
+            },
+            "alert_threshold": {
+              "expected": 3000,
+              "actual": 3000,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "amount": {
+              "expected": 15000,
+              "actual": 15000,
+              "correct": true
+            },
+            "alert_threshold": {
+              "expected": 3000,
+              "actual": 3000,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "amount": {
+              "expected": 15000,
+              "actual": 15000,
+              "correct": true
+            },
+            "alert_threshold": {
+              "expected": 3000,
+              "actual": 3000,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "amount": {
+              "expected": 15000,
+              "actual": 15000,
+              "correct": true
+            },
+            "alert_threshold": {
+              "expected": 3000,
+              "actual": 3000,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 27,
+    "group": "予算管理",
+    "input": "今度2万円のコース行きたいんだけど、交際費の予算的に大丈夫？",
+    "expected_tool": "check_budget",
+    "difficulty": "medium",
+    "note": "具体的な金額を含む予算相談。check_budgetで残額を確認し、2万円と比較する判断",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "check_budget",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "交際費",
+              "actual": "交際費",
+              "correct": true
+            },
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 28,
+    "group": "固定出金",
+    "input": "Netflix月1490円を固定費に登録して、毎月15日",
+    "expected_tool": "register_fixed_expense",
+    "difficulty": "easy",
+    "note": "基本登録",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 29,
+    "group": "固定出金",
+    "input": "固定費の一覧を見せて",
+    "expected_tool": "get_fixed_expenses",
+    "difficulty": "easy",
+    "note": "一覧表示",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 30,
+    "group": "固定出金",
+    "input": "今月の固定費を計上して",
+    "expected_tool": "apply_fixed_expenses",
+    "difficulty": "easy",
+    "note": "一括計上",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 31,
+    "group": "固定出金",
+    "input": "Spotify解約したから固定費から消して",
+    "expected_tool": "get_fixed_expenses",
+    "difficulty": "medium",
+    "note": "deactivate_fixed_expenseはIDが必要なため、まずget_fixed_expensesで一覧を取得してSpotifyのIDを確認する",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_fixed_expenses",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 32,
+    "group": "支払方法・カード・設定",
+    "input": "d払いで買い物したいんだけど使える？",
+    "expected_tool": "_special:confirmation_flow",
+    "difficulty": "medium",
+    "note": "確認フロー。get_payment_methodsで確認後、add_payment_methodを実行。1ターン評価では判定対象外",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_payment_methods",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": null,
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_payment_methods",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": null,
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_payment_methods",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 33,
+    "group": "支払方法・カード・設定",
+    "input": "JCBカードを登録して",
+    "expected_tool": "_special:confirmation_flow",
+    "difficulty": "easy",
+    "note": "確認フロー＋JCBが登録済みのため正しく拒否。1ターン評価では判定対象外",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "register_credit_card",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "register_credit_card",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "register_credit_card",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "register_credit_card",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "register_credit_card",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 34,
+    "group": "支払方法・カード・設定",
+    "input": "デフォルトの支払方法をクレカにして",
+    "expected_tool": "set_setting",
+    "difficulty": "easy",
+    "note": "設定変更",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            },
+            "value": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            },
+            "value": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            },
+            "value": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            },
+            "value": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            },
+            "value": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 35,
+    "group": "入出金登録",
+    "input": "さっきの取引間違えたから消して",
+    "expected_tool": "get_transactions",
+    "difficulty": "hard",
+    "note": "_has_confirmable_resultガードが発動。会話履歴がない状態でdelete_transactionを試みると、ガードがブロックしてget_transactionsで対象を検索するよう誘導する",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 36,
+    "group": "支払方法・カード・設定",
+    "input": "d払いを支払方法に追加して",
+    "expected_tool": "add_payment_method",
+    "difficulty": "easy",
+    "note": "支払方法追加",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 37,
+    "group": "支払方法・カード・設定",
+    "input": "QUICPayの決済元をJCBにして",
+    "expected_tool": "_special:confirmation_flow",
+    "difficulty": "easy",
+    "note": "確認フロー。決済元設定の確認後に実行。1ターン評価では判定対象外",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_payment_methods",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_payment_methods",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": null,
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "update_payment_method_linked_card",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": null,
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 38,
+    "group": "支払方法・カード・設定",
+    "input": "登録してるカード一覧見せて",
+    "expected_tool": "get_credit_cards",
+    "difficulty": "easy",
+    "note": "カード一覧",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_credit_cards",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_credit_cards",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_credit_cards",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_credit_cards",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_credit_cards",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 39,
+    "group": "支払方法・カード・設定",
+    "input": "デフォルトの支払方法って何にしてたっけ？",
+    "expected_tool": "get_setting",
+    "difficulty": "easy",
+    "note": "設定確認",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_setting",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "key": {
+              "expected": "default_payment_method",
+              "actual": "default_payment_method",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 40,
+    "group": "ファイル出力",
+    "input": "今月の支出をcsvで出力して",
+    "expected_tool": "export_file",
+    "difficulty": "medium",
+    "note": "事前にデータ取得ツールの呼び出しが必要",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "csv",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "csv",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "csv",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "csv",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "csv",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 41,
+    "group": "ツール不要",
+    "input": "こんにちは",
+    "expected_tool": null,
+    "difficulty": "easy",
+    "note": "挨拶にツールを呼ばない",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 42,
+    "group": "ツール不要",
+    "input": "ありがとう、助かった",
+    "expected_tool": null,
+    "difficulty": "easy",
+    "note": "お礼にツールを呼ばない",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 43,
+    "group": "ツール不要",
+    "input": "明日の天気は？",
+    "expected_tool": null,
+    "difficulty": "easy",
+    "note": "家計と無関係な質問",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 44,
+    "group": "ツール不要",
+    "input": "来月の食費ってどのくらいになりそう？",
+    "expected_tool": "_special:no_prediction_but_partial_ok",
+    "difficulty": "medium",
+    "note": "予測機能はスコープ外だが、過去実績の参照は許容。特殊ケースとして精度計算から除外",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_category_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_category_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_category_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_monthly_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": "get_category_summary",
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 45,
+    "group": "ツール不要",
+    "input": "確定申告用にセルフメディケーション対象の医療費をまとめて",
+    "expected_tool": "special:partial_support_only",
+    "difficulty": "hard",
+    "note": "get_transactionsでmemo検索は可能だが確定申告用のまとめは未提供。特殊ケースとして精度計算から除外",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 46,
+    "group": "集計",
+    "input": "食費どのくらい？",
+    "expected_tool": [
+      "get_monthly_summary",
+      "get_category_summary",
+      "check_budget"
+    ],
+    "difficulty": "medium",
+    "note": "ツール選択自体が曖昧。月次サマリ・カテゴリ別・予算チェックのいずれも正解。選択分布を記録",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": "get_category_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": "get_category_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": "get_category_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": "get_category_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_category_summary",
+          "is_special": false,
+          "selected_alternative": "get_category_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 47,
+    "group": "入出金登録",
+    "input": "カードで払った、3000円",
+    "expected_tool": "register_transaction",
+    "difficulty": "medium",
+    "note": "「カード」→クレジットカードの推定。デフォルトカードのcard_name補完が働くか",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 48,
+    "group": "入出金登録",
+    "input": "ウエルシアで湿布買った、800円。セルフメディケーション",
+    "expected_tool": "register_transaction",
+    "difficulty": "medium",
+    "note": "memo抽出のテスト。ダミーデータ設計で定義したセルフメディケーション運用の検証",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 800,
+              "actual": 800,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "ウエルシア",
+              "actual": "ウエルシア",
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "item": {
+              "expected": "湿布",
+              "actual": "湿布",
+              "correct": true
+            },
+            "memo": {
+              "expected": "セルフメディケーション",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.8333333333333334
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 800,
+              "actual": 800,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "ウエルシア",
+              "actual": "ウエルシア",
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "item": {
+              "expected": "湿布",
+              "actual": "湿布",
+              "correct": true
+            },
+            "memo": {
+              "expected": "セルフメディケーション",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.8333333333333334
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 800,
+              "actual": 800,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "ウエルシア",
+              "actual": "ウエルシア",
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "item": {
+              "expected": "湿布",
+              "actual": "湿布",
+              "correct": true
+            },
+            "memo": {
+              "expected": "セルフメディケーション",
+              "actual": "セルフメディケーション",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 800,
+              "actual": 800,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "ウエルシア",
+              "actual": "ウエルシア",
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "item": {
+              "expected": "湿布",
+              "actual": "湿布",
+              "correct": true
+            },
+            "memo": {
+              "expected": "セルフメディケーション",
+              "actual": "セルフメディケーション",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 800,
+              "actual": 800,
+              "correct": true
+            },
+            "store_name": {
+              "expected": "ウエルシア",
+              "actual": "ウエルシア",
+              "correct": true
+            },
+            "category": {
+              "expected": "医療費",
+              "actual": "医療費",
+              "correct": true
+            },
+            "item": {
+              "expected": "湿布",
+              "actual": "湿布",
+              "correct": true
+            },
+            "memo": {
+              "expected": "セルフメディケーション",
+              "actual": "セルフメディケーション",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 49,
+    "group": "集計",
+    "input": "セブンで何買った？",
+    "expected_tool": [
+      "get_transactions",
+      "get_store_summary"
+    ],
+    "difficulty": "medium",
+    "note": "「何買った？」は明細一覧（get_transactions）が適切だが、get_store_summaryも許容。ID 15「いくら使った？」との使い分けを比較する",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": "get_transactions"
+        },
+        "args_check": {
+          "args_results": {
+            "store_name": {
+              "expected": "セブン",
+              "actual": "セブン",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": "get_transactions"
+        },
+        "args_check": {
+          "args_results": {
+            "store_name": {
+              "expected": "セブン",
+              "actual": "セブン",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": "get_transactions"
+        },
+        "args_check": {
+          "args_results": {
+            "store_name": {
+              "expected": "セブン",
+              "actual": "セブン",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_store_summary",
+          "is_special": false,
+          "selected_alternative": "get_store_summary"
+        },
+        "args_check": {
+          "args_results": {
+            "store_name": {
+              "expected": "セブン",
+              "actual": "セブン",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 50,
+    "group": "入出金登録",
+    "input": "JCBで5000円使った",
+    "expected_tool": "register_transaction",
+    "difficulty": "medium",
+    "note": "明示的なcard_name指定。「JCBで」→payment_method=クレジットカード＋card_name=JCBを両方抽出できるか",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 5000,
+              "actual": 5000,
+              "correct": true
+            },
+            "payment_method": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            },
+            "card_name": {
+              "expected": "JCB",
+              "actual": "JCB",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 5000,
+              "actual": 5000,
+              "correct": true
+            },
+            "payment_method": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            },
+            "card_name": {
+              "expected": "JCB",
+              "actual": "JCB",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            },
+            "amount": {
+              "expected": 5000,
+              "actual": 5000,
+              "correct": true
+            },
+            "payment_method": {
+              "expected": "クレジットカード",
+              "actual": "クレジットカード",
+              "correct": true
+            },
+            "card_name": {
+              "expected": "JCB",
+              "actual": "JCB",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 51,
+    "group": "入出金登録",
+    "input": "さっき登録した食費、金額間違えた。2500円じゃなくて3500円にして",
+    "expected_tool": "get_transactions",
+    "difficulty": "hard",
+    "note": "update_transactionはIDが必要。会話履歴がない状態では直近の食費取引をget_transactionsで検索してから修正を試みる",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_transactions",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "category": {
+              "expected": "食費",
+              "actual": "食費",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 52,
+    "group": "集計",
+    "input": "今月の支払方法別の支出を見せて",
+    "expected_tool": "get_custom_summary",
+    "difficulty": "easy",
+    "note": "custom_summaryのgroup_by=payment_methodパターン。フィルタなしの基本的な使い方",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "group_by": {
+              "expected": "payment_method",
+              "actual": "payment_method",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "group_by": {
+              "expected": "payment_method",
+              "actual": "payment_method",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "group_by": {
+              "expected": "payment_method",
+              "actual": "payment_method",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "group_by": {
+              "expected": "payment_method",
+              "actual": "payment_method",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_custom_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "year_month": {
+              "expected": "2026-04",
+              "actual": "2026-04",
+              "correct": true
+            },
+            "group_by": {
+              "expected": "payment_method",
+              "actual": "payment_method",
+              "correct": true
+            },
+            "type": {
+              "expected": "expense",
+              "actual": "expense",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 53,
+    "group": "集計",
+    "input": "家計診断して",
+    "expected_tool": "get_health_indicators",
+    "difficulty": "easy",
+    "note": "家計健全性指標（エンゲル係数・貯蓄率等）の取得",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_health_indicators",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_health_indicators",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_health_indicators",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_health_indicators",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_health_indicators",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 54,
+    "group": "集計",
+    "input": "カテゴリの一覧を教えて",
+    "expected_tool": "get_categories",
+    "difficulty": "easy",
+    "note": "使用済みカテゴリ一覧の取得",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_categories",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_categories",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_categories",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_categories",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_categories",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 55,
+    "group": "キャラ設定",
+    "input": "キャラをぴよちゃんにして",
+    "expected_tool": "set_character",
+    "difficulty": "easy",
+    "note": "キャラクタープリセットの変更",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "preset": {
+              "expected": "ぴよちゃん",
+              "actual": "ぴよちゃん",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "preset": {
+              "expected": "ぴよちゃん",
+              "actual": "ぴよちゃん",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "preset": {
+              "expected": "ぴよちゃん",
+              "actual": "ぴよちゃん",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "preset": {
+              "expected": "ぴよちゃん",
+              "actual": "ぴよちゃん",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "set_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "preset": {
+              "expected": "ぴよちゃん",
+              "actual": "ぴよちゃん",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 56,
+    "group": "キャラ設定",
+    "input": "今のキャラ設定を教えて",
+    "expected_tool": "get_character",
+    "difficulty": "easy",
+    "note": "現在のキャラクター設定の確認",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_character",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 57,
+    "group": "支払方法・カード・設定",
+    "input": "使い方を教えて",
+    "expected_tool": "get_help",
+    "difficulty": "easy",
+    "note": "機能案内。get_helpを使う",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_help",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_help",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_help",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_help",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_help",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 58,
+    "group": "入出金登録",
+    "input": "QUICPayで映画3000円払った",
+    "expected_tool": "get_payment_methods",
+    "difficulty": "medium",
+    "note": "QUICPayはグループ型支払方法。get_payment_methodsを先に呼んでQUICPay（JCB）を確認してからregister_transactionを実行する。ID 4のPayPayと同パターン",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_payment_methods",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 59,
+    "group": "支払方法・カード・設定",
+    "input": "三井住友VISAカードを追加したい",
+    "expected_tool": "register_credit_card",
+    "difficulty": "easy",
+    "note": "クレジットカードの新規登録。カード名の表記揺れを許容",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_credit_card",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "name": {
+              "expected": [
+                "三井住友VISAカード",
+                "三井住友VISA"
+              ],
+              "actual": "三井住友VISAカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_credit_card",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "name": {
+              "expected": [
+                "三井住友VISAカード",
+                "三井住友VISA"
+              ],
+              "actual": "三井住友VISAカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "register_credit_card",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "name": {
+              "expected": [
+                "三井住友VISAカード",
+                "三井住友VISA"
+              ],
+              "actual": "三井住友VISAカード",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 60,
+    "group": "支払方法・カード・設定",
+    "input": "QUICPayの決済カードをJCBからSuicaに変えて",
+    "expected_tool": "update_payment_method_linked_card",
+    "difficulty": "medium",
+    "note": "linked_card変更。DBには「QUICPay（JCB）」で登録されているが、LLMがQUICPayと渡してもどちらも許容する",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "update_payment_method_linked_card",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "name": {
+              "expected": [
+                "QUICPay",
+                "QUICPay（JCB）"
+              ],
+              "actual": "QUICPay",
+              "correct": true
+            },
+            "linked_card": {
+              "expected": "Suica",
+              "actual": "Suica",
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": false,
+          "actual_tool": null,
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 61,
+    "group": "固定費",
+    "input": "はい",
+    "expected_tool": "deactivate_fixed_expense",
+    "difficulty": "hard",
+    "note": "会話履歴ベースの固定費解除確認。get_fixed_expenses結果（id=3のSpotify）を見せた後にユーザーが「はい」と回答した状態で呼ばれるべきツールを確認",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "deactivate_fixed_expense",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "fixed_expense_id": {
+              "expected": 3,
+              "actual": 3,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "deactivate_fixed_expense",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "fixed_expense_id": {
+              "expected": 3,
+              "actual": 3,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "deactivate_fixed_expense",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "fixed_expense_id": {
+              "expected": 3,
+              "actual": 3,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "deactivate_fixed_expense",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "fixed_expense_id": {
+              "expected": 3,
+              "actual": 3,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "deactivate_fixed_expense",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "fixed_expense_id": {
+              "expected": 3,
+              "actual": 3,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 62,
+    "group": "入出金登録",
+    "input": "はい",
+    "expected_tool": "update_transaction",
+    "difficulty": "hard",
+    "note": "会話履歴ベースの取引更新確認。register_transaction後に金額間違いを指摘し、エージェントが確認を求めた後「はい」で承認する。_has_confirmable_resultガードを通過する（register_transaction後にuser_msg≥2）",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "update_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "amount": {
+              "expected": 3500,
+              "actual": 3500,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "update_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "amount": {
+              "expected": 3500,
+              "actual": 3500,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "update_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "amount": {
+              "expected": 3500,
+              "actual": 3500,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "update_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "amount": {
+              "expected": 3500,
+              "actual": 3500,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "update_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "amount": {
+              "expected": 3500,
+              "actual": 3500,
+              "correct": true
+            }
+          },
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 63,
+    "group": "入出金登録",
+    "input": "はい",
+    "expected_tool": "delete_transaction",
+    "difficulty": "hard",
+    "note": "会話履歴ベースの取引削除確認。register_transaction後にユーザーが「やっぱり消して」→エージェントが確認→「はい」で承認。_has_confirmable_resultガードを通過する（register_transaction後にuser_msg≥2）",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "delete_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "delete_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "delete_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "delete_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "delete_transaction",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 64,
+    "group": "支払方法・カード・設定",
+    "input": "PayPayのデフォルトをPayPay（JCB）に変えて",
+    "expected_tool": "_special:confirmation_flow",
+    "difficulty": "medium",
+    "note": "ツール説明に「実行前に必ず確認してから実行すること」と明記されているため、単発テストでは確認メッセージを返してToolを呼ばない挙動が期待される。精度計算対象外",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": null,
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": null,
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": null,
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": null,
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": null,
+          "actual_tool": null,
+          "is_special": true,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {},
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  },
+  {
+    "case_id": 65,
+    "group": "ファイル出力",
+    "input": "今月の支出をtxtで出力して",
+    "expected_tool": "export_file",
+    "difficulty": "easy",
+    "note": "txtフォーマットのファイル出力。事前に集計ツールが呼ばれ、その後export_fileが呼ばれることを確認する",
+    "runs": [
+      {
+        "run": 1,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "txt",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 2,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "txt",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 3,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "txt",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 4,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "txt",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      },
+      {
+        "run": 5,
+        "tool_check": {
+          "tool_correct": true,
+          "actual_tool": "get_monthly_summary",
+          "is_special": false,
+          "selected_alternative": null
+        },
+        "args_check": {
+          "args_results": {
+            "file_type": {
+              "expected": "txt",
+              "actual": null,
+              "correct": false
+            }
+          },
+          "args_accuracy": 0.0
+        }
+      }
+    ]
+  }
+]

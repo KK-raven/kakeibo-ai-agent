@@ -1,0 +1,86 @@
+============================================================
+Agent 評価レポート
+実行日: 2026-04-20
+モデル: gpt-4o-mini
+テストケース数: 65
+実行回数: N=5
+総実行数: 295
+実行時間: 1571.4秒
+============================================================
+
+--- 全体精度 ---
+ツール選択精度: 72.9%
+95%信頼区間 (Wilson): [67.5%, 77.6%]
+引数精度: 86.1%
+
+--- グループ別精度 ---
+  キャラ設定: 100.0% (10/10)
+  ツール不要: 75.0% (15/20)
+  ファイル出力: 90.0% (9/10)
+  予算管理: 80.0% (20/25)
+  入出金登録: 48.4% (46/95)
+  固定出金: 75.0% (15/20)
+  固定費: 100.0% (5/5)
+  支払方法・カード・設定: 57.1% (20/35)
+  集計: 100.0% (75/75)
+
+--- 難易度別精度 ---
+  easy: 83.9% (130/155)
+  hard: 60.0% (27/45)
+  medium: 61.1% (58/95)
+
+--- ツール別 Precision / Recall / F1 ---
+  NO_TOOL: P=0.19 R=1.00 F1=0.31 (TP=15 FP=66 FN=0)
+  add_payment_method: P=1.00 R=0.60 F1=0.75 (TP=3 FP=0 FN=2)
+  apply_fixed_expenses: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  check_budget: P=1.00 R=0.60 F1=0.75 (TP=6 FP=0 FN=4)
+  deactivate_fixed_expense: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  delete_transaction: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  export_file: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=10)
+  get_budgets: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_categories: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_category_summary: P=0.45 R=1.00 F1=0.62 (TP=10 FP=12 FN=0)
+  get_character: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_credit_cards: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_custom_summary: P=0.91 R=1.00 F1=0.95 (TP=10 FP=1 FN=0)
+  get_fixed_expenses: P=1.00 R=1.00 F1=1.00 (TP=10 FP=0 FN=0)
+  get_health_indicators: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_help: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_item_summary: P=0.83 R=1.00 F1=0.91 (TP=5 FP=1 FN=0)
+  get_monthly_comparison: P=1.00 R=1.00 F1=1.00 (TP=10 FP=0 FN=0)
+  get_monthly_summary: P=0.36 R=1.00 F1=0.53 (TP=5 FP=9 FN=0)
+  get_monthly_summary|get_category_summary|check_budget: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  get_payment_methods: P=0.44 R=0.40 F1=0.42 (TP=4 FP=5 FN=6)
+  get_setting: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  get_store_summary: P=0.00 R=0.00 F1=0.00 (TP=0 FP=5 FN=0)
+  get_store_summary|get_custom_summary: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  get_transactions: P=0.78 R=0.90 F1=0.84 (TP=18 FP=5 FN=2)
+  get_transactions|get_store_summary: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  register_credit_card: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  register_fixed_expense: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  register_transaction: P=1.00 R=0.37 F1=0.54 (TP=24 FP=0 FN=41)
+  set_budget: P=1.00 R=0.90 F1=0.95 (TP=9 FP=0 FN=1)
+  set_character: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+  set_setting: P=1.00 R=0.40 F1=0.57 (TP=2 FP=0 FN=3)
+  special:partial_support_only: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  update_payment_method_linked_card: P=0.00 R=0.00 F1=0.00 (TP=0 FP=0 FN=5)
+  update_transaction: P=1.00 R=1.00 F1=1.00 (TP=5 FP=0 FN=0)
+
+--- 不安定ケース (5回中で結果がばらつくケース) ---
+  ID 5: 40% (2/5) - ユニクロでヒートテック3枚買った。6000円
+  ID 7: 40% (2/5) - セブンでおにぎりとお茶買った、350円。あとシャンプーも別で買って800円
+  ID 8: 20% (1/5) - 3月15日にサイゼリヤで900円
+  ID 10: 40% (2/5) - 友達に5000円振り込んだ、振込手数料込みで
+  ID 23: 80% (4/5) - 食費の予算を3万円に設定して
+  ID 27: 20% (1/5) - 今度2万円のコース行きたいんだけど、交際費の予算的に大丈夫？
+  ID 34: 40% (2/5) - デフォルトの支払方法をクレカにして
+  ID 35: 60% (3/5) - さっきの取引間違えたから消して
+  ID 36: 60% (3/5) - d払いを支払方法に追加して
+  ID 40: 80% (4/5) - 今月の支出をcsvで出力して
+  ID 48: 40% (2/5) - ウエルシアで湿布買った、800円。セルフメディケーション
+  ID 58: 80% (4/5) - QUICPayで映画3000円払った
+
+--- 複数正解ケースの選択分布 ---
+  ケース 15: {'get_store_summary': 5}
+  ケース 46: {'get_category_summary': 5}
+  ケース 49: {'get_transactions': 5}

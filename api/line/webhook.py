@@ -43,6 +43,10 @@ from api.db import crud
 from api.db.connection import get_or_create_user
 from api.utils.logger import get_logger
 
+
+# Vision用LLMのモデル名。環境変数 LLM_VISION_MODEL で上書き可能。
+VISION_MODEL = os.getenv("LLM_VISION_MODEL", "gpt-5-nano")
+
 logger = get_logger(__name__)
 
 # --- LINE SDK 初期化 ---
@@ -111,7 +115,7 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
 
     try:
         response = openai_client.chat.completions.create(
-            model="gpt-4o",
+            model=VISION_MODEL,
             max_tokens=1000,
             messages=[
                 {

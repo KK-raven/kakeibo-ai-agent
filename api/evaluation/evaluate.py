@@ -3,44 +3,46 @@
 Agent 評価スクリプト
 
 目的:
-- 52問のテストケースを各N回実行し、Agentのツール選択精度を測定する
+- 65問のテストケースを各N回実行し、Agentのツール選択精度を測定する
 - ツール選択の Confusion Matrix・Precision/Recall/F1 を算出する
 - 引数の主要項目の正否を判定する
 - 結果をJSON + テキストレポートで出力する
+- gpt-4o-mini と gpt-5-nano の精度比較に対応する
 
 使い方:
   プロジェクトルートから実行する:
   python3 -m api.evaluation.evaluate
+  python3 -m api.evaluation.evaluate --model gpt-5-nano
 
 注意:
 - 実行にはOpenAI APIキーが必要（環境変数 OPENAI_API_KEY）
-- 実行ごとにテスト用DBが初期化される（本番DBには影響しない）
-- N=5で260回のAPI呼び出しが発生する（GPT-4o-mini、数百円程度）
+- 実行にはDockerでPostgreSQLが起動していること（DATABASE_URL）
+- 各run前にデモユーザーのデータをダミーデータでリセットする（本番データに影響しない）
+- N=5で325回のAPI呼び出しが発生する
 """
 
-# === DB切り替え ===
-# connection.py はモジュール import 時に DB_PATH を確定するため、
-# 他のモジュールを import する前に環境変数を設定する必要がある。
-# これにより chat() 内の crud 関数がテスト用DBを参照する。
-import os
-os.environ["KAKEIBO_DB_PATH"] = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "data",
-    "test_kakeibo.db",
-)
-
+import argparse
+import csv
 import json
-import math
-import shutil
+import os
 import time
-from datetime import date, datetime, timedelta
 from collections import Counter, defaultdict
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from statsmodels.stats.proportion import proportion_confint
+from psycopg2.extras import execute_values
 
 from api.agent.core import chat
-from api.db.connection import init_db
+from api.db.connection import (
+    get_connection,
+    get_demo_user_id,
+    release_connection,
+)
 from api.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -49,22 +51,229 @@ logger = get_logger(__name__)
 # --- 定数 ---
 
 # 各テストケースの実行回数
-# N=5 × 52問 = 260回。95%CI は Wilson法で ±約4%（p=0.9の場合）
+# N=5 × 65問 = 325回。95%CI は Wilson法で ±約3.5%（p=0.9の場合）
 N_RUNS = 5
 
 TEST_CASES_PATH = Path(__file__).parent / "test_cases.json"
 RESULTS_DIR = Path(__file__).parent / "results"
 
-# テスト用DBファイルと本番DBファイル
-# 評価時は本番DBのコピーで動作し、本番データに影響しない
-TEST_DB_PATH = Path(os.environ["KAKEIBO_DB_PATH"])
-PRODUCTION_DB_PATH = Path(
-    os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        "data",
-        "kakeibo.db",
-    )
+TRANSACTIONS_CSV = (
+    Path(__file__).parent.parent.parent / "data" / "dummy" / "dummy_transactions.csv"
 )
+FIXED_EXPENSES_CSV = (
+    Path(__file__).parent.parent.parent / "data" / "dummy" / "dummy_fixed_expenses.csv"
+)
+
+# テスト用クレジットカード設定（Option B: linked_card設定済み）
+# 楽天カード: デフォルトカード（card_name補完テスト用）
+# JCB: サブカード（test ID 33「JCBが登録済みのため拒否」、ID 50「JCBで払った」用）
+_TEST_CREDIT_CARDS = [
+    {"name": "楽天カード", "is_default": 1},
+    {"name": "JCB", "is_default": 0},
+]
+
+# テスト用グループ支払方法（linked_card設定済み）
+# PayPay（楽天カード）: ID 4「PayPayで払った」のget_payment_methodsフローテスト用
+# QUICPay（JCB）: ID 58「QUICPayで払った」のget_payment_methodsフローテスト用
+_TEST_GROUP_PAYMENT_METHODS = [
+    {
+        "base_name": "PayPay",
+        "full_name": "PayPay（楽天カード）",
+        "linked_card": "楽天カード",
+        "group_name": "PayPay",
+    },
+    {
+        "base_name": "QUICPay",
+        "full_name": "QUICPay（JCB）",
+        "linked_card": "JCB",
+        "group_name": "QUICPay",
+    },
+]
+
+# デフォルトの支払方法12種（connection.py の _insert_default_payment_methods と同じ）
+_DEFAULT_PAYMENT_METHODS = [
+    ("現金", "現金", "現金"),
+    ("口座振替", "非現金", "口座振替"),
+    ("クレジットカード", "非現金", "クレジットカード"),
+    ("QUICPay", "非現金", "QUICPay"),
+    ("PayPay", "非現金", "PayPay"),
+    ("Suica", "非現金", "Suica"),
+    ("PASMO", "非現金", "PASMO"),
+    ("Amazon Pay", "非現金", "Amazon Pay"),
+    ("楽天ペイ", "非現金", "楽天ペイ"),
+    ("メルペイ", "非現金", "メルペイ"),
+    ("PayPal", "非現金", "PayPal"),
+    ("その他", "非現金", "その他"),
+]
+
+
+# ==================== CSV読み込み ====================
+
+def _load_csv(path: Path) -> list[dict]:
+    """CSVファイルを読み込み、空文字列をNoneに変換して返す。"""
+    with open(path, encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        return [{k: (v if v != "" else None) for k, v in row.items()} for row in reader]
+
+
+# ==================== テスト環境管理（PostgreSQL） ====================
+
+def _setup_test_env(demo_user_id: int, tx_rows: list[dict], fe_rows: list[dict]) -> None:
+    """テスト環境を完全初期化する（評価開始時に1回実行）。
+
+    デモユーザーの全テーブルをリセットし、ダミーデータを投入する。
+    クレジットカードとグループ支払方法（PayPay/QUICPay）もテスト用に設定する。
+
+    Args:
+        demo_user_id: デモユーザーのID。
+        tx_rows: トランザクションCSVデータ。
+        fe_rows: 固定費CSVデータ。
+    """
+    _reset_test_env(demo_user_id, tx_rows, fe_rows)
+    logger.info(f"テスト環境初期化完了: user_id={demo_user_id}")
+
+
+def _reset_test_env(
+    demo_user_id: int,
+    tx_rows: list[dict],
+    fe_rows: list[dict],
+) -> None:
+    """各run前にデモユーザーのデータを初期状態に戻す。
+
+    全テーブル（transactions/fixed_expenses/budgets/settings/
+    payment_methods/credit_cards）をリセットし、
+    ダミーデータとテスト用設定を再投入する。
+    これによりテストケース間の副作用（register_transaction等）を排除する。
+
+    Args:
+        demo_user_id: デモユーザーのID。
+        tx_rows: トランザクションCSVデータ（毎回投入）。
+        fe_rows: 固定費CSVデータ（毎回投入）。
+    """
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+
+        # --- 全テーブルをリセット ---
+        cur.execute("DELETE FROM transactions WHERE user_id = %s", (demo_user_id,))
+        cur.execute("DELETE FROM fixed_expenses WHERE user_id = %s", (demo_user_id,))
+        cur.execute("DELETE FROM budgets WHERE user_id = %s", (demo_user_id,))
+        cur.execute("DELETE FROM settings WHERE user_id = %s", (demo_user_id,))
+        cur.execute("DELETE FROM credit_cards WHERE user_id = %s", (demo_user_id,))
+        cur.execute(
+            "DELETE FROM payment_methods WHERE user_id = %s", (demo_user_id,)
+        )
+        cur.execute(
+            "DELETE FROM store_category_mapping WHERE user_id = %s", (demo_user_id,)
+        )
+
+        # --- 支払方法: デフォルト12種を再投入 ---
+        for name, cat, group in _DEFAULT_PAYMENT_METHODS:
+            cur.execute(
+                """
+                INSERT INTO payment_methods
+                    (user_id, name, category, group_name, is_group_default)
+                VALUES (%s, %s, %s, %s, TRUE)
+                ON CONFLICT (user_id, name) DO NOTHING
+                """,
+                (demo_user_id, name, cat, group),
+            )
+
+        # --- グループ支払方法: PayPay/QUICPay に linked_card を設定 ---
+        # デフォルトの "PayPay" / "QUICPay" を削除して linked_card 付きに差し替える
+        for gpm in _TEST_GROUP_PAYMENT_METHODS:
+            cur.execute(
+                "DELETE FROM payment_methods WHERE user_id = %s AND name = %s",
+                (demo_user_id, gpm["base_name"]),
+            )
+            cur.execute(
+                """
+                INSERT INTO payment_methods
+                    (user_id, name, category, linked_card, group_name, is_group_default)
+                VALUES (%s, %s, '非現金', %s, %s, TRUE)
+                ON CONFLICT (user_id, name) DO NOTHING
+                """,
+                (
+                    demo_user_id,
+                    gpm["full_name"],
+                    gpm["linked_card"],
+                    gpm["group_name"],
+                ),
+            )
+
+        # --- クレジットカード: テスト用カードを設定 ---
+        for card in _TEST_CREDIT_CARDS:
+            cur.execute(
+                """
+                INSERT INTO credit_cards (user_id, name, is_default)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (user_id, name) DO NOTHING
+                """,
+                (demo_user_id, card["name"], card["is_default"]),
+            )
+
+        # --- transactions: CSVからダミーデータを投入 ---
+        if tx_rows:
+            values = [
+                (
+                    demo_user_id,
+                    row["date"],
+                    row["type"],
+                    int(row["amount"]),
+                    row["category"],
+                    row["store_name"],
+                    row["item"],
+                    row["memo"],
+                    row["payment_method"],
+                    None,  # card_name（CSVに列がないためNULL）
+                    row["person"],
+                )
+                for row in tx_rows
+            ]
+            execute_values(
+                cur,
+                """
+                INSERT INTO transactions
+                    (user_id, date, type, amount, category, store_name,
+                     item, memo, payment_method, card_name, person)
+                VALUES %s
+                """,
+                values,
+            )
+
+        # --- fixed_expenses: CSVからダミーデータを投入 ---
+        if fe_rows:
+            fe_values = [
+                (
+                    demo_user_id,
+                    row["name"],
+                    int(row["amount"]),
+                    row["category"],
+                    int(row["day_of_month"]),
+                    row.get("payment_method") or "口座振替",
+                    "2023-01-01",
+                    None,
+                )
+                for row in fe_rows
+            ]
+            execute_values(
+                cur,
+                """
+                INSERT INTO fixed_expenses
+                    (user_id, name, amount, category, day_of_month,
+                     payment_method, start_date, end_date)
+                VALUES %s
+                """,
+                fe_values,
+            )
+
+        conn.commit()
+
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        release_connection(conn)
 
 
 # ==================== ヘルパー関数 ====================
@@ -144,7 +353,9 @@ def _check_tool_match(expected_tool, actual_tools: list[str]) -> dict:
     actual_first = actual_tools[0] if actual_tools else None
 
     # 特殊ケース：ツール未実装・標準判定不可
-    if isinstance(expected_tool, str) and expected_tool.startswith(("_missing:", "_special:")):
+    if isinstance(expected_tool, str) and expected_tool.startswith(
+        ("_missing:", "_special:")
+    ):
         return {
             "tool_correct": None,
             "actual_tool": actual_first,
@@ -233,60 +444,43 @@ def _check_args_match(expected_args: dict, actual_args: dict) -> dict:
     return {"args_results": results, "args_accuracy": accuracy}
 
 
-# ==================== DB管理 ====================
-
-def _setup_test_db():
-    """テスト用DBを初期化する。
-
-    本番DBのコピーをテスト用DBとして使う。
-    これにより評価実行中の register_transaction 等が
-    本番データに影響しない。
-    """
-    if PRODUCTION_DB_PATH.exists():
-        shutil.copy2(PRODUCTION_DB_PATH, TEST_DB_PATH)
-        logger.info(f"テスト用DBを作成: {TEST_DB_PATH}")
-    else:
-        init_db(str(TEST_DB_PATH))
-        logger.info(f"テスト用DBを新規作成: {TEST_DB_PATH}")
-
-
-def _reset_test_db():
-    """テスト用DBを初期状態に戻す。
-
-    各テストケースの実行前に呼び出して、
-    前のテストケースの副作用（取引登録等）を除去する。
-    """
-    if PRODUCTION_DB_PATH.exists():
-        shutil.copy2(PRODUCTION_DB_PATH, TEST_DB_PATH)
-
-
 # ==================== メイン実行 ====================
 
-def run_evaluation():
+def run_evaluation(model_name: str) -> dict:
     """評価を実行するメイン関数。
 
     1. テストケースを読み込む
-    2. テスト用DBを準備
+    2. デモユーザーIDを取得しテスト環境を準備
     3. 各ケースをN回実行し、ツール選択・引数の正否を判定
     4. 結果を集計してレポート出力
+
+    Args:
+        model_name: 評価対象のLLMモデル名（例: "gpt-4o-mini", "gpt-5-nano"）。
 
     Returns:
         集計レポートの辞書。
     """
-    # テストケース読み込み
+    # テストケース・ダミーデータ読み込み
     with open(TEST_CASES_PATH, encoding="utf-8") as f:
         test_cases = json.load(f)
 
+    tx_rows = _load_csv(TRANSACTIONS_CSV)
+    fe_rows = _load_csv(FIXED_EXPENSES_CSV)
+
+    logger.info(f"モデル: {model_name}")
     logger.info(f"テストケース数: {len(test_cases)}, 実行回数: N={N_RUNS}")
     logger.info(f"総API呼び出し予定: {len(test_cases) * N_RUNS}回")
+    logger.info(f"ダミーデータ: transactions={len(tx_rows)}件, fixed_expenses={len(fe_rows)}件")
+
+    # デモユーザー取得・テスト環境初期化
+    demo_user_id = get_demo_user_id()
+    logger.info(f"デモユーザーID: {demo_user_id}")
+    _setup_test_env(demo_user_id, tx_rows, fe_rows)
 
     # 結果格納
     all_results = []
     # 選択分布記録（track_alternative 用）
     alternative_distribution = defaultdict(Counter)
-
-    # テスト用DB準備
-    _setup_test_db()
 
     start_time = time.time()
 
@@ -302,12 +496,17 @@ def run_evaluation():
         case_results = []
 
         for run in range(N_RUNS):
-            # 各実行前にDBリセット
+            # 各実行前にDBをダミーデータ初期状態にリセット
             # register_transaction 等の副作用を除去するため
-            _reset_test_db()
+            _reset_test_env(demo_user_id, tx_rows, fe_rows)
 
             try:
-                result = chat(case_input, conversation_history=None)
+                result = chat(
+                    demo_user_id,
+                    case_input,
+                    conversation_history=case.get("conversation_history"),
+                    model=model_name,
+                )
             except Exception as e:
                 logger.error(f"ケース {case_id} 実行 {run + 1} エラー: {e}")
                 case_results.append({
@@ -369,11 +568,11 @@ def run_evaluation():
     logger.info(f"評価完了: {elapsed:.1f}秒")
 
     # 集計・レポート出力
-    report = _generate_report(all_results, alternative_distribution, elapsed)
-    _save_results(all_results, report, alternative_distribution)
+    report = _generate_report(all_results, alternative_distribution, elapsed, model_name)
+    _save_results(all_results, report, alternative_distribution, model_name)
 
     # MLflowに記録
-    _log_to_mlflow(report, RESULTS_DIR)
+    _log_to_mlflow(report, RESULTS_DIR, model_name)
 
     return report
 
@@ -384,6 +583,7 @@ def _generate_report(
     all_results: list,
     alternative_distribution: dict,
     elapsed: float,
+    model_name: str,
 ) -> dict:
     """全結果を集計してレポートを生成する。
 
@@ -391,6 +591,7 @@ def _generate_report(
         all_results: 全ケースの実行結果。
         alternative_distribution: 選択分布記録。
         elapsed: 実行時間（秒）。
+        model_name: 評価対象のモデル名。
 
     Returns:
         集計レポートの辞書。
@@ -459,7 +660,6 @@ def _generate_report(
     )
 
     # 95%信頼区間（Wilson法）
-    # 正規近似より統計的に正確。特に p が 0 や 1 に近い場合に差が出る。
     if tool_total_count > 0:
         ci_low, ci_high = proportion_confint(
             tool_correct_count,
@@ -496,6 +696,7 @@ def _generate_report(
     report = {
         "metadata": {
             "date": today,
+            "model": model_name,
             "n_runs": N_RUNS,
             "n_cases": len(all_results),
             "total_runs": tool_total_count,
@@ -588,41 +789,47 @@ def _save_results(
     all_results: list,
     report: dict,
     alternative_distribution: dict,
-):
+    model_name: str,
+) -> None:
     """評価結果をファイルに保存する。
 
     3種類のファイルを出力する:
-    - detail_YYYY-MM-DD.json: 全ケース × 全実行の詳細結果
-    - report_YYYY-MM-DD.json: 集計レポート（プログラムで読みやすい）
-    - report_YYYY-MM-DD.txt: テキストレポート（人間が読みやすい）
+    - detail_MODEL_YYYY-MM-DD_HHMMSS.json: 全ケース × 全実行の詳細結果
+    - report_MODEL_YYYY-MM-DD_HHMMSS.json: 集計レポート（プログラムで読みやすい）
+    - report_MODEL_YYYY-MM-DD_HHMMSS.txt: テキストレポート（人間が読みやすい）
 
     Args:
         all_results: 全ケースの詳細結果。
         report: 集計レポート。
         alternative_distribution: 選択分布。
+        model_name: 評価対象のモデル名（ファイル名に含める）。
     """
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
+    # ファイル名にモデル名を含める（比較しやすいよう）
+    safe_model = model_name.replace("/", "-").replace(":", "-")
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    prefix = f"{safe_model}_{timestamp}"
 
     # 詳細結果（全ケース × 全実行）
-    detail_path = RESULTS_DIR / f"detail_{timestamp}.json"
+    detail_path = RESULTS_DIR / f"detail_{prefix}.json"
     with open(detail_path, "w", encoding="utf-8") as f:
         json.dump(all_results, f, ensure_ascii=False, indent=2, default=str)
     logger.info(f"詳細結果: {detail_path}")
 
     # 集計レポート（JSON）
-    report_path = RESULTS_DIR / f"report_{timestamp}.json"
+    report_path = RESULTS_DIR / f"report_{prefix}.json"
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
     logger.info(f"集計レポート: {report_path}")
 
     # テキストレポート
-    text_path = RESULTS_DIR / f"report_{timestamp}.txt"
+    text_path = RESULTS_DIR / f"report_{prefix}.txt"
     with open(text_path, "w", encoding="utf-8") as f:
         f.write("=" * 60 + "\n")
         f.write("Agent 評価レポート\n")
         f.write(f"実行日: {report['metadata']['date']}\n")
+        f.write(f"モデル: {report['metadata']['model']}\n")
         f.write(f"テストケース数: {report['metadata']['n_cases']}\n")
         f.write(f"実行回数: N={report['metadata']['n_runs']}\n")
         f.write(f"総実行数: {report['metadata']['total_runs']}\n")
@@ -682,7 +889,7 @@ def _save_results(
     logger.info(f"テキストレポート: {text_path}")
 
 
-def _log_to_mlflow(report: dict, results_dir: Path):
+def _log_to_mlflow(report: dict, results_dir: Path, model_name: str) -> None:
     """評価結果を MLflow に記録する。
 
     MLflow の Run 1つに以下を記録する：
@@ -695,6 +902,7 @@ def _log_to_mlflow(report: dict, results_dir: Path):
     Args:
         report: _generate_report() の戻り値。
         results_dir: レポートファイルが保存されたディレクトリ。
+        model_name: 評価対象のモデル名。
     """
     try:
         import mlflow
@@ -715,14 +923,12 @@ def _log_to_mlflow(report: dict, results_dir: Path):
     try:
         with mlflow.start_run():
             # --- Parameters ---
-            # 実験の再現に必要な設定値
-            mlflow.log_param("model", "gpt-4o-mini")
+            mlflow.log_param("model", model_name)
             mlflow.log_param("n_cases", report["metadata"]["n_cases"])
             mlflow.log_param("n_runs", report["metadata"]["n_runs"])
             mlflow.log_param("total_runs", report["metadata"]["total_runs"])
 
             # --- Metrics ---
-            # 全体精度
             mlflow.log_metric(
                 "tool_selection_accuracy",
                 report["overall"]["tool_selection_accuracy"],
@@ -731,24 +937,18 @@ def _log_to_mlflow(report: dict, results_dir: Path):
             mlflow.log_metric("ci_high", report["overall"]["ci_high"])
             mlflow.log_metric("args_accuracy", report["overall"]["args_accuracy"])
 
-            # グループ別精度
             for group, stats in report["by_group"].items():
-                # MLflow のメトリクス名にスラッシュや中黒は使えないので
-                # 安全な文字に変換する
                 safe_name = group.replace("/", "_").replace("・", "_")
                 mlflow.log_metric(f"group_{safe_name}", stats["accuracy"])
 
-            # 難易度別精度
             for diff, stats in report["by_difficulty"].items():
                 mlflow.log_metric(f"difficulty_{diff}", stats["accuracy"])
 
-            # 不安定ケース数
             mlflow.log_metric(
                 "unstable_cases", len(report["unstable_cases"]),
             )
 
             # --- Artifacts ---
-            # results ディレクトリ内の最新ファイルを全てアップロード
             for filepath in results_dir.glob("*"):
                 if filepath.is_file():
                     mlflow.log_artifact(str(filepath))
@@ -761,11 +961,29 @@ def _log_to_mlflow(report: dict, results_dir: Path):
 
 # ==================== エントリポイント ====================
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Agent ツール選択精度評価スクリプト"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=os.getenv("LLM_CHAT_MODEL", "gpt-4o-mini"),
+        help=(
+            "評価対象のLLMモデル名。"
+            "デフォルトは環境変数 LLM_CHAT_MODEL またはgpt-4o-mini。"
+            "例: --model gpt-5-nano"
+        ),
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    report = run_evaluation()
+    args = _parse_args()
+    report = run_evaluation(args.model)
 
     print("\n" + "=" * 60)
-    print("評価完了")
+    print(f"評価完了: {args.model}")
     o = report["overall"]
     print(f"ツール選択精度: {o['tool_selection_accuracy']:.1%}")
     print(

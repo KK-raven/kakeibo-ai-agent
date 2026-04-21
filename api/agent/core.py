@@ -19,6 +19,7 @@ Agent のコアパイプライン
 """
 
 import json
+import os
 from datetime import date
 from openai import OpenAI
 
@@ -34,7 +35,10 @@ logger = get_logger(__name__)
 
 client = OpenAI()
 
-MODEL = "gpt-4o-mini"
+# 対話用LLMのデフォルトモデル。
+# 環境変数 LLM_CHAT_MODEL で上書き可能。
+# chat() の model 引数でさらに実行時上書きが可能。
+DEFAULT_MODEL = os.getenv("LLM_CHAT_MODEL", "gpt-4o-mini")
 
 MAX_TOOL_CALLS = 5
 
@@ -315,15 +319,16 @@ def _complement_defaults(
     Returns:
         デフォルト値が補完された引数の辞書。
     """
-    if tool_name == "register_transaction":
-        # 収入・支出共通で日付を補完する
-        if "date" not in args or not args["date"]:
-            args["date"] = date.today().isoformat()
-            logger.debug(f"日付補完: {args['date']}")
+    if tool_name in ("register_transaction", "register_fixed_expense"):
+        if tool_name == "register_transaction":
+            # 収入・支出共通で日付を補完する
+            if "date" not in args or not args["date"]:
+                args["date"] = date.today().isoformat()
+                logger.debug(f"日付補完: {args['date']}")
 
-        # 収入には支払方法・カード情報は不要なため補完しない
-        if args.get("type") == "income":
-            return args
+            # 収入には支払方法・カード情報は不要なため補完しない
+            if args.get("type") == "income":
+                return args
 
         if "payment_method" not in args or not args["payment_method"]:
             default_pm = crud.get_setting(user_id, "default_payment_method")
@@ -333,6 +338,7 @@ def _complement_defaults(
         # グループ名のまま渡された場合（例: "QUICPay"）、
         # is_group_default=True のエントリ名に解決する。
         # "クレジットカード" は別ルートで処理するため対象外。
+        # register_fixed_expenseはグループ型支払方法を使わないが、統一処理として通す。
         pm = args.get("payment_method", "")
         if pm and pm != "クレジットカード":
             resolved = _resolve_group_payment_method(user_id, pm)
@@ -535,6 +541,7 @@ def chat(
     user_id: int,
     user_message: str,
     conversation_history: list[dict] | None = None,
+    model: str | None = None,
 ) -> dict:
     """ユーザーの入力を受け取り、Agentの応答を返す。
 
@@ -546,14 +553,21 @@ def chat(
         user_message: ユーザーの自然言語入力。
         conversation_history: これまでの会話履歴（role/content の辞書リスト）。
                               None の場合は新規会話として扱う。
+        model: 使用するLLMモデル名。None の場合は DEFAULT_MODEL
+               （環境変数 LLM_CHAT_MODEL またはデフォルト値）を使う。
+               評価スクリプトからモデル比較時に明示指定する用途。
 
     Returns:
         {
             "response": "LLMの応答テキスト",
             "tool_results": [...],
+            "messages_to_save": [...],
         }
     """
     logger.info(f"ユーザー入力: {user_message}")
+
+    effective_model = model or DEFAULT_MODEL
+    logger.debug(f"使用モデル: {effective_model}")
 
     messages = [{"role": "system", "content": _build_system_prompt(user_id)}]
 
@@ -572,7 +586,7 @@ def chat(
 
         try:
             response = client.chat.completions.create(
-                model=MODEL,
+                model=effective_model,
                 messages=messages,
                 tools=TOOLS,
                 tool_choice="auto",
@@ -667,7 +681,7 @@ def chat(
                 })
                 try:
                     block_response = client.chat.completions.create(
-                        model=MODEL,
+                        model=effective_model,
                         messages=messages,
                         tools=TOOLS,
                         tool_choice="auto",
@@ -715,7 +729,7 @@ def chat(
                         # 検索結果を踏まえた最終応答を生成
                         try:
                             final_resp = client.chat.completions.create(
-                                model=MODEL,
+                                model=effective_model,
                                 messages=messages,
                             )
                             block_content = final_resp.choices[0].message.content or ""
@@ -792,7 +806,7 @@ def chat(
 
     try:
         response = client.chat.completions.create(
-            model=MODEL,
+            model=effective_model,
             messages=messages,
         )
         final_content = response.choices[0].message.content

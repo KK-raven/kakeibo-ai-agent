@@ -73,7 +73,6 @@ def release_connection(conn) -> None:
     """コネクションをプールに返却する。
 
     crud.pyの各関数のfinally句で呼び出す。
-    SQLite版でのconn.close()に相当する。
 
     Args:
         conn: 返却するコネクション。
@@ -148,6 +147,7 @@ def init_db() -> None:
                 is_active INTEGER NOT NULL DEFAULT 1,
                 start_date DATE NOT NULL,
                 end_date DATE,
+                card_name TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
