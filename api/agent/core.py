@@ -368,6 +368,12 @@ def _complement_defaults(
 
         cards = crud.get_credit_cards(user_id)
 
+        # card_nameが汎用語（"クレジットカード"/"カード"/"クレカ"等）の場合は未指定扱いにする
+        _GENERIC_CARD_NAMES = {"クレジットカード", "カード", "クレカ", "credit card", "card"}
+        if args.get("card_name", "").lower() in {s.lower() for s in _GENERIC_CARD_NAMES}:
+            logger.debug(f"汎用カード名を除去: {args['card_name']}")
+            args.pop("card_name", None)
+
         if args.get("payment_method") == "クレジットカード" and not args.get("card_name"):
             # カード名未指定 → デフォルトカードを補完
             default_card = next((c for c in cards if c["is_default"]), None)

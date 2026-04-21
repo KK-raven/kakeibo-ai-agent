@@ -136,7 +136,16 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
             ],
         )
         raw = response.choices[0].message.content or ""
-        return json.loads(raw)
+        logger.info(f"Vision APIレスポンス: {repr(raw[:300])}")
+
+        # markdownコードブロックを除去（```json ... ``` 形式への対応）
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.splitlines()
+            inner = [l for l in lines if not l.startswith("```")]
+            cleaned = "\n".join(inner).strip()
+
+        return json.loads(cleaned)
 
     except json.JSONDecodeError as e:
         logger.error(f"Vision APIのJSON解析失敗: {e} / raw={raw!r}")
