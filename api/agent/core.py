@@ -66,6 +66,14 @@ def _build_system_prompt(user_id: int) -> str:
     # キャラ設定の読み込み
     character = get_character(user_id)
 
+    # デフォルトクレジットカード名の取得（固定費登録の確認表示用）
+    try:
+        cards = crud.get_credit_cards(user_id)
+        default_card = next((c for c in cards if c["is_default"]), None)
+        default_card_name = default_card["name"] if default_card else None
+    except Exception:
+        default_card_name = None
+
     if character:
         name = character.get("character_name", "アシスタント")
         personality = character.get("character_personality", "")
@@ -95,7 +103,6 @@ def _build_system_prompt(user_id: int) -> str:
 - 支払方法が明示されなければ省略してください（システムがデフォルト値を適用します）
 - 取引の削除・更新は必ず2ステップで行うこと。①対象候補を特定する（get_transactionsで検索するか、直前のregister_transactionの結果を使う）。②対象の取引内容（日付・金額・店名等）を具体的に示してユーザーに最終確認を求め、「はい」「削除して」「OK」等の明示的な肯定応答が来て初めてToolを実行する。ユーザーが対象を指定した直後（「ファミマのやつ」「それ消して」等）であっても、必ず対象の取引内容を示して最終確認すること。承認なしに削除・更新のToolを実行することは絶対に禁止
 - 取引登録後の確認メッセージは、register_transactionのToolの実行結果の値を必ず使うこと。特に店名(store_name)・品目(item)・支払方法(payment_method)・カード名(card_name)はToolのresultに含まれる実際の登録値を表示すること。ユーザーの入力テキストから推測した値を使わないこと
-- 固定費登録後の確認メッセージも同様に、register_fixed_expenseのToolの実行結果の値を必ず使うこと。特にpayment_method・card_nameはToolのresultに含まれる実際の登録値を表示すること。「クレジットカード」と入力された場合でも、表示にはToolのresultのcard_nameを使い、ユーザーの入力テキストをそのまま使わないこと
 - 削除・更新の対象は、直前のget_transactionsで取得した結果、または直前のregister_transactionで登録した取引からのみ選ぶこと。過去の会話で取得した取引IDを再利用してはならない
 - get_transactionsの検索結果に複数件ヒットした場合は、全件を表示してどれを対象とするかユーザーに選ばせること。特に短い検索語（1〜2文字）では意図しない部分一致が起きやすいため注意
 - 品目名だけでカテゴリが曖昧な場合（「水」「チョコ」等の短い語）は、ユーザーにカテゴリを確認すること。店名等の文脈から明らかな場合は確認不要
@@ -114,6 +121,12 @@ def _build_system_prompt(user_id: int) -> str:
   - ユーザーが「カード払い」「クレカで払った」等とだけ入力し金額・品目の指定がない場合は、「何を登録しますか？」と聞くこと
   - ユーザーがカード名を指定したが登録済みカードと完全一致しない場合は、候補を提示して確認する。デフォルトカードの名前に含まれる場合はデフォルトカードを使う
   - クレジットカードが1枚も登録されていない状態でカード払いを指示された場合は、「カードが未登録です。カード名を教えてください（例: ドコモカード（JCB）、楽天カード（VISA）等）」と案内し、登録を促す
+- クレジットカード・カード払いの固定費登録（register_fixed_expense）:
+  - 「カード」「クレカ」等の指定はすべて payment_method='クレジットカード' として扱う
+  - クレジットカード払いが指定された場合: まず必ずget_credit_cardsを呼んで登録済みカード一覧を取得すること（カード名を指定した場合も指定しない場合も同様）
+  - カード名を指定した場合: 取得した一覧と照合し、一致するカードをcard_nameに設定する。一致しなければ「指定されたカードは登録されていません。先にregister_credit_cardで登録してください」と案内し、register_fixed_expenseは実行しない
+  - カード名を指定しない場合: card_nameを省略してregister_fixed_expenseを実行する（システムがデフォルトカードを自動補完する）。確認メッセージには取得した一覧のデフォルトカード名（is_default=Trueのカード名）を表示すること
+  - 登録完了後の報告メッセージは、register_fixed_expenseのToolの実行結果の値を必ず使うこと。特にpayment_method・card_nameはToolのresultに含まれる実際の登録値を表示すること
 - 未登録の支払方法をユーザーが使おうとした場合: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
 - 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
 - グループ型支払方法（QUICPay・PayPay等）の取引登録フロー（クレジットカードはグループフロー対象外）:
