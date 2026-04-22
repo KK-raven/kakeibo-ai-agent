@@ -270,9 +270,9 @@ TOOLS = [
             "name": "register_fixed_expense",
             "description": (
                 "毎月の固定出金を登録する。"
-                "「家賃8万円を毎月27日に登録して」"
-                "「Netflixを固定費に追加して」のように言われたときに使う。"
-                "実行前に必ず登録内容を提示し、ユーザーに確認すること。"
+                "2段階で実行すること: "
+                "1回目はconfirmなしで呼び、返されたpreviewの内容をユーザーに提示する。"
+                "2回目はユーザーの承認後にconfirm=trueで同じ内容を再度呼ぶ。"
             ),
             "parameters": {
                 "type": "object",
@@ -311,6 +311,13 @@ TOOLS = [
                     "end_date": {
                         "type": "string",
                         "description": "終了日。継続中ならなし。",
+                    },
+                    "confirm": {
+                        "type": "boolean",
+                        "description": (
+                            "trueで実際に登録する。"
+                            "省略またはfalseならプレビューのみ返す。"
+                        ),
                     },
                 },
                 "required": ["name", "amount", "category", "day_of_month", "start_date"],

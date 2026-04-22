@@ -125,8 +125,11 @@ def _build_system_prompt(user_id: int) -> str:
   - 例: 「カードで払った」→ デフォルトカード、「○○カードで払った」→ 登録済みカードから該当する登録名
   - get_payment_methodsやget_credit_cardsの呼び出しは不要（プロンプトに情報あり）
   - ツール実行結果にerrorが含まれる場合は、そのメッセージをユーザーに伝えること
-- 固定費登録時も上記と同様にcard_nameを決定し、確認画面にカード登録名を含めること
-- 固定費登録は必ず確認→承認の2ステップで行うこと。register_fixed_expense実行前に登録内容（名称・金額・カテゴリ・計上日・支払方法・開始日）を提示し、ユーザーの明示的な承認を得てから実行する。承認なしにregister_fixed_expenseを実行することは禁止
+- 固定費登録はregister_fixed_expenseを2回呼ぶこと:
+  1回目: confirmなしで呼ぶ → 返されたpreviewの内容（カード名等が解決済み）をそのままユーザーに提示する
+  2回目: ユーザーの承認後にconfirm=trueで同じ内容を再度呼ぶ → 実際に登録される
+  previewにerrorが含まれる場合はエラー内容をユーザーに伝え、カードの登録を促すこと
+- 固定費の削除（deactivate_fixed_expense）は、実行前に必ず対象の固定費の内容を提示し、ユーザーの明示的な承認を得てから実行すること
 - 未登録の支払方法をユーザーが使おうとした場合: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
 - 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
 - グループ型支払方法（QUICPay・PayPay等）の取引登録フロー（クレジットカードはグループフロー対象外）:
@@ -848,6 +851,34 @@ def chat(
                     "tool": tool_name,
                     "args": tool_args,
                     "error": error_msg,
+                })
+                continue
+
+            # register_fixed_expense のプレビューモード:
+            # confirm=true でない場合はDBに書き込まず、
+            # 解決済みの登録内容をプレビューとして返す。
+            if (
+                tool_name == "register_fixed_expense"
+                and not tool_args.pop("confirm", False)
+            ):
+                preview = {k: v for k, v in tool_args.items()}
+                result = {
+                    "preview": preview,
+                    "message": "以下の内容で固定費を登録します。よろしいですか？",
+                }
+                logger.info(f"固定費プレビュー: {preview}")
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": json.dumps(
+                        result, ensure_ascii=False, default=str,
+                    ),
+                })
+                messages_to_save.append(messages[-1])
+                tool_results.append({
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "result": result,
                 })
                 continue
 
