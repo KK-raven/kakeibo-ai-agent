@@ -105,11 +105,26 @@ def _build_system_prompt(user_id: int) -> str:
 - 収入カテゴリ: 給与/賞与/副業・フリーランス/金融資産/ギャンブル/臨時収入/その他
 - 支払方法が明示されなければ省略してください（システムがデフォルト値を適用します）。クレジットカード払いの場合のみ payment_method='クレジットカード' を設定すること（card_name はバックエンドが補完するため、わかる場合のみ設定すればよい）
 - 削除・更新の確認フロー（取引・固定費 共通）:
-  対象の内容（日付・金額・店名等）を具体的に示してユーザーに最終確認を求め、明示的な肯定応答が来て初めてToolを実行する。承認なしに削除・更新のToolを実行することは絶対に禁止。
+  対象の内容を以下の定型フォーマットで提示し、ユーザーの明示的な肯定応答が来て初めてToolを実行する。承認なしに削除・更新のToolを実行することは絶対に禁止。
   対象の特定方法: get_transactionsで検索するか、直前のregister_transactionの結果を使う。会話履歴に結果がある場合は新たにget_transactionsを呼ばず、履歴の内容を提示して確認すること。
-  get_transactionsの検索結果に複数件ヒットした場合は、全件を表示してどれを対象とするかユーザーに選ばせること
+  get_transactionsの検索結果に複数件ヒットした場合は、全件を表示してどれを対象とするかユーザーに選ばせること。
+  確認フォーマット（取引）:
+    以下の取引を削除しますか？
+    日付: ○○
+    店名: ○○
+    品目: ○○
+    金額: ○○円
+    カテゴリ: ○○
+    支払方法: ○○（カード名がある場合は「○○（カード名）」）
 - 削除・更新の対象は、直前のget_transactionsで取得した結果、または直前のregister_transactionで登録した取引からのみ選ぶこと。過去の会話で取得した取引IDを再利用してはならない
-- 取引登録後の確認メッセージは、register_transactionのToolの実行結果の値を必ず使うこと。特に店名(store_name)・品目(item)・支払方法(payment_method)・カード名(card_name)はToolのresultに含まれる実際の登録値を表示すること。ユーザーの入力テキストから推測した値を使わないこと
+- 取引登録後の確認メッセージは、register_transactionのToolの実行結果の値を以下の定型フォーマットで表示すること。ユーザーの入力テキストから推測した値を使わないこと:
+    登録しました！
+    日付: ○○
+    店名: ○○
+    品目: ○○
+    金額: ○○円
+    カテゴリ: ○○
+    支払方法: ○○（カード名がある場合は「○○（カード名）」）
 - 品目名だけでカテゴリが曖昧な場合（「水」「チョコ」等の短い語）は、ユーザーにカテゴリを確認すること。店名等の文脈から明らかな場合は確認不要
 - 回答は簡潔に、親しみやすい口調でお願いします
 - ファイル出力時は必ず専用の集計ツールで数値を取得してからcontentを生成すること。数値の計算は絶対に自分で行わないこと
@@ -597,7 +612,9 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
     以下の条件を全て満たす場合に True を返す:
     1. 会話履歴内に get_transactions または register_transaction
        の実行結果がある
-    2. その後に user メッセージが1つ以上ある
+    2. その後に必要数の user メッセージがある
+       - get_transactions 後: >= 1（LLMが既に内容を提示して確認済み）
+       - register_transaction 後: >= 2（削除指示 + 確認応答の2ステップ）
     3. その後に他の更新系ツールが実行されていない
 
     このガードは「検索も登録もしていない」または
@@ -613,14 +630,17 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
     CONFIRMABLE_TOOLS = {"get_transactions", "register_transaction"}
 
     last_idx = None
+    last_tool_name = None
     for i in range(len(messages) - 1, -1, -1):
         msg = messages[i]
         if msg.get("role") != "assistant":
             continue
         tool_calls = msg.get("tool_calls", [])
         for tc in tool_calls:
-            if tc.get("function", {}).get("name") in CONFIRMABLE_TOOLS:
+            name = tc.get("function", {}).get("name")
+            if name in CONFIRMABLE_TOOLS:
                 last_idx = i
+                last_tool_name = name
                 break
         if last_idx is not None:
             break
@@ -647,12 +667,13 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
                 if not name.startswith(("get_", "check_")):
                     return False
 
-    # 起点ツール実行後にユーザーメッセージが1つ以上あればOK。
-    # get_transactions 後:  LLMが内容を提示→ユーザーが「はい」(1通)
-    # register_transaction 後: ユーザーが「やっぱ消して」(1通)
-    # 同一ターンでの即時削除は guard_messages が現在のassistantメッセージを
-    # 除外しているため防がれる。
-    return user_msg_count >= 1
+    # get_transactions 後: LLMが内容を提示→ユーザーが「はい」(1通)で十分。
+    # register_transaction 後: 「消して」(削除指示) + 「はい」(確認) の2通が必要。
+    #   1通だけだと削除指示のみで確認なしに実行されてしまう。
+    if last_tool_name == "get_transactions":
+        return user_msg_count >= 1
+    else:
+        return user_msg_count >= 2
 
 
 def chat(

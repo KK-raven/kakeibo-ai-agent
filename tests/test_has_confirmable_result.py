@@ -57,16 +57,31 @@ class TestHasConfirmableResult(unittest.TestCase):
         ]
         self.assertTrue(self._call(messages))
 
-    # --- register_transaction 後にユーザー確認1通 → True ---
+    # --- register_transaction 後にユーザー1通 → ブロック（確認が必要） ---
 
-    def test_register_then_cancel(self):
-        """登録直後に「やっぱ消して」→ 削除許可。"""
+    def test_register_then_one_user_msg_blocked(self):
+        """登録直後に「消して」だけでは削除できない（確認が必要）。"""
         messages = [
             _make_user_msg("ランチ800円"),
             _make_assistant_tool_call("register_transaction"),
             _make_tool_result(),
             {"role": "assistant", "content": "登録しました！"},
             _make_user_msg("やっぱ消して"),
+        ]
+        self.assertFalse(self._call(messages))
+
+    # --- register_transaction 後にユーザー2通 → True ---
+
+    def test_register_then_two_user_msgs(self):
+        """登録後「消して」→ LLM確認 →「はい」→ 削除許可。"""
+        messages = [
+            _make_user_msg("ランチ800円"),
+            _make_assistant_tool_call("register_transaction"),
+            _make_tool_result(),
+            {"role": "assistant", "content": "登録しました！"},
+            _make_user_msg("やっぱ消して"),
+            {"role": "assistant", "content": "この取引を削除しますか？"},
+            _make_user_msg("はい"),
         ]
         self.assertTrue(self._call(messages))
 
@@ -83,9 +98,10 @@ class TestHasConfirmableResult(unittest.TestCase):
 
     # --- 起点ツール後に更新系ツールが挟まる → False ---
 
-    def test_invalidated_by_update_tool(self):
-        """起点ツール後に register_transaction が挟まると無効化。"""
-        messages = [
+    def test_register_after_search_resets_threshold(self):
+        """検索→登録の後は register_transaction が起点になり、
+        削除には2通のユーザーメッセージが必要。"""
+        messages_one_msg = [
             _make_user_msg("検索して"),
             _make_assistant_tool_call("get_transactions"),
             _make_tool_result(),
@@ -94,9 +110,15 @@ class TestHasConfirmableResult(unittest.TestCase):
             _make_tool_result(),
             _make_user_msg("やっぱ消して"),
         ]
-        # 最後の起点は register_transaction なので True
-        # (register_transaction 自体は CONFIRMABLE_TOOLS)
-        self.assertTrue(self._call(messages))
+        # register_transaction 後1通 → ブロック
+        self.assertFalse(self._call(messages_one_msg))
+
+        messages_two_msgs = messages_one_msg + [
+            {"role": "assistant", "content": "この取引を削除しますか？"},
+            _make_user_msg("はい"),
+        ]
+        # register_transaction 後2通 → 許可
+        self.assertTrue(self._call(messages_two_msgs))
 
     def test_invalidated_by_unrelated_update_tool(self):
         """起点ツール後に無関係な更新系ツール(add_payment_method)が挟まる → False。"""
