@@ -48,6 +48,7 @@ logger = get_logger(__name__)
 # --- LINE SDK 初期化 ---
 channel_secret = os.environ.get("LINE_CHANNEL_SECRET")
 channel_access_token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
+vision_model = os.environ.get("LLM_VISION_MODEL", "gpt-4o")
 
 if not channel_secret or not channel_access_token:
     logger.warning(
@@ -93,10 +94,10 @@ _VISION_PROMPT = """
 
 
 def extract_receipt_info(image_bytes: bytes) -> dict:
-    """レシート画像からGPT-4o Visionで情報を抽出する。
+    """レシート画像からVision APIで情報を抽出する。
 
     LINEから取得した画像バイナリをbase64エンコードし、
-    GPT-4o Visionに送信して構造化JSONを得る。
+    Vision APIに送信して構造化JSONを得る。
 
     Args:
         image_bytes: LINEのContent APIから取得した画像バイナリ。
@@ -109,10 +110,13 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
     """
     image_b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
 
+    # gpt-4o系はmax_tokens、それ以外（gpt-5.x等）はmax_output_tokensを使用する
+    token_limit_key = "max_tokens" if "gpt-4o" in vision_model else "max_output_tokens"
+
     try:
         response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            max_tokens=1000,
+            model=vision_model,
+            **{token_limit_key: 1000},
             messages=[
                 {
                     "role": "user",
@@ -301,7 +305,7 @@ def handle_text_message(event: MessageEvent):
 def handle_image_message(event: MessageEvent):
     """画像メッセージを受信した時の処理。
 
-    LINEから画像バイナリを取得し、GPT-4o Visionでレシート情報を
+    LINEから画像バイナリを取得し、Vision APIでレシート情報を
     抽出する。OCR結果を_OCR_PREFIXで始まるテキストに変換して
     chat()に渡すことで、通常のメッセージと同じAgentパイプラインを
     再利用する。
