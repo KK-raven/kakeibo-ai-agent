@@ -642,6 +642,9 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
                 # 同一検索結果から複数件を連続削除・更新するフローを許容する。
                 if name in _CONFIRMATION_REQUIRED_TOOLS:
                     continue
+                # 固定費のプレビュー/登録は削除フローと無関係なので無視する
+                if name == "register_fixed_expense":
+                    continue
                 if not name.startswith(("get_", "check_")):
                     return False
 
