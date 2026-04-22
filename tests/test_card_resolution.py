@@ -244,6 +244,41 @@ class TestComplementDefaultsCardResolution(unittest.TestCase):
         result = self._call(1, "register_fixed_expense", args)
         self.assertIn("error", result)
 
+    # --- payment_method 正規化 ---
+
+    @patch("api.agent.core.crud.get_credit_cards", return_value=[
+        {"name": "ViewCard", "is_default": True},
+    ])
+    def test_fixed_expense_card_shorthand_normalized(self, _mock_cards):
+        """「カード」等の略称がクレジットカードに正規化される。"""
+        args = {"payment_method": "カード"}
+        result = self._call(1, "register_fixed_expense", args)
+        self.assertEqual(result["payment_method"], "クレジットカード")
+        self.assertEqual(result["card_name"], "ViewCard")
+        self.assertNotIn("error", result)
+
+    @patch("api.agent.core.crud.get_credit_cards", return_value=[
+        {"name": "ViewCard", "is_default": True},
+    ])
+    def test_fixed_expense_creca_shorthand_normalized(self, _mock_cards):
+        """「クレカ」もクレジットカードに正規化される。"""
+        args = {"payment_method": "クレカ"}
+        result = self._call(1, "register_fixed_expense", args)
+        self.assertEqual(result["payment_method"], "クレジットカード")
+        self.assertEqual(result["card_name"], "ViewCard")
+        self.assertNotIn("error", result)
+
+    @patch("api.agent.core.crud.get_credit_cards", return_value=[
+        {"name": "ViewCard", "is_default": True},
+    ])
+    def test_fixed_expense_card_pay_shorthand_normalized(self, _mock_cards):
+        """「カード払い」もクレジットカードに正規化される。"""
+        args = {"payment_method": "カード払い"}
+        result = self._call(1, "register_fixed_expense", args)
+        self.assertEqual(result["payment_method"], "クレジットカード")
+        self.assertEqual(result["card_name"], "ViewCard")
+        self.assertNotIn("error", result)
+
     # --- 口座振替 → カード解決しない ---
 
     def test_fixed_expense_bank_transfer_skipped(self):

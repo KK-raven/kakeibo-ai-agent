@@ -408,6 +408,33 @@ def register_fixed_expense(
     conn = get_connection()
     try:
         cur = conn.cursor()
+
+        # 「カード」「クレカ」等の略称を「クレジットカード」に正規化
+        if payment_method is not None:
+            if "カード" in payment_method or "クレカ" in payment_method:
+                if payment_method != "クレジットカード":
+                    payment_method = "クレジットカード"
+
+        # クレジットカード払いでカード名が未指定の場合、
+        # デフォルトカードを自動補完する。
+        if payment_method == "クレジットカード" and card_name is None:
+            cur.execute(
+                """
+                SELECT name FROM credit_cards
+                WHERE user_id = %s AND is_default = 1
+                LIMIT 1
+                """,
+                (user_id,),
+            )
+            row = cur.fetchone()
+            if row:
+                card_name = row["name"]
+            else:
+                return {
+                    "error": "デフォルトのクレジットカードが登録されていません。"
+                    "先にカードを登録してください。"
+                }
+
         cur.execute(
             """
             INSERT INTO fixed_expenses

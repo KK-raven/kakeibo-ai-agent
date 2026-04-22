@@ -126,6 +126,7 @@ def _build_system_prompt(user_id: int) -> str:
   - get_payment_methodsやget_credit_cardsの呼び出しは不要（プロンプトに情報あり）
   - ツール実行結果にerrorが含まれる場合は、そのメッセージをユーザーに伝えること
 - 固定費登録時も上記と同様にcard_nameを決定し、確認画面にカード登録名を含めること
+- 固定費登録は必ず確認→承認の2ステップで行うこと。register_fixed_expense実行前に登録内容（名称・金額・カテゴリ・計上日・支払方法・開始日）を提示し、ユーザーの明示的な承認を得てから実行する。承認なしにregister_fixed_expenseを実行することは禁止
 - 未登録の支払方法をユーザーが使おうとした場合: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
 - 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
 - グループ型支払方法（QUICPay・PayPay等）の取引登録フロー（クレジットカードはグループフロー対象外）:
@@ -444,6 +445,13 @@ def _complement_defaults(
         args = _resolve_card_name(user_id, args)
 
     elif tool_name == "register_fixed_expense":
+        # 「カード」「クレカ」等の略称を「クレジットカード」に正規化
+        pm = args.get("payment_method", "")
+        if pm and pm != "クレジットカード":
+            if "カード" in pm or "クレカ" in pm:
+                args["payment_method"] = "クレジットカード"
+                logger.debug(f"固定費 支払方法正規化: {pm} → クレジットカード")
+
         args = _resolve_card_name(user_id, args)
 
     return args
