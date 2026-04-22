@@ -116,7 +116,7 @@ def _build_system_prompt(user_id: int) -> str:
 - 「確認します」「調べます」と言うだけで終わらず、必ずToolを実行して結果を返してください
 - get_transactionsを呼ぶときは、特に指定がなければ今月のyear_monthを指定してください
 - ユーザーが明示的にカテゴリや店名を指定した場合は、そのまま使うこと。勝手に変換しない
-- カテゴリの判定は常識的に行うこと。食べ物・飲み物は「食費」、日用消耗品は「日用品」が基本。「その他」は他のカテゴリに該当しない場合にのみ使う
+- カテゴリの判定は常識的に行うこと。食べ物・飲み物（お菓子・アイス・ジュース等も含む）は「食費」、日用消耗品は「日用品」が基本。「娯楽」は遊興・レジャー・ゲーム等に限定する。「その他」は他のカテゴリに該当しない場合にのみ使う
 - テキストで複数件の支出をまとめて入力された場合は、1件ずつregister_transactionを実行すること。レシートOCRの確認フロー（ステップ1〜4）はテキスト入力には適用しない
 - クレジットカード・カード払い（取引登録・固定費登録 共通）:
   - クレジットカードでの支払いを示唆する内容で、具体的なカード名の指定がない場合は、デフォルトのクレジットカードで支払うものとして扱う。payment_method='クレジットカード'、card_name=デフォルトカードの登録名 を設定すること
@@ -313,6 +313,21 @@ TOOL_FUNCTIONS = {
 }
 
 
+def _ensure_credit_card_payment_method(args: dict) -> dict:
+    """card_nameが指定されている場合、payment_methodをクレジットカードに強制する。
+
+    LLMがcard_nameを設定しつつpayment_methodを口座振替等にする
+    不整合を防ぐ。
+    """
+    if args.get("card_name") and args.get("payment_method") != "クレジットカード":
+        logger.debug(
+            f"payment_method強制変更: {args.get('payment_method')} → "
+            "クレジットカード（card_name指定あり）"
+        )
+        args["payment_method"] = "クレジットカード"
+    return args
+
+
 def _resolve_card_name(user_id: int, args: dict) -> dict:
     """クレジットカード払い時のcard_nameを解決・照合する。
 
@@ -445,6 +460,7 @@ def _complement_defaults(
                 logger.debug(f"グループ支払方法解決: {pm} → {resolved}")
                 args["payment_method"] = resolved
 
+        args = _ensure_credit_card_payment_method(args)
         args = _resolve_card_name(user_id, args)
 
     elif tool_name == "register_fixed_expense":
@@ -455,6 +471,7 @@ def _complement_defaults(
                 args["payment_method"] = "クレジットカード"
                 logger.debug(f"固定費 支払方法正規化: {pm} → クレジットカード")
 
+        args = _ensure_credit_card_payment_method(args)
         args = _resolve_card_name(user_id, args)
 
     return args

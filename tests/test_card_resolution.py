@@ -279,6 +279,46 @@ class TestComplementDefaultsCardResolution(unittest.TestCase):
         self.assertEqual(result["card_name"], "ViewCard")
         self.assertNotIn("error", result)
 
+    # --- card_name指定あり + payment_method不整合 → 強制正規化 ---
+
+    @patch("api.agent.core.crud.get_credit_cards", return_value=[
+        {"name": "ViewCard", "is_default": True},
+    ])
+    def test_fixed_expense_card_name_forces_credit_card(self, _mock_cards):
+        """card_nameがあるのにpayment_methodが口座振替の場合、クレジットカードに強制。"""
+        args = {"payment_method": "口座振替", "card_name": "ViewCard"}
+        result = self._call(1, "register_fixed_expense", args)
+        self.assertEqual(result["payment_method"], "クレジットカード")
+        self.assertEqual(result["card_name"], "ViewCard")
+        self.assertNotIn("error", result)
+
+    @patch("api.agent.core.crud.get_credit_cards", return_value=[
+        {"name": "ViewCard", "is_default": True},
+    ])
+    def test_fixed_expense_unregistered_card_name_error(self, _mock_cards):
+        """card_nameが未登録の場合、payment_method強制後にエラーになる。"""
+        args = {"payment_method": "口座振替", "card_name": "あいーんカード"}
+        result = self._call(1, "register_fixed_expense", args)
+        self.assertEqual(result["payment_method"], "クレジットカード")
+        self.assertIn("error", result)
+
+    @patch("api.agent.core._resolve_group_payment_method", return_value=None)
+    @patch("api.agent.core.crud.get_credit_cards", return_value=[
+        {"name": "ViewCard", "is_default": True},
+    ])
+    def test_transaction_card_name_forces_credit_card(self, _mock_cards, _mock_group):
+        """通常取引でもcard_nameがあればpayment_methodをクレジットカードに強制。"""
+        args = {
+            "type": "expense",
+            "payment_method": "現金",
+            "card_name": "ViewCard",
+            "date": "2026-04-22",
+        }
+        result = self._call(1, "register_transaction", args)
+        self.assertEqual(result["payment_method"], "クレジットカード")
+        self.assertEqual(result["card_name"], "ViewCard")
+        self.assertNotIn("error", result)
+
     # --- 口座振替 → カード解決しない ---
 
     def test_fixed_expense_bank_transfer_skipped(self):
