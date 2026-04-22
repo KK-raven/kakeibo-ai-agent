@@ -879,8 +879,25 @@ def chat(
                 and not tool_args.pop("confirm", False)
             ):
                 preview = {k: v for k, v in tool_args.items()}
+                # LLMが確認画面に全項目を表示できるよう、
+                # 表示すべきフィールドを明示的に列挙する
+                display_fields = []
+                display_fields.append(f"名称: {preview.get('name', '不明')}")
+                display_fields.append(f"月額金額: {preview.get('amount', '不明')}円")
+                display_fields.append(f"カテゴリ: {preview.get('category', '不明')}")
+                display_fields.append(f"毎月の計上日: {preview.get('day_of_month', '不明')}日")
+                pm = preview.get('payment_method', '口座振替')
+                cn = preview.get('card_name')
+                if cn:
+                    display_fields.append(f"支払方法: {pm}（{cn}）")
+                else:
+                    display_fields.append(f"支払方法: {pm}")
+                display_fields.append(f"開始日: {preview.get('start_date', '不明')}")
+                if preview.get('end_date'):
+                    display_fields.append(f"終了日: {preview['end_date']}")
                 result = {
                     "preview": preview,
+                    "display": "\n".join(display_fields),
                     "message": "以下の内容で固定費を登録します。よろしいですか？",
                 }
                 logger.info(f"固定費プレビュー: {preview}")
