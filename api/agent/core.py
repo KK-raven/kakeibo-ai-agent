@@ -73,6 +73,39 @@ def _build_system_prompt(user_id: int) -> str:
     else:
         card_info = "登録済みクレジットカード: なし"
 
+    # 登録済み支払方法グループの読み込み
+    # LLMがカタカナ表記（クイックペイ等）を正しい登録名（QUICPay等）に
+    # マッピングできるよう、グループ情報を注入する。
+    try:
+        pm_result = crud.get_payment_methods(user_id)
+        pm_methods = pm_result.get("payment_methods", [])
+        groups: dict[str, list[dict]] = {}
+        for m in pm_methods:
+            gn = m.get("group_name")
+            if gn:
+                groups.setdefault(gn, []).append(m)
+        if groups:
+            group_lines = []
+            for gn, entries in groups.items():
+                entry_parts = []
+                for e in entries:
+                    suffix = ""
+                    if e.get("is_group_default"):
+                        suffix += "（デフォルト）"
+                    lc = e.get("linked_card")
+                    if lc:
+                        suffix += f"（紐付: {lc}）"
+                    entry_parts.append(f"{e['name']}{suffix}")
+                group_lines.append(f"  - {gn}: {', '.join(entry_parts)}")
+            pm_group_info = (
+                "登録済み支払方法グループ:\n"
+                + "\n".join(group_lines)
+            )
+        else:
+            pm_group_info = ""
+    except Exception:
+        pm_group_info = ""
+
     # キャラ設定の読み込み
     character = get_character(user_id)
 
@@ -97,6 +130,7 @@ def _build_system_prompt(user_id: int) -> str:
 
 今日の日付: {today}
 {card_info}
+{pm_group_info}
 
 基本ルール:
 - 日付の指定がなければ今日の日付（{today}）を使ってください
@@ -139,19 +173,17 @@ def _build_system_prompt(user_id: int) -> str:
   - ユーザーがカード名を指定した場合は、プロンプト上部の登録済みカード一覧から該当する登録名を探し、card_nameに設定すること。該当するものがない場合もユーザーの指定をそのままcard_nameに設定する（バックエンドが検証しエラーを返す）。カード名の指定がない場合はcard_nameを省略してよい（バックエンドがデフォルトカードを補完する）
   - ツール実行結果にerrorが含まれる場合は、そのメッセージをユーザーに伝え、登録を中止すること
 - 固定費登録はregister_fixed_expenseを2回呼ぶこと:
-  1回目: confirmなしで呼ぶ → 返されたpreviewの内容（カード名等が解決済み）をそのままユーザーに提示する
+  1回目: confirmなしで呼ぶ → 返されたdisplay文字列をそのままユーザーに提示する。カード名等はバックエンドが解決済みなので、独自に「デフォルトカード」等と書き換えず、displayの内容をそのまま使うこと
   2回目: ユーザーの承認後にconfirm=trueで同じ内容を再度呼ぶ → 実際に登録される
   previewにerrorが含まれる場合はエラー内容をユーザーに伝え、カードの登録を促すこと
 - 支払方法の情報取得について:
   - クレジットカード: get_payment_methodsやget_credit_cardsの呼び出しは不要（プロンプトに登録済みカード情報あり）
-  - グループ型支払方法（QUICPay・PayPay等）: get_payment_methodsで該当グループのエントリを確認すること
+  - グループ型支払方法（QUICPay・PayPay等）: get_payment_methodsの呼び出しは不要（プロンプトに登録済みグループ情報あり）
   - 未登録の支払方法: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
 - 新しい支払方法を追加する場合は、必ずユーザーに確認してください
 - グループ型支払方法（QUICPay・PayPay等）の取引登録フロー（クレジットカードはグループフロー対象外）:
-  1. ユーザーが「QUICPay」「PayPay」等のグループ名で支払いを言った場合、get_payment_methodsでそのgroup_nameに属するエントリを確認する
-  2. グループ内にis_group_default=Trueのエントリがあればそのnameをpayment_methodとして使用する
-  3. グループ内に複数エントリがあるがis_group_defaultが未設定の場合は、どちらを使うか聞き、デフォルト設定を提案する（set_payment_method_group_defaultで設定）
-  4. QUICPayやPayPay等でlinked_cardが未設定のエントリが1件のみある場合（初回使用）は「QUICPayはどのカードと紐付けますか？カードと紐付けない場合は口座払いとして登録します」と確認し、カード回答後にupdate_payment_method_linked_cardを実行してからトランザクション登録を行う
+  - ユーザーが「クイックペイ」「ペイペイ」等と言った場合、プロンプト上部の登録済み支払方法グループから該当するグループを探し、デフォルトのエントリのnameをpayment_methodに設定してregister_transactionを呼ぶ。get_payment_methodsの呼び出しは不要（プロンプトに情報あり）
+  - デフォルトが未設定の場合のみ、ユーザーにどのエントリを使うか確認する
 - グループデフォルト変更は必ず「○○のデフォルトを△△に変更しますか？」と確認してからset_payment_method_group_defaultを実行すること
 
 ---
