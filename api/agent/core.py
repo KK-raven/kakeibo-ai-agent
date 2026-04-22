@@ -502,7 +502,9 @@ def _complement_defaults(
         # "クレジットカード" は別ルートで処理するため対象外。
         pm = args.get("payment_method", "")
         if pm and pm != "クレジットカード":
-            resolved = _resolve_group_payment_method(user_id, pm)
+            resolved = _resolve_group_payment_method(
+                user_id, pm, card_name=args.get("card_name"),
+            )
             if resolved and resolved != pm:
                 logger.debug(f"グループ支払方法解決: {pm} → {resolved}")
                 args["payment_method"] = resolved
@@ -529,18 +531,26 @@ def _complement_defaults(
     return args
 
 
-def _resolve_group_payment_method(user_id: int, payment_method: str) -> str | None:
-    """支払方法名がグループ名と一致する場合、デフォルトエントリ名に解決する。
+def _resolve_group_payment_method(
+    user_id: int,
+    payment_method: str,
+    card_name: str | None = None,
+) -> str | None:
+    """支払方法名がグループ名と一致する場合、適切なエントリ名に解決する。
 
     例: payment_methods テーブルに
         name="QUICPay（JCB）", group_name="QUICPay", is_group_default=True
     がある場合、"QUICPay" → "QUICPay（JCB）" を返す。
+
+    card_name が指定された場合、そのカードにリンクされたエントリを優先する。
+    例: "PayPay" + card_name="JCB" → "PayPay（JCB）"
 
     一致するグループがない、またはそのまま使えるエントリがある場合は None を返す。
 
     Args:
         user_id: ユーザーID。
         payment_method: LLMが渡した支払方法名。
+        card_name: 指定されたカード名（特定エントリの選択に使用）。
 
     Returns:
         解決後の支払方法名。解決不要なら None。
@@ -554,30 +564,54 @@ def _resolve_group_payment_method(user_id: int, payment_method: str) -> str | No
         if exact:
             return None
 
-        # group_name が一致する is_group_default=True のエントリを探す
-        defaults = [
+        # group_name が一致するエントリを検索
+        group_entries = [
             m for m in methods
             if m.get("group_name") == payment_method
-            and m.get("is_group_default")
         ]
-        if defaults:
-            return defaults[0]["name"]
+
+        if group_entries:
+            # card_name 指定あり → そのカードにリンクされたエントリを探す
+            if card_name:
+                linked = [
+                    m for m in group_entries
+                    if m.get("linked_card")
+                    and (card_name in m["linked_card"]
+                         or m["linked_card"] in card_name)
+                ]
+                if len(linked) == 1:
+                    return linked[0]["name"]
+
+            # card_name なし or リンク一致なし → デフォルトエントリ
+            defaults = [m for m in group_entries if m.get("is_group_default")]
+            if defaults:
+                return defaults[0]["name"]
 
         # OCRや外部入力で「QUICPay（Airペイ）」のように
         # カッコ付きで渡された場合、ベース名を抽出して再試行する。
         # 例: "QUICPay（Airペイ）" → "QUICPay"
         if "（" in payment_method:
             base = payment_method.split("（")[0].strip()
-            base_defaults = [
+            base_entries = [
                 m for m in methods
                 if m.get("group_name") == base
-                and m.get("is_group_default")
             ]
-            if base_defaults:
-                logger.debug(
-                    f"ベース名でグループ解決: {payment_method} → {base_defaults[0]['name']}"
-                )
-                return base_defaults[0]["name"]
+            if base_entries:
+                if card_name:
+                    linked = [
+                        m for m in base_entries
+                        if m.get("linked_card")
+                        and (card_name in m["linked_card"]
+                             or m["linked_card"] in card_name)
+                    ]
+                    if len(linked) == 1:
+                        return linked[0]["name"]
+                defaults = [m for m in base_entries if m.get("is_group_default")]
+                if defaults:
+                    logger.debug(
+                        f"ベース名でグループ解決: {payment_method} → {defaults[0]['name']}"
+                    )
+                    return defaults[0]["name"]
 
     except Exception as e:
         logger.warning(f"グループ支払方法解決エラー: {e}")
