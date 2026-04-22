@@ -155,7 +155,7 @@ PAYMENT_PROBS = {
     "教育":      (0.80, 0.20, 0.00),
 }
 
-PAYMENT_METHODS = ["クレジットカード", "現金", "口座振替"]
+PAYMENT_METHODS = ["クレカ", "現金", "口座振込"]
 
 # personの確率（自分, 妻, 共通）
 # 専用関数で処理するカテゴリ（光熱費・家賃/住居・保険）は
@@ -411,7 +411,7 @@ def generate_utility_transactions(year: int, month: int) -> list[dict]:
             "store_name":     "東京ガス",
             "item":           item,
             "memo":           None,
-            "payment_method": "口座振替",
+            "payment_method": "口座振込",
             "person":         "共通",
         })
 
@@ -427,7 +427,7 @@ def generate_utility_transactions(year: int, month: int) -> list[dict]:
             "store_name":     "水道局",
             "item":           None,
             "memo":           None,
-            "payment_method": "口座振替",
+            "payment_method": "口座振込",
             "person":         "共通",
         })
 
@@ -684,7 +684,7 @@ def generate_ana_transactions() -> list[dict]:
                 "store_name":     "ANA",
                 "item":           None,
                 "memo":           None,
-                "payment_method": "クレジットカード",
+                "payment_method": "クレカ",
                 "person":         "自分",
             })
 
@@ -782,7 +782,7 @@ def generate_fixed_expense_transactions() -> list[dict]:
                 "store_name":     item["name"],
                 "item":           None,
                 "memo":           f"[固定] {item['name']}",
-                "payment_method": "クレジットカード" if item["category"] == "サブスク" else "口座振替",
+                "payment_method": "クレカ" if item["category"] == "サブスク" else "口座振込",
                 "person":         "共通" if item["category"] == "家賃/住居" else "自分",
             })
 
@@ -852,7 +852,7 @@ def generate_income_transactions() -> list[dict]:
             "store_name":     None,
             "item":           None,
             "memo":           None,
-            "payment_method": "口座振替",
+            "payment_method": "口座振込",
             "person":         "自分",
         })
 
@@ -866,7 +866,7 @@ def generate_income_transactions() -> list[dict]:
                 "store_name":     None,
                 "item":           None,
                 "memo":           None,
-                "payment_method": "口座振替",
+                "payment_method": "口座振込",
                 "person":         "自分",
             })
 
@@ -889,7 +889,7 @@ def generate_income_transactions() -> list[dict]:
             "store_name":     None,
             "item":           None,
             "memo":           None,
-            "payment_method": "口座振替",
+            "payment_method": "口座振込",
             "person":         "自分",
         })
 
@@ -903,7 +903,7 @@ def generate_fixed_expenses() -> list[dict]:
         固定費データの辞書リスト（name, amount, category, day_of_month）。
     """
     return [
-        {"name": "家賃",         "amount": 80000, "category": "家賃・住居", "day_of_month": 27},
+        {"name": "家賃",         "amount": 80000, "category": "家賃/住居", "day_of_month": 27},
         {"name": "Netflix",      "amount": 1490,  "category": "サブスク",  "day_of_month": 15},
         {"name": "Spotify",      "amount": 980,   "category": "サブスク",  "day_of_month": 10},
         {"name": "Amazon Prime", "amount": 600,   "category": "サブスク",  "day_of_month": 1},

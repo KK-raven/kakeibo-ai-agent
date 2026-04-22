@@ -19,7 +19,6 @@ Agent のコアパイプライン
 """
 
 import json
-import os
 from datetime import date
 from openai import OpenAI
 
@@ -35,10 +34,7 @@ logger = get_logger(__name__)
 
 client = OpenAI()
 
-# 対話用LLMのデフォルトモデル。
-# 環境変数 LLM_CHAT_MODEL で上書き可能。
-# chat() の model 引数でさらに実行時上書きが可能。
-DEFAULT_MODEL = os.getenv("LLM_CHAT_MODEL", "gpt-4o-mini")
+MODEL = "gpt-4o-mini"
 
 MAX_TOOL_CALLS = 5
 
@@ -66,14 +62,6 @@ def _build_system_prompt(user_id: int) -> str:
     # キャラ設定の読み込み
     character = get_character(user_id)
 
-    # デフォルトクレジットカード名の取得（固定費登録の確認表示用）
-    try:
-        cards = crud.get_credit_cards(user_id)
-        default_card = next((c for c in cards if c["is_default"]), None)
-        default_card_name = default_card["name"] if default_card else None
-    except Exception:
-        default_card_name = None
-
     if character:
         name = character.get("character_name", "アシスタント")
         personality = character.get("character_personality", "")
@@ -96,7 +84,6 @@ def _build_system_prompt(user_id: int) -> str:
 今日の日付: {today}
 
 基本ルール:
-- クレジットカード払いを確認・登録メッセージに表示するときは必ず「クレジットカード（{default_card_name if default_card_name else "デフォルトカード"}）」の形式で書くこと。カード名を括弧なしで「クレジットカード」とだけ書いてはならない
 - 日付の指定がなければ今日の日付（{today}）を使ってください
 - 金額は正の整数で扱います
 - 支出カテゴリ: 食費/光熱費/交通費/日用品/交際費/サブスク/医療費/衣服/娯楽/教育/家賃・住居/保険/その他
@@ -122,11 +109,6 @@ def _build_system_prompt(user_id: int) -> str:
   - ユーザーが「カード払い」「クレカで払った」等とだけ入力し金額・品目の指定がない場合は、「何を登録しますか？」と聞くこと
   - ユーザーがカード名を指定したが登録済みカードと完全一致しない場合は、候補を提示して確認する。デフォルトカードの名前に含まれる場合はデフォルトカードを使う
   - クレジットカードが1枚も登録されていない状態でカード払いを指示された場合は、「カードが未登録です。カード名を教えてください（例: ドコモカード（JCB）、楽天カード（VISA）等）」と案内し、登録を促す
-- クレジットカード・カード払いの固定費登録（register_fixed_expense）:
-  - 「カード」「クレカ」等の指定はすべて payment_method='クレジットカード' として扱う
-  - カード名を指定した場合: 必ずget_credit_cardsで登録済み一覧を取得し照合する。一致すればそのcard_nameを設定してregister_fixed_expenseを実行する。一致しなければ登録を案内する
-  - カード名を指定しない場合: card_nameを省略してregister_fixed_expenseを実行する（システムがデフォルトカードを自動補完する）
-  - 確認メッセージでの支払方法表示: カード名が不明な場合でも必ず「クレジットカード（{default_card_name if default_card_name else "デフォルトカード"}）」と書くこと。「クレジットカード」のみは禁止
 - 未登録の支払方法をユーザーが使おうとした場合: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
 - 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
 - グループ型支払方法（QUICPay・PayPay等）の取引登録フロー（クレジットカードはグループフロー対象外）:
@@ -333,22 +315,15 @@ def _complement_defaults(
     Returns:
         デフォルト値が補完された引数の辞書。
     """
-    if tool_name in ("register_transaction", "register_fixed_expense"):
-        if tool_name == "register_transaction":
-            # 収入・支出共通で日付を補完する
-            if "date" not in args or not args["date"]:
-                args["date"] = date.today().isoformat()
-                logger.debug(f"日付補完: {args['date']}")
+    if tool_name == "register_transaction":
+        # 収入・支出共通で日付を補完する
+        if "date" not in args or not args["date"]:
+            args["date"] = date.today().isoformat()
+            logger.debug(f"日付補完: {args['date']}")
 
-            # 収入には支払方法・カード情報は不要なため補完しない
-            if args.get("type") == "income":
-                return args
-
-        # card_nameが設定されている場合は必ずクレジットカード払いとして扱う。
-        # LLMがpayment_methodを誤って口座振替等で渡した場合の補正。
-        if args.get("card_name") and args.get("payment_method") != "クレジットカード":
-            args["payment_method"] = "クレジットカード"
-            logger.debug(f"card_nameあり: payment_methodをクレジットカードに補正")
+        # 収入には支払方法・カード情報は不要なため補完しない
+        if args.get("type") == "income":
+            return args
 
         if "payment_method" not in args or not args["payment_method"]:
             default_pm = crud.get_setting(user_id, "default_payment_method")
@@ -358,7 +333,6 @@ def _complement_defaults(
         # グループ名のまま渡された場合（例: "QUICPay"）、
         # is_group_default=True のエントリ名に解決する。
         # "クレジットカード" は別ルートで処理するため対象外。
-        # register_fixed_expenseはグループ型支払方法を使わないが、統一処理として通す。
         pm = args.get("payment_method", "")
         if pm and pm != "クレジットカード":
             resolved = _resolve_group_payment_method(user_id, pm)
@@ -366,37 +340,18 @@ def _complement_defaults(
                 logger.debug(f"グループ支払方法解決: {pm} → {resolved}")
                 args["payment_method"] = resolved
 
-        cards = crud.get_credit_cards(user_id)
-
-        # card_nameが汎用語（"クレジットカード"/"カード"/"クレカ"等）の場合は未指定扱いにする
-        _GENERIC_CARD_NAMES = {"クレジットカード", "カード", "クレカ", "credit card", "card"}
-        if args.get("card_name", "").lower() in {s.lower() for s in _GENERIC_CARD_NAMES}:
-            logger.debug(f"汎用カード名を除去: {args['card_name']}")
-            args.pop("card_name", None)
-
-        if args.get("payment_method") == "クレジットカード" and not args.get("card_name"):
-            # カード名未指定 → デフォルトカードを補完
-            default_card = next((c for c in cards if c["is_default"]), None)
+        if (
+            args.get("payment_method") == "クレジットカード"
+            and not args.get("card_name")
+        ):
+            cards = crud.get_credit_cards(user_id)
+            default_card = next(
+                (c for c in cards if c["is_default"]),
+                None,
+            )
             if default_card:
                 args["card_name"] = default_card["name"]
                 logger.debug(f"カード補完: {args['card_name']}")
-        elif args.get("card_name"):
-            # カード名指定あり → 登録済みカードと照合して検証
-            specified = args["card_name"]
-            card_names = [c["name"] for c in cards]
-            if specified not in card_names:
-                # 部分一致を試みる
-                matches = [n for n in card_names if specified in n or n in specified]
-                if matches:
-                    logger.debug(f"カード名部分一致補完: {specified} → {matches[0]}")
-                    args["card_name"] = matches[0]
-                else:
-                    registered = "、".join(card_names) if card_names else "なし"
-                    raise ValueError(
-                        f"カード「{specified}」は登録されていません。"
-                        f"先にregister_credit_cardで登録してください。"
-                        f"（登録済み: {registered}）"
-                    )
 
     return args
 
@@ -580,7 +535,6 @@ def chat(
     user_id: int,
     user_message: str,
     conversation_history: list[dict] | None = None,
-    model: str | None = None,
 ) -> dict:
     """ユーザーの入力を受け取り、Agentの応答を返す。
 
@@ -592,21 +546,14 @@ def chat(
         user_message: ユーザーの自然言語入力。
         conversation_history: これまでの会話履歴（role/content の辞書リスト）。
                               None の場合は新規会話として扱う。
-        model: 使用するLLMモデル名。None の場合は DEFAULT_MODEL
-               （環境変数 LLM_CHAT_MODEL またはデフォルト値）を使う。
-               評価スクリプトからモデル比較時に明示指定する用途。
 
     Returns:
         {
             "response": "LLMの応答テキスト",
             "tool_results": [...],
-            "messages_to_save": [...],
         }
     """
     logger.info(f"ユーザー入力: {user_message}")
-
-    effective_model = model or DEFAULT_MODEL
-    logger.debug(f"使用モデル: {effective_model}")
 
     messages = [{"role": "system", "content": _build_system_prompt(user_id)}]
 
@@ -625,7 +572,7 @@ def chat(
 
         try:
             response = client.chat.completions.create(
-                model=effective_model,
+                model=MODEL,
                 messages=messages,
                 tools=TOOLS,
                 tool_choice="auto",
@@ -720,7 +667,7 @@ def chat(
                 })
                 try:
                     block_response = client.chat.completions.create(
-                        model=effective_model,
+                        model=MODEL,
                         messages=messages,
                         tools=TOOLS,
                         tool_choice="auto",
@@ -768,7 +715,7 @@ def chat(
                         # 検索結果を踏まえた最終応答を生成
                         try:
                             final_resp = client.chat.completions.create(
-                                model=effective_model,
+                                model=MODEL,
                                 messages=messages,
                             )
                             block_content = final_resp.choices[0].message.content or ""
@@ -780,20 +727,7 @@ def chat(
                     "messages_to_save": messages_to_save,
                 }
 
-            try:
-                tool_args = _complement_defaults(user_id, tool_name, tool_args)
-            except ValueError as e:
-                # カード未登録など、引数バリデーションエラー
-                error_msg = str(e)
-                logger.warning(f"引数バリデーションエラー: {tool_name}: {error_msg}")
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": json.dumps({"error": error_msg}, ensure_ascii=False),
-                })
-                messages_to_save.append(messages[-1])
-                tool_results.append({"tool": tool_name, "args": tool_args, "error": error_msg})
-                continue
+            tool_args = _complement_defaults(user_id, tool_name, tool_args)
 
             try:
                 # crud関数にはuser_idを第一引数として渡す。
@@ -858,7 +792,7 @@ def chat(
 
     try:
         response = client.chat.completions.create(
-            model=effective_model,
+            model=MODEL,
             messages=messages,
         )
         final_content = response.choices[0].message.content

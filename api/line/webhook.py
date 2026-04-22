@@ -43,10 +43,6 @@ from api.db import crud
 from api.db.connection import get_or_create_user
 from api.utils.logger import get_logger
 
-
-# Vision用LLMのモデル名。環境変数 LLM_VISION_MODEL で上書き可能。
-VISION_MODEL = os.getenv("LLM_VISION_MODEL", "gpt-5-nano")
-
 logger = get_logger(__name__)
 
 # --- LINE SDK 初期化 ---
@@ -113,17 +109,10 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
     """
     image_b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
 
-    # 画像フォーマットの判定（PNG/JPEGどちらにも対応）
-    if image_bytes[:4] == b'\x89PNG':
-        mime_type = "image/png"
-    else:
-        mime_type = "image/jpeg"
-
     try:
         response = openai_client.chat.completions.create(
-            model=VISION_MODEL,
-            max_completion_tokens=1000,
-            response_format={"type": "json_object"},
+            model="gpt-4o",
+            max_tokens=1000,
             messages=[
                 {
                     "role": "user",
@@ -131,7 +120,7 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": f"data:{mime_type};base64,{image_b64}",
+                                "url": f"data:image/jpeg;base64,{image_b64}",
                             },
                         },
                         {
@@ -143,14 +132,13 @@ def extract_receipt_info(image_bytes: bytes) -> dict:
             ],
         )
         raw = response.choices[0].message.content or ""
-        logger.info(f"Vision APIレスポンス: {repr(raw[:300])}")
         return json.loads(raw)
 
     except json.JSONDecodeError as e:
         logger.error(f"Vision APIのJSON解析失敗: {e} / raw={raw!r}")
         return {}
     except Exception as e:
-        logger.error(f"Vision API呼び出し失敗: {type(e).__name__}: {e}")
+        logger.error(f"Vision API呼び出し失敗: {e}")
         return {}
 
 

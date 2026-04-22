@@ -305,14 +305,6 @@ TOOLS = [
                         "type": "string",
                         "description": "終了日。継続中ならなし。",
                     },
-                    "card_name": {
-                        "type": "string",
-                        "description": (
-                            "クレジットカード払いの場合のカード名。"
-                            "ユーザーが具体的なカード名を言った場合のみ設定し、"
-                            "それ以外は省略する（システムがデフォルトカードを自動補完する）。"
-                        ),
-                    },
                 },
                 "required": ["name", "amount", "category", "day_of_month", "start_date"],
             },

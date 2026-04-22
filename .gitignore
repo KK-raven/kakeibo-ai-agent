@@ -21,7 +21,4 @@ mlflow/data/
 .idea/
 
 # Jupyter（チェックポイントのみ無視、notebookは管理する）
-.ipynb_checkpoints/
-
-# ログ
-logs/
+.ipynb_checkpoints/logs/

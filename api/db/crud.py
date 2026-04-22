@@ -380,7 +380,6 @@ def register_fixed_expense(
     start_date: str,
     payment_method: str = "口座振替",
     end_date: str | None = None,
-    card_name: str | None = None,
 ) -> dict:
     """固定出金を1件登録する。
 
@@ -400,7 +399,6 @@ def register_fixed_expense(
         start_date: 開始日（"YYYY-MM-DD"）。
         payment_method: 支払方法（デフォルト "口座振替"）。
         end_date: 終了日（None なら継続中）。
-        card_name: クレカ払い時のカード名。None なら補完済みのデフォルトカードが入る。
 
     Returns:
         登録されたレコードの辞書。
@@ -412,13 +410,13 @@ def register_fixed_expense(
             """
             INSERT INTO fixed_expenses
                 (user_id, name, amount, category, day_of_month,
-                 payment_method, start_date, end_date, card_name)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 payment_method, start_date, end_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
             (
                 user_id, name, amount, category, day_of_month,
-                payment_method, start_date, end_date, card_name,
+                payment_method, start_date, end_date,
             ),
         )
         row = cur.fetchone()
@@ -426,7 +424,7 @@ def register_fixed_expense(
 
         logger.info(
             f"固定出金登録: {name} {amount}円 {category}"
-            f" 毎月{day_of_month}日 method={payment_method} card={card_name}"
+            f" 毎月{day_of_month}日 method={payment_method}"
         )
         return dict(row)
 
@@ -570,13 +568,13 @@ def apply_fixed_expenses(
                 """
                 INSERT INTO transactions
                     (user_id, date, type, amount, category, item, memo,
-                     payment_method, card_name, person)
-                VALUES (%s, %s, 'expense', %s, %s, %s, %s, %s, %s, '自分')
+                     payment_method, person)
+                VALUES (%s, %s, 'expense', %s, %s, %s, %s, %s, '自分')
                 RETURNING *
                 """,
                 (
                     user_id, tx_date_str, fe["amount"], fe["category"],
-                    fe["name"], memo, fe["payment_method"], fe.get("card_name"),
+                    fe["name"], memo, fe["payment_method"],
                 ),
             )
             row = cur.fetchone()
