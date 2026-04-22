@@ -103,13 +103,14 @@ def _build_system_prompt(user_id: int) -> str:
 - 金額は正の整数で扱います
 - 支出カテゴリ: 食費/光熱費/交通費/日用品/交際費/サブスク/医療費/衣服/娯楽/教育/家賃・住居/保険/その他
 - 収入カテゴリ: 給与/賞与/副業・フリーランス/金融資産/ギャンブル/臨時収入/その他
-- 支払方法が明示されなければ省略してください（システムがデフォルト値を適用します）。ただしクレジットカード払いの場合は上記ルールに従い card_name を必ず指定すること
-- 取引の削除・更新は必ず2ステップで行うこと。①対象候補を特定する（get_transactionsで検索するか、直前のregister_transactionの結果を使う）。②対象の取引内容（日付・金額・店名等）を具体的に示してユーザーに最終確認を求め、「はい」「削除して」「OK」等の明示的な肯定応答が来て初めてToolを実行する。ユーザーが対象を指定した直後（「ファミマのやつ」「それ消して」等）であっても、必ず対象の取引内容を示して最終確認すること。承認なしに削除・更新のToolを実行することは絶対に禁止
-- 取引登録後の確認メッセージは、register_transactionのToolの実行結果の値を必ず使うこと。特に店名(store_name)・品目(item)・支払方法(payment_method)・カード名(card_name)はToolのresultに含まれる実際の登録値を表示すること。ユーザーの入力テキストから推測した値を使わないこと
+- 支払方法が明示されなければ省略してください（システムがデフォルト値を適用します）。クレジットカード払いの場合のみ payment_method='クレジットカード' を設定すること（card_name はバックエンドが補完するため、わかる場合のみ設定すればよい）
+- 削除・更新の確認フロー（取引・固定費 共通）:
+  対象の内容（日付・金額・店名等）を具体的に示してユーザーに最終確認を求め、明示的な肯定応答が来て初めてToolを実行する。承認なしに削除・更新のToolを実行することは絶対に禁止。
+  対象の特定方法: get_transactionsで検索するか、直前のregister_transactionの結果を使う。会話履歴に結果がある場合は新たにget_transactionsを呼ばず、履歴の内容を提示して確認すること。
+  get_transactionsの検索結果に複数件ヒットした場合は、全件を表示してどれを対象とするかユーザーに選ばせること
 - 削除・更新の対象は、直前のget_transactionsで取得した結果、または直前のregister_transactionで登録した取引からのみ選ぶこと。過去の会話で取得した取引IDを再利用してはならない
-- get_transactionsの検索結果に複数件ヒットした場合は、全件を表示してどれを対象とするかユーザーに選ばせること。特に短い検索語（1〜2文字）では意図しない部分一致が起きやすいため注意
+- 取引登録後の確認メッセージは、register_transactionのToolの実行結果の値を必ず使うこと。特に店名(store_name)・品目(item)・支払方法(payment_method)・カード名(card_name)はToolのresultに含まれる実際の登録値を表示すること。ユーザーの入力テキストから推測した値を使わないこと
 - 品目名だけでカテゴリが曖昧な場合（「水」「チョコ」等の短い語）は、ユーザーにカテゴリを確認すること。店名等の文脈から明らかな場合は確認不要
-- 新しい支払方法を追加する場合は、必ずユーザーに確認してください
 - 回答は簡潔に、親しみやすい口調でお願いします
 - ファイル出力時は必ず専用の集計ツールで数値を取得してからcontentを生成すること。数値の計算は絶対に自分で行わないこと
 - ファイル出力後は保存完了とファイル名のみを伝えること。リンクやURLは生成しないこと
@@ -118,26 +119,25 @@ def _build_system_prompt(user_id: int) -> str:
 - ユーザーが明示的にカテゴリや店名を指定した場合は、そのまま使うこと。勝手に変換しない
 - カテゴリの判定は常識的に行うこと。食べ物・飲み物（お菓子・アイス・ジュース等も含む）は「食費」、日用消耗品は「日用品」が基本。「娯楽」は遊興・レジャー・ゲーム等に限定する。「その他」は他のカテゴリに該当しない場合にのみ使う
 - テキストで複数件の支出をまとめて入力された場合は、1件ずつregister_transactionを実行すること。レシートOCRの確認フロー（ステップ1〜4）はテキスト入力には適用しない
-- クレジットカード・カード払い（取引登録・固定費登録 共通）:
-  - クレジットカードでの支払いを示唆する内容で、具体的なカード名の指定がない場合は、デフォルトのクレジットカードで支払うものとして扱う。payment_method='クレジットカード'、card_name=デフォルトカードの登録名 を設定すること
-  - 具体的なカード名が指定された場合は、登録済みカードから該当するものの登録名をcard_nameに設定する。特定できない場合のみ確認する
-  - カード未登録の場合は登録を促す
-  - 例: 「カードで払った」→ デフォルトカード、「○○カードで払った」→ 登録済みカードから該当する登録名
-  - get_payment_methodsやget_credit_cardsの呼び出しは不要（プロンプトに情報あり）
+- クレジットカード払い（取引登録・固定費登録 共通）:
+  - カード払いを示唆する場合は payment_method='クレジットカード' を設定する。カード名の解決・デフォルトカード補完はバックエンドが行うため、get_credit_cardsの呼び出しは不要
+  - 具体的なカード名が指定された場合はcard_nameに設定する。指定がなければcard_nameは省略してよい（バックエンドがデフォルトカードを補完する）
   - ツール実行結果にerrorが含まれる場合は、そのメッセージをユーザーに伝えること
 - 固定費登録はregister_fixed_expenseを2回呼ぶこと:
   1回目: confirmなしで呼ぶ → 返されたpreviewの内容（カード名等が解決済み）をそのままユーザーに提示する
   2回目: ユーザーの承認後にconfirm=trueで同じ内容を再度呼ぶ → 実際に登録される
   previewにerrorが含まれる場合はエラー内容をユーザーに伝え、カードの登録を促すこと
-- 固定費の削除（deactivate_fixed_expense）は、実行前に必ず対象の固定費の内容を提示し、ユーザーの明示的な承認を得てから実行すること
-- 未登録の支払方法をユーザーが使おうとした場合: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
-- 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
+- 支払方法の情報取得について:
+  - クレジットカード: get_payment_methodsやget_credit_cardsの呼び出しは不要（プロンプトに登録済みカード情報あり）
+  - グループ型支払方法（QUICPay・PayPay等）: get_payment_methodsで該当グループのエントリを確認すること
+  - 未登録の支払方法: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
+- 新しい支払方法を追加する場合は、必ずユーザーに確認してください
 - グループ型支払方法（QUICPay・PayPay等）の取引登録フロー（クレジットカードはグループフロー対象外）:
   1. ユーザーが「QUICPay」「PayPay」等のグループ名で支払いを言った場合、get_payment_methodsでそのgroup_nameに属するエントリを確認する
-  2. グループ内にis_group_default=TrueのエントリがあればそのnameをPayment_methodとして使用する
+  2. グループ内にis_group_default=Trueのエントリがあればそのnameをpayment_methodとして使用する
   3. グループ内に複数エントリがあるがis_group_defaultが未設定の場合は、どちらを使うか聞き、デフォルト設定を提案する（set_payment_method_group_defaultで設定）
   4. QUICPayやPayPay等でlinked_cardが未設定のエントリが1件のみある場合（初回使用）は「QUICPayはどのカードと紐付けますか？カードと紐付けない場合は口座払いとして登録します」と確認し、カード回答後にupdate_payment_method_linked_cardを実行してからトランザクション登録を行う
-- グループデフォルト変更は必ず「○○のデフォルトを△△に変更しますか？」と2ステップ確認してからset_payment_method_group_defaultを実行すること
+- グループデフォルト変更は必ず「○○のデフォルトを△△に変更しますか？」と確認してからset_payment_method_group_defaultを実行すること
 
 ---
 
@@ -597,8 +597,7 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
     以下の条件を全て満たす場合に True を返す:
     1. 会話履歴内に get_transactions または register_transaction
        の実行結果がある
-    2. その後に user メッセージが2つ以上
-       （削除・更新の指示 + 確認応答の最低2ステップを強制）
+    2. その後に user メッセージが1つ以上ある
     3. その後に他の更新系ツールが実行されていない
 
     このガードは「検索も登録もしていない」または
@@ -648,11 +647,12 @@ def _has_confirmable_result(messages: list[dict]) -> bool:
                 if not name.startswith(("get_", "check_")):
                     return False
 
-    # どちらの起点（get_transactions / register_transaction）でも
-    # 「削除・更新の指示」+「確認への承認」の2メッセージが必要。
-    # get_transactions 後に「これ消して」(1通) だけでは
-    # LLMが確認なしに削除できてしまうため >= 2 で統一する。
-    return user_msg_count >= 2
+    # 起点ツール実行後にユーザーメッセージが1つ以上あればOK。
+    # get_transactions 後:  LLMが内容を提示→ユーザーが「はい」(1通)
+    # register_transaction 後: ユーザーが「やっぱ消して」(1通)
+    # 同一ターンでの即時削除は guard_messages が現在のassistantメッセージを
+    # 除外しているため防がれる。
+    return user_msg_count >= 1
 
 
 def chat(
@@ -850,6 +850,19 @@ def chat(
                     "tool_results": tool_results,
                     "messages_to_save": messages_to_save,
                 }
+
+            # ユーザーメッセージにカード系キーワードがあるのに
+            # LLMが payment_method を正しく設定しなかった場合の補正
+            if (
+                tool_name == "register_fixed_expense"
+                and tool_args.get("payment_method") != "クレジットカード"
+                and any(kw in user_message for kw in ("カード", "クレカ", "クレジット"))
+            ):
+                logger.debug(
+                    f"ユーザーメッセージのカードキーワード検出: "
+                    f"payment_method={tool_args.get('payment_method')} → クレジットカード"
+                )
+                tool_args["payment_method"] = "クレジットカード"
 
             tool_args = _complement_defaults(user_id, tool_name, tool_args)
 
