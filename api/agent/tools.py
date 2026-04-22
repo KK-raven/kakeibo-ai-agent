@@ -299,7 +299,7 @@ TOOLS = [
                     },
                     "payment_method": {
                         "type": "string",
-                        "description": "支払方法。デフォルトは「口座振替」。",
+                        "description": "支払方法。カード払いの場合は「クレジットカード」を指定。省略時は口座振替。",
                     },
                     "card_name": {
                         "type": "string",

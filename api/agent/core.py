@@ -149,7 +149,7 @@ def _build_system_prompt(user_id: int) -> str:
     品目: ○○
     金額: ○○円
     カテゴリ: ○○
-    支払方法: ○○（カード名がある場合は「○○（カード名）」）
+    支払方法: Toolの実行結果のpayment_method値をそのまま表示（card_nameがあれば「payment_method（card_name）」）
 - 削除・更新の対象は、直前のget_transactionsで取得した結果、または直前のregister_transactionで登録した取引からのみ選ぶこと。過去の会話で取得した取引IDを再利用してはならない
 - 通常の取引登録（register_transaction）は事前確認なしで即座に実行すること。登録後、Toolの実行結果の値を以下の定型フォーマットで表示する。ユーザーの入力テキストから推測した値を使わないこと:
     登録しました！
@@ -158,7 +158,7 @@ def _build_system_prompt(user_id: int) -> str:
     品目: ○○
     金額: ○○円
     カテゴリ: ○○
-    支払方法: ○○（カード名がある場合は「○○（カード名）」）
+    支払方法: Toolの実行結果のpayment_method値をそのまま表示（card_nameがあれば「payment_method（card_name）」）
 - 品目名だけでカテゴリが曖昧な場合（「水」「チョコ」等の短い語）は、ユーザーにカテゴリを確認すること。店名等の文脈から明らかな場合は確認不要
 - 回答は簡潔に、親しみやすい口調でお願いします
 - ファイル出力時は必ず専用の集計ツールで数値を取得してからcontentを生成すること。数値の計算は絶対に自分で行わないこと
@@ -939,6 +939,29 @@ def chat(
                     "error": error_msg,
                 })
                 continue
+
+            # register_fixed_expense の confirm=true 時:
+            # 直前のプレビュー結果から解決済みの値を引き継ぐ。
+            # LLMが payment_method や card_name を省略/変更しても、
+            # プレビューで確定した値が優先される。
+            if (
+                tool_name == "register_fixed_expense"
+                and tool_args.get("confirm")
+            ):
+                for msg in reversed(messages):
+                    if msg.get("role") == "tool":
+                        try:
+                            prev = json.loads(msg["content"])
+                            if "preview" in prev:
+                                for k, v in prev["preview"].items():
+                                    if k not in tool_args or not tool_args[k]:
+                                        tool_args[k] = v
+                                logger.debug(
+                                    f"固定費confirm: preview値をマージ"
+                                )
+                                break
+                        except (json.JSONDecodeError, KeyError):
+                            continue
 
             # register_fixed_expense のプレビューモード:
             # confirm=true でない場合はDBに書き込まず、
