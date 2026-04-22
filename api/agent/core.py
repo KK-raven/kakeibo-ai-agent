@@ -506,6 +506,11 @@ def _complement_defaults(
             if resolved and resolved != pm:
                 logger.debug(f"グループ支払方法解決: {pm} → {resolved}")
                 args["payment_method"] = resolved
+                # グループ解決済みの場合、card_name は不要
+                # （カード情報は支払方法名に含まれる）。
+                # card_name が残ると _ensure_credit_card_payment_method が
+                # 誤って payment_method を「クレジットカード」に上書きする。
+                args.pop("card_name", None)
 
         args = _ensure_credit_card_payment_method(args)
         args = _resolve_card_name(user_id, args)
