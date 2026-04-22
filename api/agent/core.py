@@ -149,7 +149,7 @@ def _build_system_prompt(user_id: int) -> str:
     品目: ○○
     金額: ○○円
     カテゴリ: ○○
-    支払方法: Toolの実行結果のdisplay_payment_methodの値をそのまま表示
+    支払方法: Toolの実行結果のpayment_method値をそのまま表示（card_nameがあれば「payment_method（card_name）」）
 - 削除・更新の対象は、直前のget_transactionsで取得した結果、または直前のregister_transactionで登録した取引からのみ選ぶこと。過去の会話で取得した取引IDを再利用してはならない
 - 通常の取引登録（register_transaction）は事前確認なしで即座に実行すること。登録後、Toolの実行結果の値を以下の定型フォーマットで表示する。ユーザーの入力テキストから推測した値を使わないこと:
     登録しました！
@@ -158,7 +158,7 @@ def _build_system_prompt(user_id: int) -> str:
     品目: ○○
     金額: ○○円
     カテゴリ: ○○
-    支払方法: Toolの実行結果のdisplay_payment_methodの値をそのまま表示
+    支払方法: Toolの実行結果のpayment_method値をそのまま表示（card_nameがあれば「payment_method（card_name）」）
 - 品目名だけでカテゴリが曖昧な場合（「水」「チョコ」等の短い語）は、ユーザーにカテゴリを確認すること。店名等の文脈から明らかな場合は確認不要
 - 回答は簡潔に、親しみやすい口調でお願いします
 - ファイル出力時は必ず専用の集計ツールで数値を取得してからcontentを生成すること。数値の計算は絶対に自分で行わないこと
@@ -1073,26 +1073,6 @@ def chat(
                 continue
 
             logger.info(f"Tool結果: {tool_name} → {result}")
-
-            # register_transaction / get_transactions の結果に
-            # 表示用支払方法フィールドを注入。
-            # LLMが括弧付き名称（QUICPay（JCB）等）を省略表示するのを防ぐ。
-            if tool_name == "register_transaction" and isinstance(result, dict) and "error" not in result:
-                pm = result.get("payment_method", "")
-                cn = result.get("card_name")
-                if cn:
-                    result["display_payment_method"] = f"{pm}（{cn}）"
-                else:
-                    result["display_payment_method"] = pm
-            elif tool_name == "get_transactions" and isinstance(result, list):
-                for row in result:
-                    if isinstance(row, dict):
-                        pm = row.get("payment_method", "")
-                        cn = row.get("card_name")
-                        if cn:
-                            row["display_payment_method"] = f"{pm}（{cn}）"
-                        else:
-                            row["display_payment_method"] = pm
 
             tool_results.append({
                 "tool": tool_name,
