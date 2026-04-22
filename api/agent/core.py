@@ -103,12 +103,14 @@ def _build_system_prompt(user_id: int) -> str:
 - ユーザーが明示的にカテゴリや店名を指定した場合は、そのまま使うこと。勝手に変換しない
 - カテゴリの判定は常識的に行うこと。食べ物・飲み物は「食費」、日用消耗品は「日用品」が基本。「その他」は他のカテゴリに該当しない場合にのみ使う
 - テキストで複数件の支出をまとめて入力された場合は、1件ずつregister_transactionを実行すること。レシートOCRの確認フロー（ステップ1〜4）はテキスト入力には適用しない
-- クレジットカード・カード払いの取引登録:
-  - 「カード」「クレカ」等の指定はすべて payment_method='クレジットカード' として扱う。card_nameはユーザーが具体的なカード名を言った場合のみ設定し、それ以外は省略してregister_transactionを実行する（システムがデフォルトカードを自動補完する）
+- クレジットカード・カード払い（取引登録・固定費登録 共通）:
+  - 「カード」「クレカ」等の指定はすべて payment_method='クレジットカード' として扱う。card_nameはユーザーが具体的なカード名を言った場合のみ設定し、それ以外は省略する（システムがデフォルトカードを自動補完し、カード名の照合も行う）
   - カード払いについてget_payment_methodsを呼ぶことは禁止。get_credit_cardsも呼ばない
   - ユーザーが「カード払い」「クレカで払った」等とだけ入力し金額・品目の指定がない場合は、「何を登録しますか？」と聞くこと
-  - ユーザーがカード名を指定したが登録済みカードと完全一致しない場合は、候補を提示して確認する。デフォルトカードの名前に含まれる場合はデフォルトカードを使う
-  - クレジットカードが1枚も登録されていない状態でカード払いを指示された場合は、「カードが未登録です。カード名を教えてください（例: ドコモカード（JCB）、楽天カード（VISA）等）」と案内し、登録を促す
+  - ツール実行結果にerrorが含まれる場合は、そのメッセージをユーザーに伝えること（カード未登録・カード名不一致等）
+- 固定費のクレジットカード払い:
+  - 「カード」「クレカ」「カード払い」等でクレジットカード払いを示唆された場合、payment_method='クレジットカード' とし、card_nameはユーザーが具体的なカード名を言った場合のみ設定する
+  - register_fixed_expense実行前に「名称、月額金額、カテゴリ、計上日、支払方法（カード名を含む）、開始日」を確認画面で提示すること
 - 未登録の支払方法をユーザーが使おうとした場合: get_payment_methodsで一覧を取得し、ユーザーの指定に近いものがあれば「○○のことですか？」と確認する。近いものがなければ「登録されていません。新しく追加しますか？」と聞いてからadd_payment_methodを実行する
 - 会話履歴にget_transactionsまたはregister_transactionの結果が含まれる状態で「さっきの取引消して」「キャンセル」「削除して」等と言われた場合は、新たにget_transactionsを呼ばず、会話履歴にある取引内容を提示した上で「この取引を削除しますか？」と確認すること
 - グループ型支払方法（QUICPay・PayPay等）の取引登録フロー（クレジットカードはグループフロー対象外）:
@@ -292,6 +294,87 @@ TOOL_FUNCTIONS = {
 }
 
 
+def _resolve_card_name(user_id: int, args: dict) -> dict:
+    """クレジットカード払い時のcard_nameを解決・照合する。
+
+    register_transaction / register_fixed_expense 共通で使用する。
+
+    処理:
+    1. card_name 未指定 → デフォルトカードで補完
+    2. card_name 指定あり → 登録済みカードと照合
+       a. 完全一致 → そのまま使用
+       b. 部分一致（片方が片方を含む）→ 登録名に置換
+       c. 一致なし → error を付与
+
+    カード未登録（0枚）の場合もerrorを付与。
+
+    Args:
+        user_id: ユーザーID。
+        args: LLMが生成した引数の辞書。
+
+    Returns:
+        card_name が解決（またはerror付与）された引数の辞書。
+    """
+    if args.get("payment_method") != "クレジットカード":
+        return args
+
+    cards = crud.get_credit_cards(user_id)
+
+    if not cards:
+        args["error"] = (
+            "クレジットカードが1枚も登録されていません。"
+            "先にカードを登録してください。"
+        )
+        return args
+
+    if not args.get("card_name"):
+        # card_name 未指定 → デフォルトカードで補完
+        default_card = next(
+            (c for c in cards if c["is_default"]),
+            None,
+        )
+        if default_card:
+            args["card_name"] = default_card["name"]
+            logger.debug(f"カード補完: {args['card_name']}")
+        else:
+            args["error"] = (
+                "デフォルトのクレジットカードが登録されていません。"
+                "先にカードを登録してください。"
+            )
+        return args
+
+    # card_name 指定あり → 登録済みカードと照合
+    specified = args["card_name"]
+    card_names = [c["name"] for c in cards]
+
+    # 完全一致チェック
+    if specified in card_names:
+        return args
+
+    # 部分一致チェック（指定名が登録名に含まれる、またはその逆）
+    matches = [
+        cn for cn in card_names
+        if specified in cn or cn in specified
+    ]
+    if len(matches) == 1:
+        logger.debug(f"カード名解決: {specified} → {matches[0]}")
+        args["card_name"] = matches[0]
+        return args
+
+    if len(matches) > 1:
+        args["error"] = (
+            f"「{specified}」に該当するカードが複数あります: "
+            f"{', '.join(matches)}。どのカードか指定してください。"
+        )
+    else:
+        args["error"] = (
+            f"「{specified}」に該当する登録済みカードが見つかりません。"
+            f"登録済みカード: {', '.join(card_names)}。"
+            "先にカードを登録してください。"
+        )
+    return args
+
+
 def _complement_defaults(
     user_id: int,
     tool_name: str,
@@ -300,12 +383,15 @@ def _complement_defaults(
     """LLM が省略・誤設定した引数にデフォルト値を補完する。
 
     補完対象:
-    1. date: 省略時は今日の日付
+    1. date: 省略時は今日の日付（register_transaction のみ）
     2. payment_method: 省略時は settings("default_payment_method") or "現金"
+       （register_transaction のみ）
     3. payment_method がグループ名（例: "QUICPay"）の場合、
        同 group_name の is_group_default=True エントリ名に解決する
        （例: "QUICPay" → "QUICPay（JCB）"）
-    4. card_name: クレカ払いで未指定の場合、デフォルトカードを適用
+    4. card_name: クレカ払いで未指定の場合、デフォルトカードを適用。
+       指定ありの場合、登録済みカードと照合する。
+       （register_transaction / register_fixed_expense 共通）
 
     Args:
         user_id: ユーザーID。crud関数呼び出しに必要。
@@ -340,18 +426,10 @@ def _complement_defaults(
                 logger.debug(f"グループ支払方法解決: {pm} → {resolved}")
                 args["payment_method"] = resolved
 
-        if (
-            args.get("payment_method") == "クレジットカード"
-            and not args.get("card_name")
-        ):
-            cards = crud.get_credit_cards(user_id)
-            default_card = next(
-                (c for c in cards if c["is_default"]),
-                None,
-            )
-            if default_card:
-                args["card_name"] = default_card["name"]
-                logger.debug(f"カード補完: {args['card_name']}")
+        args = _resolve_card_name(user_id, args)
+
+    elif tool_name == "register_fixed_expense":
+        args = _resolve_card_name(user_id, args)
 
     return args
 
@@ -728,6 +806,27 @@ def chat(
                 }
 
             tool_args = _complement_defaults(user_id, tool_name, tool_args)
+
+            # _complement_defaults がエラーを付与した場合、
+            # ツール実行をスキップしてエラーをLLMに返す
+            if "error" in tool_args:
+                error_msg = tool_args.pop("error")
+                result = {"error": error_msg}
+                logger.info(f"補完エラー: {tool_name} → {error_msg}")
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": json.dumps(
+                        result, ensure_ascii=False,
+                    ),
+                })
+                messages_to_save.append(messages[-1])
+                tool_results.append({
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "error": error_msg,
+                })
+                continue
 
             try:
                 # crud関数にはuser_idを第一引数として渡す。

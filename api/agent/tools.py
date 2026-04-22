@@ -301,6 +301,13 @@ TOOLS = [
                         "type": "string",
                         "description": "支払方法。デフォルトは「口座振替」。",
                     },
+                    "card_name": {
+                        "type": "string",
+                        "description": (
+                            "クレジットカード名。"
+                            "クレジットカード払いの場合のみ指定。"
+                        ),
+                    },
                     "end_date": {
                         "type": "string",
                         "description": "終了日。継続中ならなし。",

@@ -145,6 +145,7 @@ def init_db() -> None:
                 day_of_month INTEGER NOT NULL
                     CHECK (day_of_month BETWEEN 1 AND 31),
                 payment_method TEXT NOT NULL DEFAULT '口座振替',
+                card_name TEXT,
                 is_active INTEGER NOT NULL DEFAULT 1,
                 start_date DATE NOT NULL,
                 end_date DATE,
@@ -248,6 +249,12 @@ def init_db() -> None:
                 is_group_default BOOLEAN NOT NULL DEFAULT TRUE,
                 UNIQUE (user_id, name)
             )
+        """)
+
+        # fixed_expenses マイグレーション: card_name 追加
+        cur.execute("""
+            ALTER TABLE fixed_expenses
+            ADD COLUMN IF NOT EXISTS card_name TEXT
         """)
 
         # payment_methods マイグレーション: group_name / is_group_default 追加
