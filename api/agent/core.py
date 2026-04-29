@@ -34,7 +34,7 @@ logger = get_logger(__name__)
 
 client = OpenAI()
 
-MODEL = "gpt-4o-mini"
+MODEL = "gpt-5.4-nano"
 
 MAX_TOOL_CALLS = 5
 
