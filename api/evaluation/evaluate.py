@@ -19,28 +19,38 @@ Agent 評価スクリプト
 """
 
 # === DB切り替え ===
-# connection.py はモジュール import 時に DB_PATH を確定するため、
+# connection.py は最初の接続取得時に DATABASE_URL を確定するため、
 # 他のモジュールを import する前に環境変数を設定する必要がある。
-# これにより chat() 内の crud 関数がテスト用DBを参照する。
+# これにより chat() 内の crud 関数が評価専用DBを参照する。
+#
+# 評価専用DB(kakeibo_eval)は本番(kakeibo)と同じPostgreSQLコンテナ内の
+# 別データベース。本番DBには一切書き込まず、起動時にデータをスナップショット
+# するのみ。各ケース実行前に kakeibo_eval を本番データの状態へ復元する。
 import os
-os.environ["KAKEIBO_DB_PATH"] = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "data",
-    "test_kakeibo.db",
+
+# 接続のベース（認証情報＋ホスト）。ホストから実行する場合、composeの
+# ポート公開によりlocalhost:5432で到達できる。Docker内から実行する等で
+# 変える場合は環境変数 EVAL_DB_BASE で上書きする。
+EVAL_DB_BASE = os.environ.get(
+    "EVAL_DB_BASE", "postgresql://kakeibo:kakeibo_dev@localhost:5432"
 )
+PROD_DB_NAME = "kakeibo"
+EVAL_DB_NAME = "kakeibo_eval"
+
+os.environ["DATABASE_URL"] = f"{EVAL_DB_BASE}/{EVAL_DB_NAME}"
 
 import json
-import math
-import shutil
 import time
 from datetime import date, datetime, timedelta
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from statsmodels.stats.proportion import proportion_confint
 
 from api.agent.core import chat
-from api.db.connection import init_db
+from api.db.connection import get_connection, init_db, release_connection
 from api.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -52,19 +62,29 @@ logger = get_logger(__name__)
 # N=5 × 52問 = 260回。95%CI は Wilson法で ±約4%（p=0.9の場合）
 N_RUNS = 5
 
+# 評価で使用する user_id。
+# 本番DBのコピー上で動作し、最初に作られるデモユーザー（id=1）を対象とする。
+EVAL_USER_ID = 1
+
 TEST_CASES_PATH = Path(__file__).parent / "test_cases.json"
 RESULTS_DIR = Path(__file__).parent / "results"
 
-# テスト用DBファイルと本番DBファイル
-# 評価時は本番DBのコピーで動作し、本番データに影響しない
-TEST_DB_PATH = Path(os.environ["KAKEIBO_DB_PATH"])
-PRODUCTION_DB_PATH = Path(
-    os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        "data",
-        "kakeibo.db",
-    )
-)
+# スナップショット/復元の対象テーブル（親→子のFK依存順）。
+# 全テーブルが users.id のみを参照するため、users を先頭にすれば足りる。
+SNAPSHOT_TABLES = [
+    "users",
+    "payment_methods",
+    "credit_cards",
+    "transactions",
+    "fixed_expenses",
+    "budgets",
+    "settings",
+    "store_category_mapping",
+    "conversation_history",
+]
+
+# 起動時に本番DBから読み込んだ各テーブルの全行（リセット時に復元する）。
+_PRODUCTION_SNAPSHOT: dict[str, list[dict]] = {}
 
 
 # ==================== ヘルパー関数 ====================
@@ -235,29 +255,117 @@ def _check_args_match(expected_args: dict, actual_args: dict) -> dict:
 
 # ==================== DB管理 ====================
 
-def _setup_test_db():
-    """テスト用DBを初期化する。
+def _ensure_eval_database():
+    """評価専用DB(kakeibo_eval)が無ければ作成する。
 
-    本番DBのコピーをテスト用DBとして使う。
-    これにより評価実行中の register_transaction 等が
-    本番データに影響しない。
+    CREATE DATABASE はトランザクション内で実行できないため、
+    maintenance DB(postgres)へ autocommit で接続して実行する。
+    既存の本番DB(kakeibo)には接続せず、影響を与えない。
     """
-    if PRODUCTION_DB_PATH.exists():
-        shutil.copy2(PRODUCTION_DB_PATH, TEST_DB_PATH)
-        logger.info(f"テスト用DBを作成: {TEST_DB_PATH}")
-    else:
-        init_db(str(TEST_DB_PATH))
-        logger.info(f"テスト用DBを新規作成: {TEST_DB_PATH}")
+    conn = psycopg2.connect(f"{EVAL_DB_BASE}/postgres")
+    try:
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT 1 FROM pg_database WHERE datname = %s", (EVAL_DB_NAME,)
+        )
+        if cur.fetchone() is None:
+            # データベース名は識別子のためパラメータ化できない。
+            # 定数なのでインジェクションの懸念はない。
+            cur.execute(f'CREATE DATABASE "{EVAL_DB_NAME}"')
+            logger.info(f"評価用DBを作成: {EVAL_DB_NAME}")
+        else:
+            logger.info(f"評価用DBは既存: {EVAL_DB_NAME}")
+    finally:
+        conn.close()
+
+
+def _snapshot_production():
+    """本番DB(kakeibo)の全データをメモリに読み込む。
+
+    SELECT のみで本番DBへの書き込みは一切行わない。
+    読み込んだデータは各ケース実行前のリセットで kakeibo_eval に復元する。
+    """
+    conn = psycopg2.connect(
+        f"{EVAL_DB_BASE}/{PROD_DB_NAME}", cursor_factory=RealDictCursor
+    )
+    try:
+        cur = conn.cursor()
+        for table in SNAPSHOT_TABLES:
+            cur.execute(f"SELECT * FROM {table} ORDER BY id")
+            _PRODUCTION_SNAPSHOT[table] = cur.fetchall()
+    finally:
+        conn.close()
+
+    counts = {t: len(rows) for t, rows in _PRODUCTION_SNAPSHOT.items() if rows}
+    logger.info(f"本番データをスナップショット: {counts}")
+
+
+def _setup_test_db():
+    """評価専用DBを準備する。
+
+    1. kakeibo_eval を作成（無ければ）
+    2. スキーマを作成（init_db）
+    3. 本番データをメモリにスナップショット
+    4. 初回リセットで本番の状態へ復元
+
+    本番DB(kakeibo)へは SELECT するのみで、書き込みは行わない。
+    """
+    _ensure_eval_database()
+    init_db()  # DATABASE_URL=kakeibo_eval なので評価DBにスキーマを作る
+    _snapshot_production()
+    _reset_test_db()
+    logger.info(f"評価用DBを準備完了: {EVAL_DB_NAME}")
 
 
 def _reset_test_db():
-    """テスト用DBを初期状態に戻す。
+    """評価専用DBを本番データの状態へ戻す。
 
-    各テストケースの実行前に呼び出して、
-    前のテストケースの副作用（取引登録等）を除去する。
+    各テストケースの実行前に呼び出して、前のケースの副作用
+    （register_transaction 等の書き込み）を除去する。
+    全テーブルを TRUNCATE 後にスナップショットを復元し、
+    SERIAL のシーケンスを最大idへ補正する。
     """
-    if PRODUCTION_DB_PATH.exists():
-        shutil.copy2(PRODUCTION_DB_PATH, TEST_DB_PATH)
+    conn = get_connection()
+    try:
+        cur = conn.cursor()
+
+        # 全テーブルを空にする（子テーブルのFKも一括処理するため CASCADE）
+        cur.execute(
+            "TRUNCATE {} RESTART IDENTITY CASCADE".format(
+                ", ".join(SNAPSHOT_TABLES)
+            )
+        )
+
+        # 親→子の順でスナップショットを復元
+        for table in SNAPSHOT_TABLES:
+            rows = _PRODUCTION_SNAPSHOT.get(table) or []
+            if not rows:
+                continue
+
+            columns = list(rows[0].keys())
+            col_sql = ", ".join(columns)
+            placeholders = ", ".join(["%s"] * len(columns))
+            insert_sql = (
+                f"INSERT INTO {table} ({col_sql}) VALUES ({placeholders})"
+            )
+            cur.executemany(
+                insert_sql,
+                [[row[c] for c in columns] for row in rows],
+            )
+
+            # 明示的にidを挿入したためSERIALのシーケンスが進んでいない。
+            # 次の自動採番が衝突しないよう最大idへ補正する。
+            if "id" in columns:
+                cur.execute(
+                    "SELECT setval(pg_get_serial_sequence(%s, 'id'), "
+                    "MAX(id)) FROM {}".format(table),
+                    (table,),
+                )
+
+        conn.commit()
+    finally:
+        release_connection(conn)
 
 
 # ==================== メイン実行 ====================
@@ -307,7 +415,7 @@ def run_evaluation():
             _reset_test_db()
 
             try:
-                result = chat(case_input, conversation_history=None)
+                result = chat(EVAL_USER_ID, case_input, conversation_history=None)
             except Exception as e:
                 logger.error(f"ケース {case_id} 実行 {run + 1} エラー: {e}")
                 case_results.append({
@@ -716,7 +824,7 @@ def _log_to_mlflow(report: dict, results_dir: Path):
         with mlflow.start_run():
             # --- Parameters ---
             # 実験の再現に必要な設定値
-            mlflow.log_param("model", "gpt-4o-mini")
+            mlflow.log_param("model", "gpt-5-nano")
             mlflow.log_param("n_cases", report["metadata"]["n_cases"])
             mlflow.log_param("n_runs", report["metadata"]["n_runs"])
             mlflow.log_param("total_runs", report["metadata"]["total_runs"])
